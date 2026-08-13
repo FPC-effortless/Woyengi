@@ -270,7 +270,7 @@
         "A durable local ledger and object store survive process restart.",
         "Adapters preserve deterministic ordering and atomic append semantics."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 17,
       "blocked_by": ["PLAT-011"]
     },

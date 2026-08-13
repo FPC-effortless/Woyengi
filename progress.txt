@@ -178,3 +178,11 @@
 - REFACTOR: extracted the execution ports contract while retaining green tests.
 - Verification: `pnpm test` passed on Node v24.19.0 (17 tests).
 - Next: PLAT-020 storage ports and durable local adapters.
+
+## 2026-08-13 — PLAT-020 RED → GREEN
+
+- RED: local storage restart test failed because storage ports and adapters did not exist.
+- GREEN: added ledger, graph, object, search, vector, and cache ports plus durable local canonical-ledger and content-addressed object-store adapters.
+- Ledger appends serialize through an atomic write queue, reject duplicate IDs, survive restart, and restore deterministic ordering; objects verify SHA-256 before commit.
+- Verification: `pnpm test` passed on Node v24.19.0 (18 tests).
+- Next: PLAT-021 durable event bus and subscriber cursors.
