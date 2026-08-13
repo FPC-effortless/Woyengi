@@ -129,3 +129,11 @@
 - Invalidated sources mark every dependent observation, claim, projection, and reconstruction unsupported without deleting history.
 - Verification: `pnpm test` passed on Node v24.19.0 (11 tests).
 - Next: PLAT-013 evidence relationships and verification state.
+
+## 2026-08-13 — PLAT-013 RED → GREEN
+
+- RED: evidence-engine test failed because support/contradiction links and verifier outcomes did not exist.
+- GREEN: added immutable evidence links, exact-locator retention, append-only verification outcomes, and explainable supported/contradicted/mixed/unresolved summaries.
+- Summarization retains every candidate and verification without mutating source evidence.
+- Verification: `pnpm test` passed on Node v24.19.0 (12 tests).
+- Next: PLAT-014 contextual authority evaluation.

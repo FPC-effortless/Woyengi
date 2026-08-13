@@ -186,7 +186,7 @@
         "Verification outcomes retain verifier, method, time, and provenance.",
         "Evidence summaries remain explainable and do not mutate source records."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 10,
       "blocked_by": ["PLAT-011", "PLAT-012"]
     },
