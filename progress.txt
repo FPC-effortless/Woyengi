@@ -227,3 +227,11 @@
 - Equivalent normalized requests produce byte-equivalent plans with deterministic ordering.
 - Verification: `pnpm test` passed on Node v24.19.0 (23 tests).
 - Next: PLAT-008 structured reconstructive workspace.
+
+## 2026-08-13 — PLAT-008 RED → GREEN
+
+- RED: reconstruction test failed because the workspace engine did not exist.
+- GREEN: added permission-first reconstruction that composes planned graphs/retrieval into structured current state, history, events, decisions, constraints, procedures, evidence, conflicts, uncertainty, authority, provenance, and rendered context.
+- Every workspace is an immutable canonical reconstruction record with an eight-stage trace from intent through context assembly.
+- Verification: `pnpm test` passed on Node v24.19.0 (24 tests).
+- Next: PLAT-026 guarded agent proposals and actions.

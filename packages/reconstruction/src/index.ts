@@ -1,4 +1,5 @@
 import type { RetrievalModality } from "../../search/src/index.ts";
+import type { StateValue } from "../../core/src/index.ts";
 
 export interface ResolvedIntent {
   readonly intent: string;
@@ -75,6 +76,144 @@ export class StateRequirementPlanner {
           : [{ kind: "authority" as const, predicate: action, purpose: resolved.purpose }]),
         { kind: "permission" as const, operation: "RECONSTRUCT" as const, principal, purpose: resolved.purpose },
       ],
+    });
+  }
+}
+
+export type WorkspaceItem = Readonly<Record<string, StateValue>>;
+
+export interface WorkspaceAssembly {
+  readonly currentState: readonly WorkspaceItem[];
+  readonly historicalState: readonly WorkspaceItem[];
+  readonly relevantEvents: readonly WorkspaceItem[];
+  readonly decisions: readonly WorkspaceItem[];
+  readonly procedures: readonly WorkspaceItem[];
+  readonly evidence: readonly WorkspaceItem[];
+  readonly contradictions: readonly WorkspaceItem[];
+  readonly uncertainties: readonly WorkspaceItem[];
+  readonly authorityContext: WorkspaceItem;
+  readonly provenanceManifest: readonly string[];
+  readonly renderedContext: string;
+}
+
+export interface ReconstructiveWorkspace {
+  readonly id: string;
+  readonly kind: "reconstruction";
+  readonly transactionTime: { readonly from: string };
+  readonly request: string;
+  readonly intent: string;
+  readonly subjects: readonly string[];
+  readonly currentState: readonly WorkspaceItem[];
+  readonly historicalState: readonly WorkspaceItem[];
+  readonly relevantEvents: readonly WorkspaceItem[];
+  readonly decisions: readonly WorkspaceItem[];
+  readonly constraints: readonly string[];
+  readonly procedures: readonly WorkspaceItem[];
+  readonly evidence: readonly WorkspaceItem[];
+  readonly contradictions: readonly WorkspaceItem[];
+  readonly uncertainties: readonly WorkspaceItem[];
+  readonly authorityContext: WorkspaceItem;
+  readonly permissionContext: {
+    readonly allowed: true;
+    readonly capabilityId: string;
+    readonly rationale: string;
+  };
+  readonly provenanceManifest: readonly string[];
+  readonly recommendedContext: string;
+  readonly trace: readonly {
+    readonly stage:
+      | "intent"
+      | "permission"
+      | "graph-activation"
+      | "retrieval"
+      | "temporal-resolution"
+      | "authority-resolution"
+      | "evidence-evaluation"
+      | "context-assembly";
+    readonly detail: StateValue;
+  }[];
+}
+
+export interface ReconstructionEnginePorts {
+  readonly planner: StateRequirementPlanner;
+  readonly authorize: (plan: StateRequirementPlan) =>
+    | { readonly allowed: true; readonly capabilityId: string; readonly rationale: string }
+    | { readonly allowed: false; readonly rationale: string };
+  readonly retrieve: (plan: StateRequirementPlan) => Promise<{
+    readonly recordIds: readonly string[];
+    readonly trace: readonly WorkspaceItem[];
+  }>;
+  readonly assemble: (
+    plan: StateRequirementPlan,
+    recordIds: readonly string[],
+  ) => Promise<WorkspaceAssembly>;
+}
+
+export class ReconstructionEngine {
+  readonly #ports: ReconstructionEnginePorts;
+
+  constructor(ports: ReconstructionEnginePorts) {
+    this.#ports = ports;
+  }
+
+  async reconstruct(input: {
+    readonly id: string;
+    readonly request: string;
+    readonly principal: string;
+  }): Promise<ReconstructiveWorkspace> {
+    const id = prefixed("reconstruction id", input.id, "reconstruction:");
+    const plan = await this.#ports.planner.plan({ request: input.request, principal: input.principal });
+    const permission = this.#ports.authorize(plan);
+    if (!permission.allowed) {
+      throw new Error(`reconstruction denied: ${permission.rationale}`);
+    }
+    const retrieval = await this.#ports.retrieve(plan);
+    const recordIds = unique("retrieved record ids", retrieval.recordIds.map((item) => namespaced("record id", item)));
+    const assembly = await this.#ports.assemble(plan, recordIds);
+    const trace: ReconstructiveWorkspace["trace"] = [
+      { stage: "intent", detail: { intent: plan.intent, subjects: plan.subjects } },
+      { stage: "permission", detail: { capabilityId: permission.capabilityId, rationale: permission.rationale } },
+      { stage: "graph-activation", detail: { graphIds: plan.graphIds } },
+      { stage: "retrieval", detail: { recordIds, providers: retrieval.trace } },
+      { stage: "temporal-resolution", detail: { validAt: plan.validAt, recordedAt: plan.recordedAt } },
+      { stage: "authority-resolution", detail: assembly.authorityContext },
+      {
+        stage: "evidence-evaluation",
+        detail: {
+          evidenceCount: assembly.evidence.length,
+          contradictionCount: assembly.contradictions.length,
+          uncertaintyCount: assembly.uncertainties.length,
+        },
+      },
+      {
+        stage: "context-assembly",
+        detail: {
+          currentStateCount: assembly.currentState.length,
+          historicalStateCount: assembly.historicalState.length,
+        },
+      },
+    ];
+    return deepFreeze({
+      id,
+      kind: "reconstruction" as const,
+      transactionTime: { from: plan.recordedAt },
+      request: plan.request,
+      intent: plan.intent,
+      subjects: plan.subjects,
+      currentState: assembly.currentState,
+      historicalState: assembly.historicalState,
+      relevantEvents: assembly.relevantEvents,
+      decisions: assembly.decisions,
+      constraints: plan.constraints,
+      procedures: assembly.procedures,
+      evidence: assembly.evidence,
+      contradictions: assembly.contradictions,
+      uncertainties: assembly.uncertainties,
+      authorityContext: assembly.authorityContext,
+      permissionContext: permission,
+      provenanceManifest: unique("provenance manifest", assembly.provenanceManifest),
+      recommendedContext: requiredText("rendered context", assembly.renderedContext),
+      trace,
     });
   }
 }
