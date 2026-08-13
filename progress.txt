@@ -79,3 +79,11 @@
 - Split replay restores original alias ownership without erasing merge history.
 - Verification: `pnpm test` passed on Node v24.19.0 (6 tests).
 - Next: retry PLAT-009 when registry access is available; PLAT-007 is now the next independent unblocked ticket.
+
+## 2026-08-13 — PLAT-007 RED → GREEN
+
+- RED: domain package test failed because the Domain SDK contract did not exist.
+- GREEN: added immutable versioned Domain Packages covering types, graphs, lifecycle, authority, reducers, verification, reconstruction, permissions, procedures, and connectors.
+- Registry enforces platform API compatibility, namespace-qualified definition IDs, duplicate protection, and deterministic installed-package order.
+- Verification: `pnpm test` passed on Node v24.19.0 (7 tests).
+- Next: PLAT-009 remains the only unblocked prerequisite for canonical record expansion; retry compiler installation.
