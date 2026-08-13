@@ -462,7 +462,7 @@
         "Benchmarks report correctness and permission-leakage metrics.",
         "Release gates fail on regressions beyond documented thresholds."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 37,
       "blocked_by": ["PLAT-006", "PLAT-008", "PLAT-031", "PLAT-035"]
     },
