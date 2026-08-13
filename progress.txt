@@ -202,3 +202,11 @@
 - Concurrent and repeated idempotency keys return the original receipt without duplicating ledger, object, or event writes.
 - Verification: `pnpm test` passed on Node v24.19.0 (20 tests).
 - Next: PLAT-023 multimodal retrieval orchestration.
+
+## 2026-08-13 — PLAT-023 RED → GREEN
+
+- RED: retrieval-orchestration test failed because the shared modality protocol did not exist.
+- GREEN: added lexical, vector, graph, temporal, entity, state, procedure, and evidence providers with weighted deterministic fusion.
+- Every result retains provider/modality contribution scores and index provenance; retrieval remains a candidate mechanism, not canonical state.
+- Verification: `pnpm test` passed on Node v24.19.0 (21 tests).
+- Next: PLAT-024 semantic decomposition and entity-resolution proposals.

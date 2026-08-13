@@ -306,7 +306,7 @@
         "A planner can activate multiple retrieval modalities and fuse deterministic results.",
         "Every candidate retains modality and provenance."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 20,
       "blocked_by": ["PLAT-013", "PLAT-017", "PLAT-018", "PLAT-020"]
     },
