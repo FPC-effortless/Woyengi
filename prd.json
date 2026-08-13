@@ -174,7 +174,7 @@
         "Invalidating a source identifies every affected record and projection.",
         "Cycles and references to missing records are rejected."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 9,
       "blocked_by": ["PLAT-011"]
     },

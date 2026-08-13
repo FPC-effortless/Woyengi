@@ -121,3 +121,11 @@
 - IDs are unique across kinds; replay and queries sort by transaction time then ID and support record-kind/time filters.
 - Verification: `pnpm test` passed on Node v24.19.0 (10 tests).
 - Next: PLAT-012 provenance DAG and invalidation propagation.
+
+## 2026-08-13 — PLAT-012 RED → GREEN
+
+- RED: provenance test failed because the DAG API did not exist.
+- GREEN: added deterministic DAG construction, upstream/downstream traversal, missing-reference and cycle rejection, and immutable invalidation impact records.
+- Invalidated sources mark every dependent observation, claim, projection, and reconstruction unsupported without deleting history.
+- Verification: `pnpm test` passed on Node v24.19.0 (11 tests).
+- Next: PLAT-013 evidence relationships and verification state.
