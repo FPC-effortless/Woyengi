@@ -58,7 +58,7 @@
         "Superseded and retracted claims remain historical but do not govern current state.",
         "Every result exposes candidates, conflicts, and an inspectable selection trace."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 4,
       "blocked_by": ["PLAT-003"]
     },

@@ -90,6 +90,17 @@ export interface ClaimRecord {
   readonly lifecycle: LifecycleStatus;
 }
 
+export interface LifecycleTransitionRecord {
+  readonly kind: "lifecycle-transition";
+  readonly id: RecordId<"lifecycle-transition">;
+  readonly targetId: RecordId;
+  readonly status: LifecycleStatus;
+  readonly reason: string;
+  readonly transactionTime: TimeInterval;
+  readonly provenance: Provenance;
+  readonly authority: Authority;
+}
+
 export interface CreateObservationInput {
   readonly id: string;
   readonly sourceId: string;
@@ -126,6 +137,20 @@ export interface CreateClaimInput {
   };
   readonly confidence: number;
   readonly lifecycle?: LifecycleStatus;
+}
+
+export interface CreateLifecycleTransitionInput {
+  readonly id: string;
+  readonly targetId: string;
+  readonly status: LifecycleStatus;
+  readonly reason: string;
+  readonly recordedAt: string;
+  readonly provenance?: ProvenanceInput;
+  readonly authority: {
+    readonly level: number;
+    readonly basis: string;
+    readonly principal?: string;
+  };
 }
 
 export interface ProvenanceInput {
@@ -189,6 +214,31 @@ export function createClaim(input: CreateClaimInput): ClaimRecord {
   });
 }
 
+export function createLifecycleTransition(
+  input: CreateLifecycleTransitionInput,
+): LifecycleTransitionRecord {
+  if (!Number.isFinite(input.authority.level)) {
+    throw new TypeError("authority.level must be a finite number");
+  }
+
+  return deepFreeze({
+    kind: "lifecycle-transition" as const,
+    id: prefixedRecordId("lifecycle-transition", "lifecycle", input.id),
+    targetId: genericRecordId(input.targetId),
+    status: input.status,
+    reason: requiredText("reason", input.reason),
+    transactionTime: interval(input.recordedAt),
+    provenance: provenance(input.provenance),
+    authority: {
+      level: input.authority.level,
+      basis: requiredText("authority.basis", input.authority.basis),
+      ...(input.authority.principal === undefined
+        ? {}
+        : { principal: entityId(input.authority.principal) }),
+    },
+  });
+}
+
 function provenance(input: ProvenanceInput | undefined): Provenance {
   return {
     derivedFrom: [...(input?.derivedFrom ?? [])],
@@ -224,6 +274,26 @@ function recordId<Kind extends RecordKind>(kind: Kind, value: string): RecordId<
     throw new TypeError(`${kind} id must start with ${kind}:`);
   }
   return normalized as RecordId<Kind>;
+}
+
+function prefixedRecordId<Kind extends RecordKind>(
+  kind: Kind,
+  prefix: string,
+  value: string,
+): RecordId<Kind> {
+  const normalized = requiredText(`${kind} id`, value);
+  if (!normalized.startsWith(`${prefix}:`)) {
+    throw new TypeError(`${kind} id must start with ${prefix}:`);
+  }
+  return normalized as RecordId<Kind>;
+}
+
+function genericRecordId(value: string): RecordId {
+  const normalized = requiredText("target record id", value);
+  if (!/^[a-z][a-z0-9-]*:.+/i.test(normalized)) {
+    throw new TypeError("target record id must be namespace-qualified");
+  }
+  return normalized as RecordId;
 }
 
 function entityId(value: string): EntityId {

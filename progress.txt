@@ -32,3 +32,13 @@
 - History queries filter by subject/predicate and sort deterministically by transaction time then record ID.
 - Verification: `pnpm test` passed on Node v24.19.0 (2 tests).
 - Next: PLAT-004 bitemporal state projection, conflicts, and trace.
+
+## 2026-08-13 — PLAT-004 RED → GREEN → RED → GREEN
+
+- RED 1: projection test failed because `projectAt` did not exist.
+- GREEN 1: added explicit valid-time/transaction-time filtering, lifecycle/authority ranking, conflict retention, and a five-stage trace.
+- RED 2: lifecycle test failed because append-only transitions did not exist.
+- GREEN 2: added provenance-ready lifecycle transition records plus transaction-time-aware retraction and supersession.
+- Original claims remain in ledger history after lifecycle changes.
+- Verification: `pnpm test:coverage` passed on Node v24.19.0 (4 tests; 88.59% line, 70.33% branch, 90.70% function coverage).
+- Next: PLAT-005 deterministic replay and projection rebuilding.
