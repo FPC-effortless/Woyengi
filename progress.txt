@@ -137,3 +137,11 @@
 - Summarization retains every candidate and verification without mutating source evidence.
 - Verification: `pnpm test` passed on Node v24.19.0 (12 tests).
 - Next: PLAT-014 contextual authority evaluation.
+
+## 2026-08-13 — PLAT-014 RED → GREEN
+
+- RED: authority-ranking test failed because no contextual authority engine existed.
+- GREEN: added policy evaluation across principal, predicate, purpose, conditions, and time, with deterministic ranking and per-policy traces.
+- A lower-confidence executive decision correctly outranks a high-confidence model inference because authority and confidence remain independent.
+- Verification: `pnpm test` passed on Node v24.19.0 (13 tests).
+- Next: PLAT-016 extensible verification engine.

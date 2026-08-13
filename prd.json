@@ -198,7 +198,7 @@
         "Authority remains independent from confidence and evidence strength.",
         "Every evaluation returns an inspectable rationale."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 11,
       "blocked_by": ["PLAT-007", "PLAT-011"]
     },
