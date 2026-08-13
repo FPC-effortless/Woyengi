@@ -105,3 +105,11 @@
 - No machine-specific path or unverifiable dependency was added to the repository.
 - Corrected PLAT-010 so semantic canonical-record work no longer depends on this cross-cutting delivery gate; PLAT-009 remains required and open.
 - Next: PLAT-010 canonical events, relationships, decisions, and artifacts.
+
+## 2026-08-13 — PLAT-010 RED → GREEN
+
+- RED: canonical record test failed because event, relationship, decision, and artifact constructors did not exist.
+- GREEN: added immutable bitemporal records for typed events/participants, authoritative relationships, decisions, and content-addressed artifacts.
+- Artifacts retain original storage plus exact residual-detail locators; all derived records retain evidence and provenance.
+- Verification: `pnpm test` passed on Node v24.19.0 (9 tests).
+- Next: PLAT-011 generalized canonical ledger.

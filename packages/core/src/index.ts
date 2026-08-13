@@ -10,6 +10,7 @@ export type RecordKind =
   | "claim"
   | "event"
   | "relationship"
+  | "decision"
   | "evidence"
   | "authority-assessment"
   | "lifecycle-transition"
@@ -90,6 +91,70 @@ export interface ClaimRecord {
   readonly lifecycle: LifecycleStatus;
 }
 
+export interface EventParticipant {
+  readonly entityId: EntityId;
+  readonly role: string;
+}
+
+export interface EventRecord {
+  readonly kind: "event";
+  readonly id: RecordId<"event">;
+  readonly eventType: Predicate;
+  readonly participants: readonly EventParticipant[];
+  readonly validTime: TimeInterval;
+  readonly transactionTime: TimeInterval;
+  readonly evidenceIds: readonly RecordId<"evidence">[];
+  readonly provenance: Provenance;
+  readonly lifecycle: LifecycleStatus;
+}
+
+export interface RelationshipRecord {
+  readonly kind: "relationship";
+  readonly id: RecordId<"relationship">;
+  readonly relationshipType: Predicate;
+  readonly fromEntityId: EntityId;
+  readonly toEntityId: EntityId;
+  readonly validTime: TimeInterval;
+  readonly transactionTime: TimeInterval;
+  readonly evidenceIds: readonly RecordId<"evidence">[];
+  readonly provenance: Provenance;
+  readonly authority: Authority;
+  readonly confidence: number;
+  readonly lifecycle: LifecycleStatus;
+}
+
+export interface DecisionRecord {
+  readonly kind: "decision";
+  readonly id: RecordId<"decision">;
+  readonly decisionType: Predicate;
+  readonly subjects: readonly EntityId[];
+  readonly decidedBy: readonly EntityId[];
+  readonly outcome: StateValue;
+  readonly validTime: TimeInterval;
+  readonly transactionTime: TimeInterval;
+  readonly evidenceIds: readonly RecordId<"evidence">[];
+  readonly provenance: Provenance;
+  readonly authority: Authority;
+  readonly lifecycle: LifecycleStatus;
+}
+
+export interface ResidualDetailReference {
+  readonly locator: string;
+  readonly mediaType?: string;
+}
+
+export interface ArtifactRecord {
+  readonly kind: "artifact";
+  readonly id: RecordId<"artifact">;
+  readonly mediaType: string;
+  readonly contentHash: string;
+  readonly storageLocator: string;
+  readonly residualDetails: readonly ResidualDetailReference[];
+  readonly transactionTime: TimeInterval;
+  readonly provenance: Provenance;
+  readonly lifecycle: LifecycleStatus;
+}
+
 export interface LifecycleTransitionRecord {
   readonly kind: "lifecycle-transition";
   readonly id: RecordId<"lifecycle-transition">;
@@ -153,6 +218,56 @@ export interface CreateLifecycleTransitionInput {
     readonly basis: string;
     readonly principal?: string;
   };
+}
+
+export interface CreateEventInput {
+  readonly id: string;
+  readonly eventType: string;
+  readonly participants: readonly { readonly entityId: string; readonly role: string }[];
+  readonly validTime: { readonly from: string; readonly to?: string };
+  readonly recordedAt: string;
+  readonly evidenceIds?: readonly string[];
+  readonly provenance?: ProvenanceInput;
+  readonly lifecycle?: LifecycleStatus;
+}
+
+export interface CreateRelationshipInput {
+  readonly id: string;
+  readonly relationshipType: string;
+  readonly fromEntityId: string;
+  readonly toEntityId: string;
+  readonly validTime: { readonly from: string; readonly to?: string };
+  readonly recordedAt: string;
+  readonly evidenceIds?: readonly string[];
+  readonly provenance?: ProvenanceInput;
+  readonly authority: Authority;
+  readonly confidence: number;
+  readonly lifecycle?: LifecycleStatus;
+}
+
+export interface CreateDecisionInput {
+  readonly id: string;
+  readonly decisionType: string;
+  readonly subjects: readonly string[];
+  readonly decidedBy: readonly string[];
+  readonly outcome: StateValue;
+  readonly validTime: { readonly from: string; readonly to?: string };
+  readonly recordedAt: string;
+  readonly evidenceIds?: readonly string[];
+  readonly provenance?: ProvenanceInput;
+  readonly authority: Authority;
+  readonly lifecycle?: LifecycleStatus;
+}
+
+export interface CreateArtifactInput {
+  readonly id: string;
+  readonly mediaType: string;
+  readonly contentHash: string;
+  readonly storageLocator: string;
+  readonly residualDetails?: readonly ResidualDetailReference[];
+  readonly recordedAt: string;
+  readonly provenance?: ProvenanceInput;
+  readonly lifecycle?: LifecycleStatus;
 }
 
 export interface ProvenanceInput {
@@ -241,11 +356,113 @@ export function createLifecycleTransition(
   });
 }
 
+export function createEvent(input: CreateEventInput): EventRecord {
+  if (input.participants.length === 0) {
+    throw new TypeError("event participants must not be empty");
+  }
+  return deepFreeze({
+    kind: "event" as const,
+    id: recordId("event", input.id),
+    eventType: predicate(input.eventType),
+    participants: input.participants.map((participant) => ({
+      entityId: entityId(participant.entityId),
+      role: requiredText("participant role", participant.role),
+    })),
+    validTime: interval(input.validTime.from, input.validTime.to),
+    transactionTime: interval(input.recordedAt),
+    evidenceIds: evidenceIds(input.evidenceIds),
+    provenance: provenance(input.provenance),
+    lifecycle: input.lifecycle ?? "provisional",
+  });
+}
+
+export function createRelationship(input: CreateRelationshipInput): RelationshipRecord {
+  assertConfidence(input.confidence);
+  return deepFreeze({
+    kind: "relationship" as const,
+    id: recordId("relationship", input.id),
+    relationshipType: predicate(input.relationshipType),
+    fromEntityId: entityId(input.fromEntityId),
+    toEntityId: entityId(input.toEntityId),
+    validTime: interval(input.validTime.from, input.validTime.to),
+    transactionTime: interval(input.recordedAt),
+    evidenceIds: evidenceIds(input.evidenceIds),
+    provenance: provenance(input.provenance),
+    authority: authority(input.authority),
+    confidence: input.confidence,
+    lifecycle: input.lifecycle ?? "provisional",
+  });
+}
+
+export function createDecision(input: CreateDecisionInput): DecisionRecord {
+  if (input.subjects.length === 0 || input.decidedBy.length === 0) {
+    throw new TypeError("decision subjects and decision makers must not be empty");
+  }
+  return deepFreeze({
+    kind: "decision" as const,
+    id: recordId("decision", input.id),
+    decisionType: predicate(input.decisionType),
+    subjects: input.subjects.map(entityId),
+    decidedBy: input.decidedBy.map(entityId),
+    outcome: input.outcome,
+    validTime: interval(input.validTime.from, input.validTime.to),
+    transactionTime: interval(input.recordedAt),
+    evidenceIds: evidenceIds(input.evidenceIds),
+    provenance: provenance(input.provenance),
+    authority: authority(input.authority),
+    lifecycle: input.lifecycle ?? "provisional",
+  });
+}
+
+export function createArtifact(input: CreateArtifactInput): ArtifactRecord {
+  const contentHash = requiredText("contentHash", input.contentHash).toLowerCase();
+  if (!/^sha256:[a-f0-9]{64}$/.test(contentHash)) {
+    throw new TypeError("contentHash must be a sha256 digest");
+  }
+  return deepFreeze({
+    kind: "artifact" as const,
+    id: recordId("artifact", input.id),
+    mediaType: requiredText("mediaType", input.mediaType),
+    contentHash,
+    storageLocator: requiredText("storageLocator", input.storageLocator),
+    residualDetails: (input.residualDetails ?? []).map((detail) => ({
+      locator: requiredText("residual detail locator", detail.locator),
+      ...(detail.mediaType === undefined
+        ? {}
+        : { mediaType: requiredText("residual detail mediaType", detail.mediaType) }),
+    })),
+    transactionTime: interval(input.recordedAt),
+    provenance: provenance(input.provenance),
+    lifecycle: input.lifecycle ?? "provisional",
+  });
+}
+
 function provenance(input: ProvenanceInput | undefined): Provenance {
   return {
     derivedFrom: [...(input?.derivedFrom ?? [])],
     transformations: [...(input?.transformations ?? [])],
   };
+}
+
+function evidenceIds(values: readonly string[] | undefined): RecordId<"evidence">[] {
+  return (values ?? []).map((id) => recordId("evidence", id));
+}
+
+function authority(value: Authority): Authority {
+  if (!Number.isFinite(value.level)) {
+    throw new TypeError("authority.level must be a finite number");
+  }
+  return {
+    level: value.level,
+    basis: requiredText("authority.basis", value.basis),
+    ...(value.principal === undefined ? {} : { principal: entityId(value.principal) }),
+  };
+}
+
+function assertConfidence(value: number): void {
+  if (value < 0 || value > 1) {
+    throw new RangeError("confidence must be between 0 and 1");
+  }
 }
 
 function interval(from: string, to?: string): TimeInterval {
