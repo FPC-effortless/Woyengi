@@ -310,3 +310,11 @@
 - Recursive redaction removes credentials, tokens, payloads, and content before diagnostics leave the service. Admin access defaults to denied; dangerous retries require an exact target-bound confirmation and append a request/principal/reason audit record.
 - Verification: `pnpm test` passed on Node v24.19.0 (33 tests).
 - Next: PLAT-035 privacy-safe tracing, quality metrics, and correlated audit events.
+
+## 2026-08-13 — PLAT-035 RED → GREEN
+
+- RED: observability test failed because no shared trace, metric, or audit substrate existed.
+- GREEN: added the complete platform quality vocabulary for identity, temporal state, provenance, authority, supersession, conflicts, reconstruction precision/completeness, freshness, verification, and permission leakage.
+- Immutable traces capture timed stages; audit records correlate request, trace, principal, decision, state change, and reconstruction. Content-bearing and credential-bearing attributes are recursively redacted before storage.
+- Verification: `pnpm test` passed on Node v24.19.0 (34 tests).
+- Next: PLAT-036 adversarial state and reconstruction benchmark gates.

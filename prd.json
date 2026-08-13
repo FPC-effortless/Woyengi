@@ -450,7 +450,7 @@
         "Trace and metric records avoid sensitive-content leakage.",
         "Audit events correlate request, principal, decision, state change, and reconstruction."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 36,
       "blocked_by": ["PLAT-008", "PLAT-016", "PLAT-021", "PLAT-028"]
     },
