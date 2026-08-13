@@ -378,7 +378,7 @@
         "Generated or shared contract fixtures prevent language drift.",
         "Retries never duplicate idempotent writes."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 30,
       "blocked_by": ["PLAT-028"]
     },

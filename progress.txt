@@ -260,3 +260,12 @@
 - Success and error responses share stable envelopes; unauthenticated/unauthorized requests reach no domain handler.
 - Verification: `pnpm test` passed on Node v24.19.0 (27 tests, including real loopback HTTP).
 - Next: PLAT-029 TypeScript and Python client SDKs.
+
+## 2026-08-13 — PLAT-029 RED → GREEN → REFACTOR
+
+- RED: both client tests failed because TypeScript and Python SDKs did not exist.
+- GREEN: added ingestion, state, reconstruction, control, and subscription clients driven by a shared HTTP contract fixture.
+- Both clients reuse caller-supplied idempotency keys across network/server retries and parse the same response envelope.
+- REFACTOR: replaced a hanging nested-pnpm test script with a direct cross-language gate and portable Python-runtime discovery.
+- Verification: `pnpm test:all` passed (28 Node tests plus 1 Python unittest).
+- Next: PLAT-030 storage policies and local/cloud/hybrid synchronization.

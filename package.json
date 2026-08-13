@@ -10,6 +10,8 @@
   },
   "scripts": {
     "test": "node --test",
+    "test:python": "node scripts/run-python-tests.mjs",
+    "test:all": "node --test && node scripts/run-python-tests.mjs",
     "test:coverage": "node --test --experimental-test-coverage"
   }
 }
