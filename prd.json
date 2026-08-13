@@ -438,7 +438,7 @@
         "Dangerous operations require explicit confirmation and produce audit records.",
         "Diagnostics reveal no unauthorized sensitive payloads."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 35,
       "blocked_by": ["PLAT-028", "PLAT-033"]
     },

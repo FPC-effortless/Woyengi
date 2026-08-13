@@ -302,3 +302,11 @@
 - Visual QA: Chromium passed at 1280×900 dark/light and 375×812 light; mobile document width remained 375 px, interactive controls had accessible names, IDs were unique, and console output had zero errors or warnings after fixing the favicon request.
 - Verification: `pnpm test` passed on Node v24.19.0 (32 tests).
 - Next: PLAT-034 administrator and developer diagnostics.
+
+## 2026-08-13 — PLAT-034 RED → GREEN
+
+- RED: diagnostics test failed because the administrator boundary did not exist.
+- GREEN: added a responsive admin diagnostics surface and service aggregating connectors, policies, verifiers, subscriptions, storage health, and failed jobs.
+- Recursive redaction removes credentials, tokens, payloads, and content before diagnostics leave the service. Admin access defaults to denied; dangerous retries require an exact target-bound confirmation and append a request/principal/reason audit record.
+- Verification: `pnpm test` passed on Node v24.19.0 (33 tests).
+- Next: PLAT-035 privacy-safe tracing, quality metrics, and correlated audit events.
