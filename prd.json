@@ -2,6 +2,11 @@
   "product": "Woyengi Platform",
   "problem": "Stateful applications and agents need persistent, reconstructable state without confusing documents, generated text, inferences, or indexes with authoritative state.",
   "outcome": "Provide a domain-neutral substrate that reconstructs typed historical state under explicit identity, time, provenance, authority, evidence, lifecycle, and permission constraints.",
+  "active_milestone": {
+    "name": "Persistent state foundation",
+    "tickets": ["PLAT-001", "PLAT-002", "PLAT-003", "PLAT-004"],
+    "qa_status": "awaiting_human_acknowledgement"
+  },
   "architectural_invariants": [
     "Canonical history is append-oriented and replayable.",
     "Valid time and transaction time are distinct.",

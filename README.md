@@ -34,6 +34,8 @@ Node.js 24.12 or newer is required while TypeScript source is executed with nati
 ## Governing documents
 
 - `CONSTITUTION.md` defines non-negotiable architecture invariants.
+- `docs/architecture.md` preserves the full target system and delivery order.
 - `prd.json` is the ordered executable contract.
 - `research.md` records external constraints and decisions.
 - `progress.txt` is the append-only delivery log.
+- `QA.md` defines the current milestone's human acceptance checks.

@@ -42,3 +42,9 @@
 - Original claims remain in ledger history after lifecycle changes.
 - Verification: `pnpm test:coverage` passed on Node v24.19.0 (4 tests; 88.59% line, 70.33% branch, 90.70% function coverage).
 - Next: PLAT-005 deterministic replay and projection rebuilding.
+
+## 2026-08-13 — FOUNDATION QA HANDOFF
+
+- Preserved the complete target architecture and Platform/Compute boundary in `docs/architecture.md`.
+- Added `QA.md` with human scenarios, automated commands, limitations, and the regression restart protocol.
+- Foundation automated checks are green; human QA acknowledgement remains pending.
