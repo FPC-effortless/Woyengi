@@ -48,3 +48,11 @@
 - Preserved the complete target architecture and Platform/Compute boundary in `docs/architecture.md`.
 - Added `QA.md` with human scenarios, automated commands, limitations, and the regression restart protocol.
 - Foundation automated checks are green; human QA acknowledgement remains pending.
+
+## 2026-08-13 — GOAL CONTINUATION / FULL PRD
+
+- User directed continued execution until the complete platform goal is achieved.
+- Activated persistent goal tracking for the full architecture and production-ready handoff.
+- Expanded `prd.json` from 8 to 40 dependency-ordered tickets covering every target layer.
+- Moved the active milestone to canonical integrity and replay (PLAT-005, PLAT-006, PLAT-009 through PLAT-012).
+- Next: PLAT-005 deterministic replay.

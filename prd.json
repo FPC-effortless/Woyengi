@@ -3,10 +3,25 @@
   "problem": "Stateful applications and agents need persistent, reconstructable state without confusing documents, generated text, inferences, or indexes with authoritative state.",
   "outcome": "Provide a domain-neutral substrate that reconstructs typed historical state under explicit identity, time, provenance, authority, evidence, lifecycle, and permission constraints.",
   "active_milestone": {
-    "name": "Persistent state foundation",
-    "tickets": ["PLAT-001", "PLAT-002", "PLAT-003", "PLAT-004"],
-    "qa_status": "awaiting_human_acknowledgement"
+    "name": "Canonical integrity and replay",
+    "tickets": ["PLAT-005", "PLAT-006", "PLAT-009", "PLAT-010", "PLAT-011", "PLAT-012"],
+    "qa_status": "not_started"
   },
+  "completed_milestones": [
+    {
+      "name": "Persistent state foundation",
+      "tickets": ["PLAT-001", "PLAT-002", "PLAT-003", "PLAT-004"],
+      "qa_status": "automated_green_human_continuation_authorized"
+    }
+  ],
+  "definition_of_done": [
+    "Every ticket passes its automated acceptance checks.",
+    "Canonical state can be replayed and reconstructed without relying on disposable indexes.",
+    "The modular-monolith API, worker, storage, search, eventing, synchronization, SDK, and inspection surfaces are runnable locally.",
+    "Security and permission-leakage tests pass.",
+    "Adversarial state benchmarks and production-readiness gates pass.",
+    "Human QA is acknowledged for the final release candidate."
+  ],
   "architectural_invariants": [
     "Canonical history is append-oriented and replayable.",
     "Valid time and transaction time are distinct.",
@@ -112,8 +127,392 @@
         "Every reconstruction includes a deterministic trace."
       ],
       "passes": false,
+      "priority": 26,
+      "blocked_by": ["PLAT-006", "PLAT-007", "PLAT-012", "PLAT-013", "PLAT-014", "PLAT-015", "PLAT-017", "PLAT-018", "PLAT-023"]
+    },
+    {
+      "id": "PLAT-009",
+      "title": "Add compiler type-check and package boundary gates",
+      "acceptance_criteria": [
+        "A pinned TypeScript compiler checks every package under strict settings.",
+        "Build and test commands run from the workspace root.",
+        "Package imports remain acyclic and explicit."
+      ],
+      "passes": false,
+      "priority": 6,
+      "blocked_by": ["PLAT-005"]
+    },
+    {
+      "id": "PLAT-010",
+      "title": "Define canonical events, relationships, artifacts, and decisions",
+      "acceptance_criteria": [
+        "Events represent participants and valid temporal boundaries without product-specific types.",
+        "Relationships and decisions are immutable bitemporal records.",
+        "Artifacts retain exact source and residual-detail locators."
+      ],
+      "passes": false,
+      "priority": 7,
+      "blocked_by": ["PLAT-005", "PLAT-009"]
+    },
+    {
+      "id": "PLAT-011",
+      "title": "Generalize the canonical ledger across record kinds",
+      "acceptance_criteria": [
+        "One append-only port accepts all canonical record kinds.",
+        "Duplicate identifiers are rejected globally.",
+        "Queries preserve deterministic transaction ordering and record-kind filters."
+      ],
+      "passes": false,
       "priority": 8,
-      "blocked_by": ["PLAT-004", "PLAT-007"]
+      "blocked_by": ["PLAT-010"]
+    },
+    {
+      "id": "PLAT-012",
+      "title": "Build provenance DAG traversal and invalidation propagation",
+      "acceptance_criteria": [
+        "Derived records expose upstream and downstream dependencies.",
+        "Invalidating a source identifies every affected record and projection.",
+        "Cycles and references to missing records are rejected."
+      ],
+      "passes": false,
+      "priority": 9,
+      "blocked_by": ["PLAT-011"]
+    },
+    {
+      "id": "PLAT-013",
+      "title": "Build evidence support, contradiction, and verification state",
+      "acceptance_criteria": [
+        "Evidence can support or contradict claims with exact locators.",
+        "Verification outcomes retain verifier, method, time, and provenance.",
+        "Evidence summaries remain explainable and do not mutate source records."
+      ],
+      "passes": false,
+      "priority": 10,
+      "blocked_by": ["PLAT-011", "PLAT-012"]
+    },
+    {
+      "id": "PLAT-014",
+      "title": "Build contextual authority evaluation",
+      "acceptance_criteria": [
+        "Authority policies evaluate principal, predicate, purpose, context, and time.",
+        "Authority remains independent from confidence and evidence strength.",
+        "Every evaluation returns an inspectable rationale."
+      ],
+      "passes": false,
+      "priority": 11,
+      "blocked_by": ["PLAT-007", "PLAT-011"]
+    },
+    {
+      "id": "PLAT-015",
+      "title": "Build capability-based permission evaluation",
+      "acceptance_criteria": [
+        "Capabilities constrain principal, resources, operations, purpose, sensitivity, conditions, delegation, and time.",
+        "Read, reconstruct, propose-write, verify, execute, export, and share are separately authorized.",
+        "Default denial and permission-leakage tests pass."
+      ],
+      "passes": false,
+      "priority": 12,
+      "blocked_by": ["PLAT-006", "PLAT-007"]
+    },
+    {
+      "id": "PLAT-016",
+      "title": "Build the extensible verification engine",
+      "acceptance_criteria": [
+        "Schema, constraint, temporal, authority, consistency, external, human, and domain verifiers share one protocol.",
+        "Verification failures are explicit results rather than hidden exceptions.",
+        "Verification decisions are appendable canonical records."
+      ],
+      "passes": false,
+      "priority": 13,
+      "blocked_by": ["PLAT-013", "PLAT-014", "PLAT-015"]
+    },
+    {
+      "id": "PLAT-017",
+      "title": "Build typed graph registry and federation",
+      "acceptance_criteria": [
+        "Graph definitions declare node/edge types, invariants, temporal behavior, retention, permissions, and verification hooks.",
+        "Graph registration is versioned and rejects incompatible definitions.",
+        "Materialized graphs rebuild from canonical ledger records."
+      ],
+      "passes": false,
+      "priority": 14,
+      "blocked_by": ["PLAT-007", "PLAT-011"]
+    },
+    {
+      "id": "PLAT-018",
+      "title": "Build cross-graph binding traversal",
+      "acceptance_criteria": [
+        "Bindings connect records across registered graphs without duplicating objects.",
+        "Traversal applies direction, depth, temporal, and permission constraints.",
+        "Binding traces explain every traversed path."
+      ],
+      "passes": false,
+      "priority": 15,
+      "blocked_by": ["PLAT-015", "PLAT-017"]
+    },
+    {
+      "id": "PLAT-019",
+      "title": "Build reusable procedure definitions and guarded execution",
+      "acceptance_criteria": [
+        "Procedures define preconditions, operations, tools, invariants, verification, postconditions, and repair behavior.",
+        "Execution checks permissions and verification before state-changing operations.",
+        "Successful runs can propose versioned candidate procedures."
+      ],
+      "passes": false,
+      "priority": 16,
+      "blocked_by": ["PLAT-015", "PLAT-016"]
+    },
+    {
+      "id": "PLAT-020",
+      "title": "Define storage ports and durable local adapters",
+      "acceptance_criteria": [
+        "Ledger, graph, object, search, vector, and cache ports are explicit.",
+        "A durable local ledger and object store survive process restart.",
+        "Adapters preserve deterministic ordering and atomic append semantics."
+      ],
+      "passes": false,
+      "priority": 17,
+      "blocked_by": ["PLAT-011"]
+    },
+    {
+      "id": "PLAT-021",
+      "title": "Build transactional event bus and subscription delivery",
+      "acceptance_criteria": [
+        "Every committed state change produces a typed platform event.",
+        "Subscribers resume from durable cursors without silent loss.",
+        "Duplicate delivery is detectable and handlers can be idempotent."
+      ],
+      "passes": false,
+      "priority": 18,
+      "blocked_by": ["PLAT-020"]
+    },
+    {
+      "id": "PLAT-022",
+      "title": "Build the ingestion fabric and connector envelope",
+      "acceptance_criteria": [
+        "Documents, events, API payloads, agent proposals, and human actions enter through one typed envelope.",
+        "Ingestion records source identity, content hash, storage policy, and transaction time.",
+        "Idempotency prevents duplicate source ingestion."
+      ],
+      "passes": false,
+      "priority": 19,
+      "blocked_by": ["PLAT-012", "PLAT-020", "PLAT-021"]
+    },
+    {
+      "id": "PLAT-023",
+      "title": "Orchestrate lexical, vector, graph, temporal, entity, state, procedure, and evidence retrieval",
+      "acceptance_criteria": [
+        "Retrieval providers share a scored candidate protocol without becoming canonical memory.",
+        "A planner can activate multiple retrieval modalities and fuse deterministic results.",
+        "Every candidate retains modality and provenance."
+      ],
+      "passes": false,
+      "priority": 20,
+      "blocked_by": ["PLAT-013", "PLAT-017", "PLAT-018", "PLAT-020"]
+    },
+    {
+      "id": "PLAT-024",
+      "title": "Build semantic decomposition and entity-resolution proposals",
+      "acceptance_criteria": [
+        "An observation compiles into proposed claims, events, relationships, evidence links, and identity candidates.",
+        "Compiler output is provisional and retains exact source spans.",
+        "No compiler or model output silently mutates governing state."
+      ],
+      "passes": false,
+      "priority": 21,
+      "blocked_by": ["PLAT-006", "PLAT-010", "PLAT-013", "PLAT-022"]
+    },
+    {
+      "id": "PLAT-025",
+      "title": "Build state-requirement planning",
+      "acceptance_criteria": [
+        "Intent resolution identifies subjects, actions, time, domain, constraints, evidence needs, and unresolved contradictions.",
+        "Plans declare required graphs, retrieval modalities, authority, and permission checks.",
+        "Planning is deterministic for an equivalent normalized request."
+      ],
+      "passes": false,
+      "priority": 25,
+      "blocked_by": ["PLAT-014", "PLAT-015", "PLAT-023", "PLAT-024"]
+    },
+    {
+      "id": "PLAT-026",
+      "title": "Build guarded agent proposal and action protocol",
+      "acceptance_criteria": [
+        "Agent reads and writes require distinct capabilities.",
+        "Agent outputs enter as proposals with validation, authority, lifecycle, and optional human verification.",
+        "Executed actions retain request, permission, procedure, result, and provenance."
+      ],
+      "passes": false,
+      "priority": 27,
+      "blocked_by": ["PLAT-008", "PLAT-015", "PLAT-016", "PLAT-019"]
+    },
+    {
+      "id": "PLAT-027",
+      "title": "Publish Domain, Agent, and Connector SDK contracts",
+      "acceptance_criteria": [
+        "SDKs expose stable versioned contracts without importing service internals.",
+        "Examples compile for a sample domain, guarded agent, and idempotent connector.",
+        "Compatibility and deprecation behavior is documented and tested."
+      ],
+      "passes": false,
+      "priority": 28,
+      "blocked_by": ["PLAT-007", "PLAT-022", "PLAT-026"]
+    },
+    {
+      "id": "PLAT-028",
+      "title": "Build the Platform HTTP API",
+      "acceptance_criteria": [
+        "INGEST, STATE, RECONSTRUCT, and CONTROL API families are runnable locally.",
+        "Requests authenticate a principal and enforce capability checks.",
+        "Errors, idempotency, pagination, and trace identifiers use stable envelopes."
+      ],
+      "passes": false,
+      "priority": 29,
+      "blocked_by": ["PLAT-008", "PLAT-016", "PLAT-021", "PLAT-022", "PLAT-026"]
+    },
+    {
+      "id": "PLAT-029",
+      "title": "Build TypeScript and Python client SDKs",
+      "acceptance_criteria": [
+        "Both SDKs cover ingestion, state, reconstruction, control, and subscriptions.",
+        "Generated or shared contract fixtures prevent language drift.",
+        "Retries never duplicate idempotent writes."
+      ],
+      "passes": false,
+      "priority": 30,
+      "blocked_by": ["PLAT-028"]
+    },
+    {
+      "id": "PLAT-030",
+      "title": "Build storage policies and local/cloud/hybrid synchronization",
+      "acceptance_criteria": [
+        "Every state object can declare locality, regions, devices, agents, encryption, retention, and expiry.",
+        "Synchronization uses object-specific merge policies rather than forcing universal CRDT semantics.",
+        "Authoritative conflicts stop for explicit resolution while mergeable content converges."
+      ],
+      "passes": false,
+      "priority": 31,
+      "blocked_by": ["PLAT-015", "PLAT-020", "PLAT-021"]
+    },
+    {
+      "id": "PLAT-031",
+      "title": "Propagate deletion and source invalidation through provenance",
+      "acceptance_criteria": [
+        "Deletion or invalidation enumerates dependent observations, claims, projections, reconstructions, and notifications.",
+        "Retention policy distinguishes logical invalidation from physical erasure.",
+        "Unauthorized deleted content cannot leak through indexes or reconstructions."
+      ],
+      "passes": false,
+      "priority": 32,
+      "blocked_by": ["PLAT-008", "PLAT-012", "PLAT-015", "PLAT-020", "PLAT-030"]
+    },
+    {
+      "id": "PLAT-032",
+      "title": "Build replay, inspection, migration, and backup CLI",
+      "acceptance_criteria": [
+        "CLI replays a workspace until a transaction-time boundary and exports deterministic state.",
+        "Operators can inspect provenance, conflicts, permissions, and reconstruction traces.",
+        "Migration, backup, restore, and integrity-check commands round-trip test fixtures."
+      ],
+      "passes": false,
+      "priority": 33,
+      "blocked_by": ["PLAT-005", "PLAT-020", "PLAT-031"]
+    },
+    {
+      "id": "PLAT-033",
+      "title": "Build Woyengi Explorer",
+      "acceptance_criteria": [
+        "Explorer inspects entity claims, events, relationships, history, evidence, provenance, authority, lifecycle, conflicts, graph neighborhoods, and reconstructions.",
+        "Reconstruction traces expose activated graphs, filtering, selection, and unresolved contradictions.",
+        "Responsive and accessibility checks pass."
+      ],
+      "passes": false,
+      "priority": 34,
+      "blocked_by": ["PLAT-028", "PLAT-032"]
+    },
+    {
+      "id": "PLAT-034",
+      "title": "Build admin console and developer diagnostics",
+      "acceptance_criteria": [
+        "Operators inspect connectors, policies, verifiers, subscriptions, storage health, and failed jobs.",
+        "Dangerous operations require explicit confirmation and produce audit records.",
+        "Diagnostics reveal no unauthorized sensitive payloads."
+      ],
+      "passes": false,
+      "priority": 35,
+      "blocked_by": ["PLAT-028", "PLAT-033"]
+    },
+    {
+      "id": "PLAT-035",
+      "title": "Instrument traces, quality metrics, and audit events",
+      "acceptance_criteria": [
+        "Metrics cover entity resolution, temporal state, provenance, authority, supersession, conflicts, reconstruction, freshness, verification, and permission leakage.",
+        "Trace and metric records avoid sensitive-content leakage.",
+        "Audit events correlate request, principal, decision, state change, and reconstruction."
+      ],
+      "passes": false,
+      "priority": 36,
+      "blocked_by": ["PLAT-008", "PLAT-016", "PLAT-021", "PLAT-028"]
+    },
+    {
+      "id": "PLAT-036",
+      "title": "Build adversarial state and reconstruction benchmarks",
+      "acceptance_criteria": [
+        "Fixtures cover stale state, wrong identity, wrong authority, contradictions, missing evidence, supersession, future leakage, poisoned memory, unauthorized memory, chronology corruption, and invalidated sources.",
+        "Benchmarks report correctness and permission-leakage metrics.",
+        "Release gates fail on regressions beyond documented thresholds."
+      ],
+      "passes": false,
+      "priority": 37,
+      "blocked_by": ["PLAT-006", "PLAT-008", "PLAT-031", "PLAT-035"]
+    },
+    {
+      "id": "PLAT-037",
+      "title": "Package modular-monolith services and background worker",
+      "acceptance_criteria": [
+        "Platform API and worker compose ingestion, state, reconstruction, verification, policy, sync, and event modules without network calls between them.",
+        "Jobs are idempotent, retryable, and observable.",
+        "Service boundaries can be extracted without changing public contracts."
+      ],
+      "passes": false,
+      "priority": 38,
+      "blocked_by": ["PLAT-028", "PLAT-030", "PLAT-035"]
+    },
+    {
+      "id": "PLAT-038",
+      "title": "Provide local Docker deployment and operational runbooks",
+      "acceptance_criteria": [
+        "A documented local deployment starts API, worker, durable database, object storage, and search dependencies.",
+        "Health, readiness, graceful shutdown, backup, restore, and migration paths are exercised.",
+        "Secrets are externalized and no development credentials ship in images."
+      ],
+      "passes": false,
+      "priority": 39,
+      "blocked_by": ["PLAT-032", "PLAT-037"]
+    },
+    {
+      "id": "PLAT-039",
+      "title": "Complete security hardening and threat-model remediation",
+      "acceptance_criteria": [
+        "Threat model covers identity, ingestion, storage, reconstruction, agents, sync, APIs, and operator surfaces.",
+        "Authentication, authorization, input validation, audit, secrets, dependency, and data-leakage checks pass.",
+        "All high-severity findings are remediated or explicitly rejected with rationale."
+      ],
+      "passes": false,
+      "priority": 40,
+      "blocked_by": ["PLAT-034", "PLAT-036", "PLAT-038"]
+    },
+    {
+      "id": "PLAT-040",
+      "title": "Pass final production readiness and human QA gates",
+      "acceptance_criteria": [
+        "Build, type-check, unit, integration, benchmark, security, backup/restore, and end-to-end checks pass from a clean clone.",
+        "Release documentation states supported deployment, limitations, rollback, and incident procedures.",
+        "Human QA explicitly acknowledges the release candidate."
+      ],
+      "passes": false,
+      "priority": 41,
+      "blocked_by": ["PLAT-029", "PLAT-033", "PLAT-034", "PLAT-036", "PLAT-038", "PLAT-039"]
     }
   ]
 }
