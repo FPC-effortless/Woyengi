@@ -1,4 +1,8 @@
-import type { ClaimRecord, LifecycleTransitionRecord } from "../../core/src/index.ts";
+import type {
+  CanonicalRecord,
+  ClaimRecord,
+  LifecycleTransitionRecord,
+} from "../../core/src/index.ts";
 
 export interface ClaimHistoryFilter {
   readonly subject?: string;
@@ -45,6 +49,26 @@ export class ClaimLedger {
   readonly #lifecycleByTarget = new Map<string, LifecycleTransitionRecord[]>();
   readonly #recordIds = new Set<string>();
 
+  static replay(
+    records: readonly CanonicalRecord[],
+    options: { readonly until?: string } = {},
+  ): ClaimLedger {
+    const ledger = new ClaimLedger();
+    const until = options.until === undefined ? undefined : normalizeInstant(options.until);
+    const ordered = [...records]
+      .filter((record) => until === undefined || record.transactionTime.from <= until)
+      .sort(compareCanonicalTransactionOrder);
+
+    for (const record of ordered) {
+      if (record.kind === "claim") {
+        ledger.append(record);
+      } else {
+        ledger.appendLifecycleTransition(record);
+      }
+    }
+    return ledger;
+  }
+
   append(claim: ClaimRecord): void {
     this.#assertNewRecordId(claim.id);
     this.#claimsById.set(claim.id, claim);
@@ -75,6 +99,14 @@ export class ClaimLedger {
     return Object.freeze(
       [...(this.#lifecycleByTarget.get(targetId) ?? [])].sort(compareLifecycleTransactionOrder),
     );
+  }
+
+  canonicalRecords(): readonly CanonicalRecord[] {
+    const records: CanonicalRecord[] = [
+      ...this.#claimsById.values(),
+      ...[...this.#lifecycleByTarget.values()].flat(),
+    ];
+    return Object.freeze(records.sort(compareCanonicalTransactionOrder));
   }
 
   projectAt(query: StateProjectionQuery): StateProjection {
@@ -160,6 +192,16 @@ function compareTransactionOrder(left: ClaimRecord, right: ClaimRecord): number 
 function compareLifecycleTransactionOrder(
   left: LifecycleTransitionRecord,
   right: LifecycleTransitionRecord,
+): number {
+  return (
+    left.transactionTime.from.localeCompare(right.transactionTime.from) ||
+    left.id.localeCompare(right.id)
+  );
+}
+
+function compareCanonicalTransactionOrder(
+  left: CanonicalRecord,
+  right: CanonicalRecord,
 ): number {
   return (
     left.transactionTime.from.localeCompare(right.transactionTime.from) ||

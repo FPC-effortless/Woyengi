@@ -101,6 +101,8 @@ export interface LifecycleTransitionRecord {
   readonly authority: Authority;
 }
 
+export type CanonicalRecord = ClaimRecord | LifecycleTransitionRecord;
+
 export interface CreateObservationInput {
   readonly id: string;
   readonly sourceId: string;

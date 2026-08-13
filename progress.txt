@@ -56,3 +56,11 @@
 - Expanded `prd.json` from 8 to 40 dependency-ordered tickets covering every target layer.
 - Moved the active milestone to canonical integrity and replay (PLAT-005, PLAT-006, PLAT-009 through PLAT-012).
 - Next: PLAT-005 deterministic replay.
+
+## 2026-08-13 — PLAT-005 RED → GREEN
+
+- RED: replay test failed because no canonical replay API existed.
+- GREEN: added deterministic ordering, transaction-time cutoff replay, canonical record export, and clean-ledger rebuilding.
+- One implementation defect (`Iterator.flat`) was corrected after the first green attempt; the second run passed.
+- Verification: `pnpm test` passed on Node v24.19.0 (5 tests).
+- Next: PLAT-009 compiler and package-boundary gates, then PLAT-006 identity operations.

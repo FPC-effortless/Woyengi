@@ -90,7 +90,7 @@
         "Replay can stop at an explicit transaction-time boundary.",
         "Projection indexes can be discarded and rebuilt without information loss."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 5,
       "blocked_by": ["PLAT-004"]
     },
