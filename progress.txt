@@ -145,3 +145,11 @@
 - A lower-confidence executive decision correctly outranks a high-confidence model inference because authority and confidence remain independent.
 - Verification: `pnpm test` passed on Node v24.19.0 (13 tests).
 - Next: PLAT-016 extensible verification engine.
+
+## 2026-08-13 — PLAT-016 RED → GREEN
+
+- RED: verification test failed because the shared verifier protocol did not exist.
+- GREEN: added schema, constraint, source, cross-source, temporal, authority, consistency, external, human, and domain strategy support.
+- Rejections, missing verifiers, and thrown verifier errors become explicit outcomes; aggregate decisions are immutable canonical ledger records.
+- Verification: `pnpm test` passed on Node v24.19.0 (14 tests).
+- Next: PLAT-017 typed graph federation.
