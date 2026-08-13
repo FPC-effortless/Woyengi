@@ -235,3 +235,11 @@
 - Every workspace is an immutable canonical reconstruction record with an eight-stage trace from intent through context assembly.
 - Verification: `pnpm test` passed on Node v24.19.0 (24 tests).
 - Next: PLAT-026 guarded agent proposals and actions.
+
+## 2026-08-13 — PLAT-026 RED → GREEN
+
+- RED: agent protocol test failed because the guarded gateway did not exist.
+- GREEN: added separately authorized reads, proposed writes, validation, authority assessment, optional verification, lifecycle assignment, and procedure-bound actions.
+- Agent actions retain request, capability decision, procedure, result, provenance, principal, and transaction time; denied writes append nothing.
+- Verification: `pnpm test` passed on Node v24.19.0 (25 tests).
+- Next: PLAT-027 stable Domain, Agent, and Connector SDK surfaces.
