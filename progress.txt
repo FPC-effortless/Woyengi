@@ -87,3 +87,12 @@
 - Registry enforces platform API compatibility, namespace-qualified definition IDs, duplicate protection, and deterministic installed-package order.
 - Verification: `pnpm test` passed on Node v24.19.0 (7 tests).
 - Next: PLAT-009 remains the only unblocked prerequisite for canonical record expansion; retry compiler installation.
+
+## 2026-08-13 — PLAT-015 RED → GREEN
+
+- RED: capability test failed because the permission engine did not exist.
+- GREEN: added default-deny capability evaluation across principal, boundary-safe resource prefixes, graph, entity, operation, purpose, sensitivity, conditions, and time.
+- Delegation is constrained to the parent's issuer, time, operations, purposes, resources, graph/entity scope, sensitivity, and conditions.
+- `RECONSTRUCT` permission is proven not to imply `PROPOSE_WRITE`.
+- Verification: `pnpm test` passed on Node v24.19.0 (8 tests).
+- Next: retry PLAT-009; no other canonical-integrity ticket is unblocked until the compiler gate passes.
