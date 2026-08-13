@@ -258,7 +258,7 @@
         "Execution checks permissions and verification before state-changing operations.",
         "Successful runs can propose versioned candidate procedures."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 16,
       "blocked_by": ["PLAT-015", "PLAT-016"]
     },

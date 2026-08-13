@@ -169,3 +169,12 @@
 - Traversal records every traversed, denied, out-of-time, or already-visited edge in an inspectable trace.
 - Verification: `pnpm test` passed on Node v24.19.0 (16 tests).
 - Next: PLAT-019 guarded procedure execution.
+
+## 2026-08-13 — PLAT-019 RED → GREEN → REFACTOR
+
+- RED: procedure execution test failed because structural procedure definitions and guarded execution did not exist.
+- GREEN: added preconditions, operations/tools, invariants, verification, postconditions, repair behavior, permission-first execution, and immutable traces.
+- Verified successful runs can emit a versioned candidate procedure tied to the originating execution.
+- REFACTOR: extracted the execution ports contract while retaining green tests.
+- Verification: `pnpm test` passed on Node v24.19.0 (17 tests).
+- Next: PLAT-020 storage ports and durable local adapters.
