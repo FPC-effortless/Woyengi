@@ -402,7 +402,7 @@
         "Retention policy distinguishes logical invalidation from physical erasure.",
         "Unauthorized deleted content cannot leak through indexes or reconstructions."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 32,
       "blocked_by": ["PLAT-008", "PLAT-012", "PLAT-015", "PLAT-020", "PLAT-030"]
     },

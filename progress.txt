@@ -277,3 +277,11 @@
 - Mergeable maps converge independent of arrival order; concurrent authoritative heads stop as explicit conflicts; local-only/ephemeral content is rejected before cloud transfer.
 - Verification: `pnpm test` passed on Node v24.19.0 (29 tests).
 - Next: PLAT-031 provenance-aware deletion and invalidation propagation.
+
+## 2026-08-13 — PLAT-031 RED → GREEN
+
+- RED: deletion-coordinator test failed because the lifecycle deletion boundary did not exist.
+- GREEN: added permission-checked, retention-aware source deletion that invalidates the complete provenance-dependent subgraph, purges unsupported IDs from indexes, and notifies consumers.
+- Logical invalidation retains the source for governed audit history; physical erasure removes it only after retention policy permits. Both paths append an immutable source-invalidation record.
+- Verification: `pnpm test` passed on Node v24.19.0 (30 tests).
+- Next: PLAT-032 replay, inspection, migration, backup, restore, and integrity CLI.
