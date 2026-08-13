@@ -186,3 +186,11 @@
 - Ledger appends serialize through an atomic write queue, reject duplicate IDs, survive restart, and restore deterministic ordering; objects verify SHA-256 before commit.
 - Verification: `pnpm test` passed on Node v24.19.0 (18 tests).
 - Next: PLAT-021 durable event bus and subscriber cursors.
+
+## 2026-08-13 — PLAT-021 RED → GREEN
+
+- RED: crash/restart delivery test failed because the platform event bus did not exist.
+- GREEN: added typed state-change events, durable local event storage, topic subscriptions, atomic subscriber cursors, deterministic delivery IDs, and at-least-once consumption.
+- A handler crash leaves the cursor unchanged; restart redelivers the same identifiable event and loses nothing.
+- Verification: `pnpm test` passed on Node v24.19.0 (19 tests).
+- Next: PLAT-022 ingestion fabric and connector envelope.

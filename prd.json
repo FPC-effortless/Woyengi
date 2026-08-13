@@ -282,7 +282,7 @@
         "Subscribers resume from durable cursors without silent loss.",
         "Duplicate delivery is detectable and handlers can be idempotent."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 18,
       "blocked_by": ["PLAT-020"]
     },
