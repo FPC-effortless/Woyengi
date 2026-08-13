@@ -1,0 +1,18 @@
+# Woyengi Platform Progress
+
+## 2026-08-13 — IDEA / RESEARCH / PRD
+
+- Received and adopted the persistent reconstructable state architecture.
+- Confirmed the workspace was empty and had no Git history or baseline tests.
+- Chose a dependency-light TypeScript + Node 24 + pnpm foundation.
+- Recorded official runtime and monorepo constraints in `research.md`.
+- Created the initial executable ticket sequence in `prd.json`.
+- Next: PLAT-001 repository bootstrap, followed by the canonical state vertical slice.
+
+## 2026-08-13 — PLAT-001 GREEN
+
+- Initialized the repository on `main`.
+- Added the Node 24 / pnpm workspace contract and root test commands.
+- Added the constitution, PRD, research log, README, and agent workflow.
+- Verification: `pnpm test` passed with the empty-suite bootstrap contract.
+- Next: PLAT-002 canonical record contracts.
