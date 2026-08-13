@@ -152,7 +152,7 @@
       ],
       "passes": false,
       "priority": 7,
-      "blocked_by": ["PLAT-005", "PLAT-009"]
+      "blocked_by": ["PLAT-005"]
     },
     {
       "id": "PLAT-011",

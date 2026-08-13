@@ -96,3 +96,12 @@
 - `RECONSTRUCT` permission is proven not to imply `PROPOSE_WRITE`.
 - Verification: `pnpm test` passed on Node v24.19.0 (8 tests).
 - Next: retry PLAT-009; no other canonical-integrity ticket is unblocked until the compiler gate passes.
+
+## 2026-08-13 — PLAT-009 BLOCKED ATTEMPTS 2–3 / PRD EDGE CORRECTION
+
+- A bounded registry retry downloaded `@types/node` and `undici-types` but repeatedly timed out on the TypeScript artifact.
+- A locally installed TypeScript package was repacked only to seed the pnpm store; pnpm correctly rejected it as a substitute for the official registry-integrity artifact.
+- A long-timeout official fetch also failed at the transport layer.
+- No machine-specific path or unverifiable dependency was added to the repository.
+- Corrected PLAT-010 so semantic canonical-record work no longer depends on this cross-cutting delivery gate; PLAT-009 remains required and open.
+- Next: PLAT-010 canonical events, relationships, decisions, and artifacts.
