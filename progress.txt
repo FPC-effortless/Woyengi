@@ -326,3 +326,11 @@
 - Reports separate exact selected-state correctness from forbidden-record exposure. Configurable release thresholds throw a report-bearing gate error on either semantic regression or permission leakage.
 - Verification: `pnpm benchmark` passed 11/11 fixtures at 100% correctness and 0% leakage; `pnpm test` passed (35 tests).
 - Next: PLAT-037 modular-monolith composition and observable worker jobs.
+
+## 2026-08-13 — PLAT-037 RED → GREEN
+
+- RED: runtime test failed because there was no deployable module composition or worker boundary.
+- GREEN: added typed in-process contracts composing ingestion, state, reconstruction, verification, policy, sync, and event modules without internal network calls.
+- The worker persists jobs atomically, deduplicates by stable idempotency key, bounds retries, survives reopen, and emits queued/started/retryable/completed/failed events. Contract versions and module names preserve future extraction boundaries.
+- Verification: `pnpm test` passed on Node v24.19.0 (36 tests).
+- Next: PLAT-038 local deployment, health/recovery exercises, and operational runbooks.

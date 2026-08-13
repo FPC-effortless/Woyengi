@@ -474,7 +474,7 @@
         "Jobs are idempotent, retryable, and observable.",
         "Service boundaries can be extracted without changing public contracts."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 38,
       "blocked_by": ["PLAT-028", "PLAT-030", "PLAT-035"]
     },
