@@ -162,7 +162,7 @@
         "Duplicate identifiers are rejected globally.",
         "Queries preserve deterministic transaction ordering and record-kind filters."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 8,
       "blocked_by": ["PLAT-010"]
     },

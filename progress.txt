@@ -113,3 +113,11 @@
 - Artifacts retain original storage plus exact residual-detail locators; all derived records retain evidence and provenance.
 - Verification: `pnpm test` passed on Node v24.19.0 (9 tests).
 - Next: PLAT-011 generalized canonical ledger.
+
+## 2026-08-13 — PLAT-011 RED → GREEN
+
+- RED: generalized ledger test failed because no canonical ledger port existed.
+- GREEN: added a storage-agnostic append/query/get port and immutable in-memory adapter accepting every structural record kind.
+- IDs are unique across kinds; replay and queries sort by transaction time then ID and support record-kind/time filters.
+- Verification: `pnpm test` passed on Node v24.19.0 (10 tests).
+- Next: PLAT-012 provenance DAG and invalidation propagation.
