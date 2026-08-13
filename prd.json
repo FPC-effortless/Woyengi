@@ -390,7 +390,7 @@
         "Synchronization uses object-specific merge policies rather than forcing universal CRDT semantics.",
         "Authoritative conflicts stop for explicit resolution while mergeable content converges."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 31,
       "blocked_by": ["PLAT-015", "PLAT-020", "PLAT-021"]
     },

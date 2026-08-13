@@ -269,3 +269,11 @@
 - REFACTOR: replaced a hanging nested-pnpm test script with a direct cross-language gate and portable Python-runtime discovery.
 - Verification: `pnpm test:all` passed (28 Node tests plus 1 Python unittest).
 - Next: PLAT-030 storage policies and local/cloud/hybrid synchronization.
+
+## 2026-08-13 — PLAT-030 RED → GREEN
+
+- RED: synchronization test failed because storage policies and merge semantics did not exist.
+- GREEN: added locality, device, region, agent, encryption, retention, and expiry policies plus deterministic operation synchronization.
+- Mergeable maps converge independent of arrival order; concurrent authoritative heads stop as explicit conflicts; local-only/ephemeral content is rejected before cloud transfer.
+- Verification: `pnpm test` passed on Node v24.19.0 (29 tests).
+- Next: PLAT-031 provenance-aware deletion and invalidation propagation.
