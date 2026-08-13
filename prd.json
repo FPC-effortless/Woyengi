@@ -318,7 +318,7 @@
         "Compiler output is provisional and retains exact source spans.",
         "No compiler or model output silently mutates governing state."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 21,
       "blocked_by": ["PLAT-006", "PLAT-010", "PLAT-013", "PLAT-022"]
     },

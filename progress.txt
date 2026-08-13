@@ -210,3 +210,12 @@
 - Every result retains provider/modality contribution scores and index provenance; retrieval remains a candidate mechanism, not canonical state.
 - Verification: `pnpm test` passed on Node v24.19.0 (21 tests).
 - Next: PLAT-024 semantic decomposition and entity-resolution proposals.
+
+## 2026-08-13 — PLAT-024 RED → GREEN → REFACTOR
+
+- RED: semantic-compilation test failed because the compiler boundary did not exist.
+- GREEN: added a pluggable decomposition protocol producing provisional claims, events, relationships, evidence locators, and scored identity candidates.
+- Every proposal retains an exact validated source span; the compiler has no governing-state mutation behavior.
+- REFACTOR: extracted a clean compiler ports interface while retaining green tests.
+- Verification: `pnpm test` passed on Node v24.19.0 (22 tests).
+- Next: PLAT-025 deterministic state-requirement planning.
