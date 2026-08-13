@@ -153,3 +153,11 @@
 - Rejections, missing verifiers, and thrown verifier errors become explicit outcomes; aggregate decisions are immutable canonical ledger records.
 - Verification: `pnpm test` passed on Node v24.19.0 (14 tests).
 - Next: PLAT-017 typed graph federation.
+
+## 2026-08-13 — PLAT-017 RED → GREEN
+
+- RED: graph-registry test failed because typed graph definitions and materialization did not exist.
+- GREEN: added versioned node/edge schemas, invariants, temporal behavior, retention, permission operations, verifier hooks, compatibility checks, and deterministic ledger rebuilding.
+- Backward-incompatible minor updates are rejected and require a major graph version.
+- Verification: `pnpm test` passed on Node v24.19.0 (15 tests).
+- Next: PLAT-018 permission-aware cross-graph bindings.

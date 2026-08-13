@@ -234,7 +234,7 @@
         "Graph registration is versioned and rejects incompatible definitions.",
         "Materialized graphs rebuild from canonical ledger records."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 14,
       "blocked_by": ["PLAT-007", "PLAT-011"]
     },
