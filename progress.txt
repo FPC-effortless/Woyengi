@@ -64,3 +64,18 @@
 - One implementation defect (`Iterator.flat`) was corrected after the first green attempt; the second run passed.
 - Verification: `pnpm test` passed on Node v24.19.0 (5 tests).
 - Next: PLAT-009 compiler and package-boundary gates, then PLAT-006 identity operations.
+
+## 2026-08-13 — PLAT-009 BLOCKED ATTEMPT 1
+
+- RED: `pnpm typecheck` failed because no compiler script or dependency exists.
+- The online registry request remained unresponsive and was terminated without partial changes.
+- Offline pnpm installation also failed because the TypeScript tarball was not present in the local pnpm store.
+- PLAT-009 remains pending; independent work continued on PLAT-006.
+
+## 2026-08-13 — PLAT-006 RED → GREEN
+
+- RED: identity replay test failed because the identity registry API did not exist.
+- GREEN: added provenance-backed entity creation, aliases/external IDs, provisional match proposals, authoritative merges, reversible splits, deterministic replay, and merge history.
+- Split replay restores original alias ownership without erasing merge history.
+- Verification: `pnpm test` passed on Node v24.19.0 (6 tests).
+- Next: retry PLAT-009 when registry access is available; PLAT-007 is now the next independent unblocked ticket.

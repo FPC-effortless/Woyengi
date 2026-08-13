@@ -102,7 +102,7 @@
         "Merge and split history is replayable.",
         "Ambiguous identity matches remain provisional until confirmed."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 6,
       "blocked_by": ["PLAT-005"]
     },
