@@ -1,6 +1,8 @@
 import type { StateValue } from "../../core/src/index.ts";
 import type { CapabilityOperation } from "../../permissions/src/index.ts";
 
+export const AGENT_SDK_VERSION = "1.0.0";
+
 export interface AgentPermissionDecision {
   readonly allowed: boolean;
   readonly capabilityId?: string;

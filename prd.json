@@ -354,7 +354,7 @@
         "Examples compile for a sample domain, guarded agent, and idempotent connector.",
         "Compatibility and deprecation behavior is documented and tested."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 28,
       "blocked_by": ["PLAT-007", "PLAT-022", "PLAT-026"]
     },

@@ -3,6 +3,8 @@ export interface ExtensionDefinition {
   readonly description?: string;
 }
 
+export const DOMAIN_SDK_VERSION = "1.0.0";
+
 export interface PlatformApiRange {
   readonly minInclusive: string;
   readonly maxExclusive: string;

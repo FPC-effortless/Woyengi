@@ -243,3 +243,12 @@
 - Agent actions retain request, capability decision, procedure, result, provenance, principal, and transaction time; denied writes append nothing.
 - Verification: `pnpm test` passed on Node v24.19.0 (25 tests).
 - Next: PLAT-027 stable Domain, Agent, and Connector SDK surfaces.
+
+## 2026-08-13 — PLAT-027 RED → GREEN → REFACTOR
+
+- RED: SDK contract test failed because Connector SDK and explicit SDK versions did not exist.
+- GREEN: exposed versioned Domain, Agent, and Connector contracts plus Platform API range enforcement, connector cursoring, and stable external-record idempotency keys.
+- REFACTOR: extracted the connector delivery contract and documented semantic-versioning, compatibility, deprecation, and service-internal boundaries.
+- External registry publishing remains correctly gated by PLAT-009 compiled artifacts.
+- Verification: `pnpm test` passed on Node v24.19.0 (26 tests).
+- Next: PLAT-028 local Platform HTTP API.
