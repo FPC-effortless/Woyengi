@@ -219,3 +219,11 @@
 - REFACTOR: extracted a clean compiler ports interface while retaining green tests.
 - Verification: `pnpm test` passed on Node v24.19.0 (22 tests).
 - Next: PLAT-025 deterministic state-requirement planning.
+
+## 2026-08-13 — PLAT-025 RED → GREEN
+
+- RED: planning test failed because no state-requirement planner existed.
+- GREEN: added normalized intent planning for subjects, actions, domains, valid/knowledge time, constraints, evidence, contradictions, graphs, retrieval modalities, authority, and permission checks.
+- Equivalent normalized requests produce byte-equivalent plans with deterministic ordering.
+- Verification: `pnpm test` passed on Node v24.19.0 (23 tests).
+- Next: PLAT-008 structured reconstructive workspace.

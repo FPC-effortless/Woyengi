@@ -330,7 +330,7 @@
         "Plans declare required graphs, retrieval modalities, authority, and permission checks.",
         "Planning is deterministic for an equivalent normalized request."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 25,
       "blocked_by": ["PLAT-014", "PLAT-015", "PLAT-023", "PLAT-024"]
     },
