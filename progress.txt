@@ -194,3 +194,11 @@
 - A handler crash leaves the cursor unchanged; restart redelivers the same identifiable event and loses nothing.
 - Verification: `pnpm test` passed on Node v24.19.0 (19 tests).
 - Next: PLAT-022 ingestion fabric and connector envelope.
+
+## 2026-08-13 — PLAT-022 RED → GREEN
+
+- RED: ingestion-envelope test failed because the common ingestion fabric did not exist.
+- GREEN: added one envelope for documents, application events, API payloads, agent proposals, and human actions with source identity, SHA-256 content address, storage policy, lifecycle, and transaction time.
+- Concurrent and repeated idempotency keys return the original receipt without duplicating ledger, object, or event writes.
+- Verification: `pnpm test` passed on Node v24.19.0 (20 tests).
+- Next: PLAT-023 multimodal retrieval orchestration.

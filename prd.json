@@ -294,7 +294,7 @@
         "Ingestion records source identity, content hash, storage policy, and transaction time.",
         "Idempotency prevents duplicate source ingestion."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 19,
       "blocked_by": ["PLAT-012", "PLAT-020", "PLAT-021"]
     },
