@@ -33,7 +33,7 @@
         "The kernel contains no Memory, Software, Regulation, Audience, Hospitality, or Forge domain concepts.",
         "Records use stable opaque identifiers and immutable public shapes."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 2,
       "blocked_by": ["PLAT-001"]
     },

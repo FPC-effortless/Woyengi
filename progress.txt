@@ -16,3 +16,11 @@
 - Added the constitution, PRD, research log, README, and agent workflow.
 - Verification: `pnpm test` passed with the empty-suite bootstrap contract.
 - Next: PLAT-002 canonical record contracts.
+
+## 2026-08-13 — PLAT-002 RED → GREEN
+
+- RED: `packages/core/test/records.test.ts` failed because the canonical record API did not exist.
+- GREEN: added immutable domain-neutral Observation, Claim, Evidence, Provenance, Authority, Lifecycle, and bitemporal contracts.
+- Enforced namespaced opaque IDs, explicit timestamp offsets, valid intervals, and separate confidence/authority values.
+- Verification: `pnpm test` passed on Node v24.19.0 (1 test).
+- Next: PLAT-003 append-only claim ledger.
