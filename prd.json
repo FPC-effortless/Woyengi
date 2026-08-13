@@ -366,7 +366,7 @@
         "Requests authenticate a principal and enforce capability checks.",
         "Errors, idempotency, pagination, and trace identifiers use stable envelopes."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 29,
       "blocked_by": ["PLAT-008", "PLAT-016", "PLAT-021", "PLAT-022", "PLAT-026"]
     },

@@ -252,3 +252,11 @@
 - External registry publishing remains correctly gated by PLAT-009 compiled artifacts.
 - Verification: `pnpm test` passed on Node v24.19.0 (26 tests).
 - Next: PLAT-028 local Platform HTTP API.
+
+## 2026-08-13 — PLAT-028 RED → GREEN
+
+- RED: HTTP integration test failed because the Platform API service did not exist.
+- GREEN: added a runnable Node HTTP API for INGEST, STATE, RECONSTRUCT, and CONTROL with authentication, per-route capability checks, 1 MiB input bounds, idempotency, pagination, and trace IDs.
+- Success and error responses share stable envelopes; unauthenticated/unauthorized requests reach no domain handler.
+- Verification: `pnpm test` passed on Node v24.19.0 (27 tests, including real loopback HTTP).
+- Next: PLAT-029 TypeScript and Python client SDKs.
