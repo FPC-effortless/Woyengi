@@ -161,3 +161,11 @@
 - Backward-incompatible minor updates are rejected and require a major graph version.
 - Verification: `pnpm test` passed on Node v24.19.0 (15 tests).
 - Next: PLAT-018 permission-aware cross-graph bindings.
+
+## 2026-08-13 — PLAT-018 RED → GREEN
+
+- RED: binding traversal test failed because the binding graph did not exist.
+- GREEN: added immutable cross-graph bindings and breadth-first traversal with direction, depth, valid-time, transaction-time, permission, and cycle controls.
+- Traversal records every traversed, denied, out-of-time, or already-visited edge in an inspectable trace.
+- Verification: `pnpm test` passed on Node v24.19.0 (16 tests).
+- Next: PLAT-019 guarded procedure execution.

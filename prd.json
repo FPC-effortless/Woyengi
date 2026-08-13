@@ -246,7 +246,7 @@
         "Traversal applies direction, depth, temporal, and permission constraints.",
         "Binding traces explain every traversed path."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 15,
       "blocked_by": ["PLAT-015", "PLAT-017"]
     },
