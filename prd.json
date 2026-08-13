@@ -414,7 +414,7 @@
         "Operators can inspect provenance, conflicts, permissions, and reconstruction traces.",
         "Migration, backup, restore, and integrity-check commands round-trip test fixtures."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 33,
       "blocked_by": ["PLAT-005", "PLAT-020", "PLAT-031"]
     },

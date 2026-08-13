@@ -285,3 +285,11 @@
 - Logical invalidation retains the source for governed audit history; physical erasure removes it only after retention policy permits. Both paths append an immutable source-invalidation record.
 - Verification: `pnpm test` passed on Node v24.19.0 (30 tests).
 - Next: PLAT-032 replay, inspection, migration, backup, restore, and integrity CLI.
+
+## 2026-08-13 — PLAT-032 RED → GREEN
+
+- RED: operator CLI test failed because no executable command surface existed.
+- GREEN: added `replay`, `inspect`, `migrate`, `backup`, `restore`, and `integrity` commands over durable workspace state.
+- Replay exports deterministic transaction-time snapshots; inspections cover provenance, conflicts, permissions, and reconstructions; content-hashed backups restore byte-identical workspaces and reject unsafe paths or non-empty targets.
+- Verification: `pnpm test` passed on Node v24.19.0 (31 tests).
+- Next: PLAT-033 Woyengi Explorer.

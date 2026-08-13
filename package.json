@@ -8,10 +8,14 @@
     "node": ">=24.12.0",
     "pnpm": ">=11.0.0 <12.0.0"
   },
+  "bin": {
+    "woyengi": "packages/cli/src/bin.ts"
+  },
   "scripts": {
     "test": "node --test",
     "test:python": "node scripts/run-python-tests.mjs",
     "test:all": "node --test && node scripts/run-python-tests.mjs",
-    "test:coverage": "node --test --experimental-test-coverage"
+    "test:coverage": "node --test --experimental-test-coverage",
+    "woyengi": "node packages/cli/src/bin.ts"
   }
 }
