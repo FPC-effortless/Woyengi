@@ -426,7 +426,7 @@
         "Reconstruction traces expose activated graphs, filtering, selection, and unresolved contradictions.",
         "Responsive and accessibility checks pass."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 34,
       "blocked_by": ["PLAT-028", "PLAT-032"]
     },

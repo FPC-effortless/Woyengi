@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <title>Woyengi Explorer</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23d3ff63'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='38' font-family='Georgia' fill='%23182000'%3EW%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Skip to state workspace</a>
+    <div class="shell">
+      <aside class="rail" aria-label="Primary navigation">
+        <a class="brand" href="/" aria-label="Woyengi Explorer home">
+          <span class="brand-mark" aria-hidden="true">W</span>
+          <span><strong>Woyengi</strong><small>Explorer</small></span>
+        </a>
+        <nav aria-label="State objects">
+          <p class="nav-label">Inspect</p>
+          <a class="nav-item active" href="#overview"><span aria-hidden="true">⌂</span>Overview</a>
+          <a class="nav-item" href="#claims"><span aria-hidden="true">◇</span>Claims</a>
+          <a class="nav-item" href="#events"><span aria-hidden="true">◷</span>Events</a>
+          <a class="nav-item" href="#relationships"><span aria-hidden="true">⌘</span>Relationships</a>
+          <a class="nav-item" href="#history"><span aria-hidden="true">↶</span>History</a>
+          <a class="nav-item" href="#evidence"><span aria-hidden="true">✓</span>Evidence</a>
+          <a class="nav-item" href="#provenance"><span aria-hidden="true">⌁</span>Provenance</a>
+          <a class="nav-item" href="#authority"><span aria-hidden="true">♢</span>Authority</a>
+          <a class="nav-item" href="#lifecycle"><span aria-hidden="true">◉</span>Lifecycle</a>
+          <a class="nav-item" href="#conflicts"><span aria-hidden="true">△</span>Conflicts</a>
+          <a class="nav-item" href="#graph"><span aria-hidden="true">⌬</span>Graph</a>
+          <a class="nav-item" href="#reconstruction"><span aria-hidden="true">✦</span>Reconstruction</a>
+        </nav>
+        <div class="workspace-chip"><span class="pulse" aria-hidden="true"></span><span><strong>Local workspace</strong><small>Synced 18s ago</small></span></div>
+      </aside>
+
+      <main id="workspace">
+        <header class="topbar">
+          <button class="rail-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+          <form class="search" role="search">
+            <label class="sr-only" for="state-search">Search state</label>
+            <span aria-hidden="true">⌕</span>
+            <input id="state-search" name="entity" value="entity:daniel" aria-label="Search state" autocomplete="off" placeholder="Search entities, claims, events…">
+            <kbd>↵</kbd>
+          </form>
+          <div class="top-actions">
+            <span class="as-of"><span class="pulse" aria-hidden="true"></span>As of now</span>
+            <button class="icon-button" type="button" data-theme-toggle aria-label="Switch to light theme">☼</button>
+          </div>
+        </header>
+
+        <div class="content" aria-live="polite">
+          <section class="entity-header" aria-labelledby="entity-name">
+            <div class="avatar" aria-hidden="true">DW</div>
+            <div class="entity-title"><div class="eyebrow"><span id="entity-type">Person</span><span>•</span><code id="entity-id">entity:daniel</code></div><h1 id="entity-name">Daniel Waritimi</h1><p>Persistent state assembled from authorized historical records.</p></div>
+            <div class="entity-actions"><span class="status verified" id="entity-lifecycle">● Verified</span><button type="button" class="secondary">Explain state</button><button type="button" class="primary">Reconstruct</button></div>
+          </section>
+
+          <section class="metrics" aria-label="Entity state summary">
+            <article><span>Active claims</span><strong id="metric-claims">—</strong><small>governing now</small></article>
+            <article><span>Relationships</span><strong id="metric-relationships">—</strong><small>across 4 graphs</small></article>
+            <article><span>Open conflicts</span><strong class="attention" id="metric-conflicts">—</strong><small>requires review</small></article>
+            <article><span>Evidence coverage</span><strong id="metric-evidence">—</strong><div class="meter"><i id="evidence-meter"></i></div></article>
+          </section>
+
+          <div class="tabs" role="tablist" aria-label="Explorer views">
+            <button role="tab" aria-selected="true" data-tab="state">Current state</button>
+            <button role="tab" aria-selected="false" data-tab="timeline">Timeline</button>
+            <button role="tab" aria-selected="false" data-tab="evidence">Evidence</button>
+            <button role="tab" aria-selected="false" data-tab="trace">Reconstruction trace</button>
+          </div>
+
+          <section class="workspace-grid" data-panel="state">
+            <div class="column-stack">
+              <article class="panel" id="claims"><div class="panel-heading"><div><span class="kicker">Projected now</span><h2>Current state</h2></div><button class="text-button" type="button">View history →</button></div><div id="current-state" class="state-list skeleton"></div></article>
+              <article class="panel" id="history"><div class="panel-heading"><div><span class="kicker">Bitemporal ledger</span><h2>Recent history</h2></div><span class="legend"><i></i>Transaction time</span></div><div id="history-list" class="timeline skeleton"></div></article>
+              <article class="panel object-register"><div class="panel-heading"><div><span class="kicker">Available records</span><h2>State object register</h2></div></div><div class="object-tags"><span>Claims</span><span>Events</span><span>Relationships</span><span>History</span><span>Evidence</span><span>Provenance</span><span>Authority</span><span>Lifecycle</span><span>Conflicts</span><span>Graph neighborhood</span><span>Reconstructions</span></div></article>
+            </div>
+            <aside class="column-stack context-column" aria-label="State context">
+              <article class="panel" id="authority"><div class="panel-heading"><div><span class="kicker">Governing context</span><h2>Authority</h2></div></div><div id="authority-list" class="compact-list skeleton"></div></article>
+              <article class="panel" id="evidence"><div class="panel-heading"><div><span class="kicker">Support chain</span><h2>Evidence & provenance</h2></div></div><div id="evidence-list" class="compact-list skeleton"></div><div id="provenance-list" class="compact-list"></div></article>
+              <article class="panel conflict-panel" id="conflicts"><div class="panel-heading"><div><span class="kicker">Visible disagreement</span><h2>Conflict</h2></div></div><div id="conflict-list" class="compact-list skeleton"></div></article>
+              <article class="panel" id="graph"><div class="panel-heading"><div><span class="kicker">Federated links</span><h2>Graph neighborhood</h2></div></div><div id="neighborhood-list" class="compact-list skeleton"></div></article>
+            </aside>
+          </section>
+
+          <section class="workspace-grid hidden" data-panel="timeline"><article class="panel wide"><div class="panel-heading"><div><span class="kicker">World time and knowledge time</span><h2>Events & history</h2></div></div><div id="event-list" class="card-grid"></div><div id="relationship-list" class="card-grid"></div></article></section>
+          <section class="workspace-grid hidden" data-panel="evidence"><article class="panel wide"><div class="panel-heading"><div><span class="kicker">Inspectable support</span><h2>Evidence, provenance & authority</h2></div></div><div class="three-column" id="evidence-detail"></div></article></section>
+          <section class="workspace-grid hidden" data-panel="trace" id="reconstruction"><article class="panel wide"><div class="panel-heading"><div><span class="kicker">Why Woyengi remembered this</span><h2>Reconstruction trace</h2></div><span class="status verified">Complete</span></div><ol id="trace-list" class="trace-list"></ol></article></section>
+          <div class="error-banner hidden" role="alert"></div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

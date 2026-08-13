@@ -16,6 +16,7 @@
     "test:python": "node scripts/run-python-tests.mjs",
     "test:all": "node --test && node scripts/run-python-tests.mjs",
     "test:coverage": "node --test --experimental-test-coverage",
-    "woyengi": "node packages/cli/src/bin.ts"
+    "woyengi": "node packages/cli/src/bin.ts",
+    "explorer": "node apps/explorer/src/demo.ts"
   }
 }

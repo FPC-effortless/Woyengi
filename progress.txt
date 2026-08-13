@@ -293,3 +293,12 @@
 - Replay exports deterministic transaction-time snapshots; inspections cover provenance, conflicts, permissions, and reconstructions; content-hashed backups restore byte-identical workspaces and reject unsafe paths or non-empty targets.
 - Verification: `pnpm test` passed on Node v24.19.0 (31 tests).
 - Next: PLAT-033 Woyengi Explorer.
+
+## 2026-08-13 — PLAT-033 RED → GREEN → VISUAL QA
+
+- RED: Explorer contract test failed because no inspection application existed.
+- GREEN: added a CSP-protected Explorer server and responsive entity workspace spanning claims, events, relationships, history, evidence, provenance, authority, lifecycle, conflicts, graph neighborhood, and reconstructions.
+- Reconstruction traces expose intent, identity resolution, graph activation, temporal filtering, authority selection, evidence resolution, and retained contradictions.
+- Visual QA: Chromium passed at 1280×900 dark/light and 375×812 light; mobile document width remained 375 px, interactive controls had accessible names, IDs were unique, and console output had zero errors or warnings after fixing the favicon request.
+- Verification: `pnpm test` passed on Node v24.19.0 (32 tests).
+- Next: PLAT-034 administrator and developer diagnostics.
