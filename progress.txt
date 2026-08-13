@@ -24,3 +24,11 @@
 - Enforced namespaced opaque IDs, explicit timestamp offsets, valid intervals, and separate confidence/authority values.
 - Verification: `pnpm test` passed on Node v24.19.0 (1 test).
 - Next: PLAT-003 append-only claim ledger.
+
+## 2026-08-13 — PLAT-003 RED → GREEN
+
+- RED: the ledger behavior test failed because `ClaimLedger` did not exist.
+- GREEN: added append-only in-memory claim storage with duplicate-ID rejection.
+- History queries filter by subject/predicate and sort deterministically by transaction time then record ID.
+- Verification: `pnpm test` passed on Node v24.19.0 (2 tests).
+- Next: PLAT-004 bitemporal state projection, conflicts, and trace.

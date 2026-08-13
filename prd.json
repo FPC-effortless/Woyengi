@@ -45,7 +45,7 @@
         "The ledger rejects duplicate record identifiers.",
         "The ledger can return the transaction-time history of a subject and predicate."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 3,
       "blocked_by": ["PLAT-002"]
     },
