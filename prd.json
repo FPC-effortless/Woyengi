@@ -3,15 +3,20 @@
   "problem": "Stateful applications and agents need persistent, reconstructable state without confusing documents, generated text, inferences, or indexes with authoritative state.",
   "outcome": "Provide a domain-neutral substrate that reconstructs typed historical state under explicit identity, time, provenance, authority, evidence, lifecycle, and permission constraints.",
   "active_milestone": {
-    "name": "Canonical integrity and replay",
-    "tickets": ["PLAT-005", "PLAT-006", "PLAT-009", "PLAT-010", "PLAT-011", "PLAT-012"],
-    "qa_status": "not_started"
+    "name": "Production release candidate",
+    "tickets": ["PLAT-038", "PLAT-039", "PLAT-040"],
+    "qa_status": "automated_in_progress_human_pending"
   },
   "completed_milestones": [
     {
       "name": "Persistent state foundation",
       "tickets": ["PLAT-001", "PLAT-002", "PLAT-003", "PLAT-004"],
       "qa_status": "automated_green_human_continuation_authorized"
+    },
+    {
+      "name": "Platform implementation",
+      "tickets": ["PLAT-005", "PLAT-006", "PLAT-007", "PLAT-008", "PLAT-009", "PLAT-010", "PLAT-011", "PLAT-012", "PLAT-013", "PLAT-014", "PLAT-015", "PLAT-016", "PLAT-017", "PLAT-018", "PLAT-019", "PLAT-020", "PLAT-021", "PLAT-022", "PLAT-023", "PLAT-024", "PLAT-025", "PLAT-026", "PLAT-027", "PLAT-028", "PLAT-029", "PLAT-030", "PLAT-031", "PLAT-032", "PLAT-033", "PLAT-034", "PLAT-035", "PLAT-036", "PLAT-037"],
+      "qa_status": "automated_green"
     }
   ],
   "definition_of_done": [

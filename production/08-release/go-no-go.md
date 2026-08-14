@@ -1,27 +1,20 @@
 # Production readiness decision
 
-Decision: **GO**
+Decision: **NO-GO**
 
-- Run: plat-039-standard-1
-- Profile: standard
-- Commit: 7bed280c2eda7cceee906232d2a00768c4c5e45c
+- Run: release-preflight-blocked
+- Profile: release
+- Commit: 60dcc6c4312161a1b8ec5413ea574b65facd21b6
 
 ## Gates
 
-- PASS — requirements
-- PASS — architecture
-- PASS — deep-module
-- PASS — data
-- PASS — e2e
-- PASS — security
-- PASS — benchmark
-- PASS — cost
-- PASS — observability
+- FAIL — requirements
 
 ## Blocking reasons
 
-None.
+- requirements: incomplete tickets: PLAT-038, PLAT-039
+- requirements: human QA acknowledgement is pending
 
 ## Remediation
 
-No blocking remediation remains for this profile.
+Resolve every blocking reason and rerun the same profile. Gates fail closed; do not update baselines after a failing run.

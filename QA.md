@@ -1,61 +1,76 @@
-# Foundation Milestone QA Handoff
+# Woyengi Platform release-candidate QA
 
-## Scope
+This checklist is the human acceptance gate for PLAT-040. Automated success does not substitute for the acknowledgement at the end.
 
-This checklist covers PLAT-001 through PLAT-004: repository bootstrap, canonical records, append-only claim history, bitemporal projection, authority ranking, conflict retention, lifecycle transitions, and projection traces.
+## Candidate scope
 
-PLAT-005 and later tickets remain backlog.
+The candidate includes the domain-neutral kernel, historical ledgers and projections, identity, provenance, evidence, authority, permissions, verification, graphs/bindings, procedures, ingestion and semantic compilation, reconstruction, SDKs, local/hybrid storage policies, synchronization, eventing, API/worker runtime, CLI, Explorer, admin diagnostics, observability, benchmarks, and the local Compose topology.
+
+It does not include Woyengi Memory, Software, Regulation, Audience, Hospitality, or Forge domain models. Those remain product-owned Domain Packages.
+
+## Automated evidence
+
+From a clean checkout, run:
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm build
+pnpm boundaries
+pnpm test:all
+pnpm benchmark
+pnpm prod:release --run-id final-release
+```
+
+Expected: every command exits zero and the final decision is `GO`. The release gate must fail closed if a prerequisite ticket, security check, browser evidence item, benchmark threshold, or architectural invariant is missing.
 
 ## Human scenarios
 
-### 1. Canonical records
+### Historical state and explanation
 
-- Inspect `packages/core/src/index.ts` and confirm there are no product-domain entities or predicates.
-- Confirm Claim keeps `validTime` and `transactionTime` separate.
-- Confirm `authority` and `confidence` are separate fields.
-- Confirm Observation, Claim, Evidence, Provenance, Authority, and Lifecycle are explicit types.
+- Ingest two temporally overlapping claims from different authorities.
+- Confirm the projected value is selected by temporal/lifecycle/authority rules rather than confidence alone.
+- Confirm the losing claim remains visible as a conflict.
+- Confirm the reconstruction trace identifies filtering, selection, evidence, and provenance steps without leaking denied record identifiers.
 
-### 2. Bitemporal knowledge
+### Identity and deletion
 
-- Run the test suite.
-- Confirm the February 5 query, when limited to records known on February 5, selects Daniel.
-- Confirm the same valid-time query, using records known on February 15, selects Priya.
+- Create two identities, merge them, inspect the merge history, then split them.
+- Invalidate or delete a source and confirm dependent claims, projections, and reconstructions become unsupported or invalidated according to policy.
+- Confirm canonical history remains append-oriented throughout.
 
-### 3. Authority and conflict
+### Permissions and agents
 
-- Confirm Priya's authority level 80 beats Daniel's level 30 even though Priya's confidence is lower.
-- Confirm Daniel remains in `conflicts` instead of being deleted or hidden.
-- Confirm the trace lists candidate discovery, transaction-time filtering, valid-time filtering, lifecycle filtering, and selection.
+- Confirm an authorized principal can reconstruct permitted records.
+- Confirm an unauthorized record is filtered before workspace assembly and cannot be inferred from the trace.
+- Confirm read access does not grant write or execute access.
+- Confirm an agent write enters as a validated proposal/provisional record rather than silently replacing governing state.
 
-### 4. Lifecycle history
+### Operations
 
-- Confirm retracting Priya is an appended `LifecycleTransitionRecord`.
-- Confirm Daniel governs after Priya's retraction.
-- Confirm superseding Daniel later produces no governing selection for the queried state.
-- Confirm both original claims remain returned by ledger history.
+- Start the Compose stack and verify API, worker, PostgreSQL, object storage, and search are healthy.
+- Perform authenticated ingest → durable state query → reconstruction.
+- Stop and restart the stack and confirm durable state remains available.
+- Exercise migration, backup, integrity verification, restore into an empty workspace, and deterministic replay.
+- Send SIGTERM/stop and confirm the API and worker shut down cleanly.
 
-## Automated commands
+### Explorer and diagnostics
 
-```powershell
-pnpm test
-pnpm test:coverage
-git status --short
-```
+- Inspect an entity across claims, events, relationships, history, evidence, provenance, authority, lifecycle, conflicts, graph neighborhood, and reconstruction trace.
+- Repeat at desktop and mobile widths in light and dark modes.
+- Confirm no horizontal overflow, broken controls, console errors, secret-bearing diagnostics, or unauthorized admin access.
 
-Expected: 4 tests pass. Current coverage baseline is 88.59% lines, 70.33% branches, and 90.70% functions.
+## Release limitations to acknowledge
 
-## Known limitations
-
-- Storage is in-memory; durable ledger ports and deterministic replay are PLAT-005.
-- Runtime TypeScript execution does not type-check; a compiler gate is still required before package publication.
-- Numeric authority ranking is a kernel mechanism, not a finished organization/domain authority policy.
-- Permissions, evidence verification, identity merge/split, reconstruction workspaces, event delivery, and APIs are not implemented yet.
-- No production deployment, migration, retention, deletion propagation, synchronization, or backup path exists yet.
-
-## Bug report and restart protocol
-
-Record the exact command, Node/pnpm versions, failing test name, expected state, actual state, and the smallest relevant ledger record sequence. Do not rewrite history to repair a failure. Add a failing regression test, append the diagnosis to `progress.txt`, and resume at the earliest failing PRD ticket.
+- The supported deployment is private/local, single-operator, and loopback-bound. Internet-facing or multi-tenant use requires deployment-specific identity, capability issuance, TLS/edge controls, storage encryption, tenant isolation, and a fresh threat-model review.
+- PostgreSQL, MinIO, and Meilisearch are composed as operational dependencies; the reference vertical slice keeps its canonical local ledger behind storage ports. Managed adapters and production object/search integrations require deployment-specific validation.
+- Image tags are pinned to versions but not immutable registry digests.
+- MinIO in this Compose file is for local evaluation; production operators must choose a supported object-store deployment.
+- Adversarial benchmarks validate the harness and declared platform invariants; deployment-specific accuracy baselines must be measured against the installed Domain Packages and real data distributions.
 
 ## Human acknowledgement
 
-The foundation milestone remains awaiting human QA acknowledgement before it is treated as accepted for the next milestone.
+Reply with the exact sentence below only after the automated and human scenarios are acceptable:
+
+`I acknowledge the Woyengi Platform release candidate.`
+
+Until that acknowledgement and a successful Compose exercise are recorded, PLAT-040 remains open and the platform is **NO-GO for release**.

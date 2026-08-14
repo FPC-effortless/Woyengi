@@ -40,11 +40,22 @@ function executeGate(gate, activeProfile, activeConfig) {
   try {
     if (gate === "requirements") {
       const prd = readJson("prd.json");
-      const missing = ["CONSTITUTION.md", "prd.json", "README.md"].filter((path) => !existsSync(join(root, path)));
-      const incomplete = activeProfile === "release" ? prd.tickets.filter((ticket) => ticket.passes !== true).map((ticket) => ticket.id) : [];
-      return result(gate, missing.length === 0 && incomplete.length === 0, [
+      const requiredArtifacts = ["CONSTITUTION.md", "prd.json", "README.md", "QA.md", "docs/release.md", "docs/operations-runbook.md"];
+      const missing = requiredArtifacts.filter((path) => !existsSync(join(root, path)));
+      const incomplete = activeProfile === "release"
+        ? prd.tickets.filter((ticket) => ticket.id !== "PLAT-040" && ticket.passes !== true).map((ticket) => ticket.id)
+        : [];
+      const humanQa = readJson("production/08-release/human-qa.json");
+      const humanQaPassed = activeProfile !== "release" || (
+        humanQa.status === "acknowledged"
+        && humanQa.acknowledgement === humanQa.requiredText
+        && typeof humanQa.acknowledgedAt === "string"
+        && humanQa.acknowledgedAt.length > 0
+      );
+      return result(gate, missing.length === 0 && incomplete.length === 0 && humanQaPassed, [
         check(missing.length === 0, missing.length === 0 ? "required scope artifacts exist" : `missing: ${missing.join(", ")}`),
         check(incomplete.length === 0, incomplete.length === 0 ? "ticket state accepted for profile" : `incomplete tickets: ${incomplete.join(", ")}`),
+        check(humanQaPassed, humanQaPassed ? "human QA evidence accepted for profile" : "human QA acknowledgement is pending"),
       ]);
     }
     if (gate === "architecture") {
