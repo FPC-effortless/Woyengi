@@ -32,7 +32,7 @@ const decision = blockingFailures.length === 0 ? "GO" : "NO-GO";
 const aggregate = { runId, profile, commit: commit(), startedAt: new Date().toISOString(), decision, results, blockingReasons: blockingFailures.flatMap((result) => result.checks.filter((check) => !check.passed).map((check) => `${result.gate}: ${check.detail}`)) };
 writeFileSync(join(runDirectory, "results.json"), `${JSON.stringify(aggregate, null, 2)}\n`, "utf8");
 writeFileSync(join(runDirectory, "summary.md"), summaryMarkdown(aggregate), "utf8");
-writeFileSync(join(root, "production", "08-release", "go-no-go.md"), summaryMarkdown(aggregate), "utf8");
+if (profile === "release") writeFileSync(join(root, "production", "08-release", "go-no-go.md"), summaryMarkdown(aggregate), "utf8");
 process.stdout.write(`${JSON.stringify({ runId, profile, decision, runDirectory, gates: results.map(({ gate, status }) => ({ gate, status })) }, null, 2)}\n`);
 if (decision === "NO-GO") process.exitCode = 1;
 

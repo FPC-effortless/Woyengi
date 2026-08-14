@@ -2,9 +2,9 @@
 
 Decision: **NO-GO**
 
-- Run: release-preflight-blocked
+- Run: release-preflight-final
 - Profile: release
-- Commit: 60dcc6c4312161a1b8ec5413ea574b65facd21b6
+- Commit: 4fd0cc561d1f101e29957690d9becdf98be4286b
 
 ## Gates
 
