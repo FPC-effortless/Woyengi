@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "browser": "Chromium",
+  "viewports": [
+    { "width": 1280, "height": 900, "themes": ["dark", "light"] },
+    { "width": 375, "height": 812, "themes": ["light"] }
+  ],
+  "consoleErrors": 0,
+  "consoleWarnings": 0,
+  "horizontalOverflow": false,
+  "duplicateIds": 0,
+  "unnamedInteractiveControls": 0,
+  "capturedAt": "2026-08-13T21:02:38Z"
+}

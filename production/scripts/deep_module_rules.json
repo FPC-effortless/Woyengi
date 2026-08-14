@@ -1,0 +1,6 @@
+{
+  "serviceRoot": "services",
+  "publicInterface": "index.ts",
+  "forbiddenCrossServiceSegment": "/src/",
+  "failOnNewViolationsOnly": false
+}

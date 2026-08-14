@@ -1,0 +1,7 @@
+{
+  "appendOnlyCanonicalLedger": true,
+  "bitemporalRecords": true,
+  "provenanceInvalidationPropagation": true,
+  "indexesRebuildable": true,
+  "restoreRequiresEmptyTarget": true
+}

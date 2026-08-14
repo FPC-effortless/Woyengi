@@ -1,0 +1,8 @@
+{
+  "journeys": [
+    { "id": "health-readiness", "blocking": true },
+    { "id": "authenticated-ingest-state-reconstruct", "blocking": true },
+    { "id": "explorer-inspection", "blocking": true, "browser": true },
+    { "id": "backup-restore", "blocking": true }
+  ]
+}

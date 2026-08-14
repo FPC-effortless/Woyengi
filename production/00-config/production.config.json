@@ -1,0 +1,19 @@
+{
+  "app": { "name": "Woyengi Platform", "runtime": "node", "minimumNodeMajor": 24 },
+  "db": { "engine": "postgresql", "schemaManifest": "migrations/manifest.json" },
+  "gates": {
+    "requirements": true,
+    "architecture": true,
+    "deep-module": true,
+    "data": true,
+    "e2e": true,
+    "security": true,
+    "benchmark": true,
+    "cost": true,
+    "observability": true
+  },
+  "thresholds": { "benchmarkCorrectness": 1, "permissionLeakageRate": 0, "costRegressionPercent": 10 },
+  "journeys": ["health-readiness", "authenticated-ingest-state-reconstruct", "explorer-inspection", "backup-restore"],
+  "enforcement": { "defaultProfile": "standard", "precommit": false, "failClosed": true },
+  "autofix": { "commandsByGate": {} }
+}

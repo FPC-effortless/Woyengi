@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://woyengi.dev/schemas/canonical-record.schema.json",
+  "type": "object",
+  "required": ["id", "kind", "transactionTime"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:.+$" },
+    "kind": { "type": "string", "minLength": 1 },
+    "transactionTime": { "type": "object", "required": ["from"], "properties": { "from": { "type": "string", "format": "date-time" }, "to": { "type": "string", "format": "date-time" } } }
+  }
+}

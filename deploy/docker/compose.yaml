@@ -1,0 +1,98 @@
+name: woyengi-platform
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    command: ["node", "services/platform-api/src/main.ts"]
+    environment:
+      WOYENGI_API_TOKEN: ${WOYENGI_API_TOKEN:?set WOYENGI_API_TOKEN}
+      WOYENGI_DATA_DIR: /data
+      WOYENGI_POSTGRES_URL: postgresql://woyengi:${WOYENGI_POSTGRES_PASSWORD:?set WOYENGI_POSTGRES_PASSWORD}@database:5432/woyengi
+      WOYENGI_OBJECT_STORE_ENDPOINT: http://object-storage:9000
+      WOYENGI_OBJECT_STORE_ACCESS: ${WOYENGI_OBJECT_STORE_ACCESS:?set WOYENGI_OBJECT_STORE_ACCESS}
+      WOYENGI_OBJECT_STORE_SECRET: ${WOYENGI_OBJECT_STORE_SECRET:?set WOYENGI_OBJECT_STORE_SECRET}
+      WOYENGI_SEARCH_ENDPOINT: http://search:7700
+      WOYENGI_SEARCH_KEY: ${WOYENGI_SEARCH_KEY:?set WOYENGI_SEARCH_KEY}
+    ports: ["127.0.0.1:8080:8080"]
+    volumes: ["platform-data:/data"]
+    depends_on:
+      database: { condition: service_healthy }
+      object-storage: { condition: service_healthy }
+      search: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/readyz').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    command: ["node", "services/runtime/src/worker-main.ts"]
+    environment:
+      WOYENGI_DATA_DIR: /data
+      WOYENGI_POSTGRES_URL: postgresql://woyengi:${WOYENGI_POSTGRES_PASSWORD:?set WOYENGI_POSTGRES_PASSWORD}@database:5432/woyengi
+      WOYENGI_OBJECT_STORE_ENDPOINT: http://object-storage:9000
+      WOYENGI_SEARCH_ENDPOINT: http://search:7700
+    volumes: ["platform-data:/data"]
+    depends_on:
+      database: { condition: service_healthy }
+      object-storage: { condition: service_healthy }
+      search: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  database:
+    image: postgres:18.4-alpine3.24
+    environment:
+      POSTGRES_DB: woyengi
+      POSTGRES_USER: woyengi
+      POSTGRES_PASSWORD: ${WOYENGI_POSTGRES_PASSWORD:?set WOYENGI_POSTGRES_PASSWORD}
+    volumes: ["postgres-data:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U woyengi -d woyengi"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  object-storage:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${WOYENGI_OBJECT_STORE_ACCESS:?set WOYENGI_OBJECT_STORE_ACCESS}
+      MINIO_ROOT_PASSWORD: ${WOYENGI_OBJECT_STORE_SECRET:?set WOYENGI_OBJECT_STORE_SECRET}
+    volumes: ["object-data:/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  search:
+    image: getmeili/meilisearch:v1.51.0
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${WOYENGI_SEARCH_KEY:?set WOYENGI_SEARCH_KEY}
+      MEILI_NO_ANALYTICS: "true"
+    volumes: ["search-data:/meili_data"]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:7700/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  platform-data:
+  postgres-data:
+  object-data:
+  search-data:

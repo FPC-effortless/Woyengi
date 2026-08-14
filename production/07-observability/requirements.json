@@ -1,0 +1,5 @@
+{
+  "requiredCorrelation": ["traceId", "requestId", "principal", "decision", "stateChangeId", "reconstructionId"],
+  "sensitivePayloadsAllowed": false,
+  "requiredQualityMetricCount": 11
+}

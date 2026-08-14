@@ -6,6 +6,7 @@ import type { StateValue } from "../../../packages/core/src/index.ts";
 import type { CapabilityOperation } from "../../../packages/permissions/src/index.ts";
 
 export interface PlatformApiPorts {
+  readonly operational?: () => Promise<{ readonly healthy: boolean; readonly ready: boolean; readonly checks: Readonly<Record<string, "up" | "down">> }>;
   readonly authenticate: (authorization: string | undefined) => { readonly id: string } | undefined;
   readonly authorize: (input: {
     readonly principal: string;
@@ -71,6 +72,13 @@ export class PlatformApi {
   async #handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const traceId = trace(request.headers["x-trace-id"]);
     try {
+      const operational = matchOperationalRoute(request.method ?? "GET", request.url ?? "/");
+      if (operational !== undefined) {
+        const status = await (this.#ports.operational?.() ?? Promise.resolve({ healthy: true, ready: true, checks: {} }));
+        const available = operational === "health" ? status.healthy : status.ready;
+        send(response, available ? 200 : 503, { ok: available, data: { status: available ? "up" : "down", checks: status.checks }, meta: { traceId } });
+        return;
+      }
       const principal = this.#ports.authenticate(singleHeader(request.headers.authorization));
       if (principal === undefined) throw new ApiError(401, "UNAUTHENTICATED", "A valid principal credential is required.");
       const url = new URL(request.url ?? "/", "http://platform.local");
@@ -127,6 +135,12 @@ export class PlatformApi {
       });
     }
   }
+}
+
+function matchOperationalRoute(method: string, rawUrl: string): "health" | "readiness" | undefined {
+  if (method !== "GET") return undefined;
+  const pathname = new URL(rawUrl, "http://platform.local").pathname;
+  return pathname === "/healthz" ? "health" : pathname === "/readyz" ? "readiness" : undefined;
 }
 
 type Route =

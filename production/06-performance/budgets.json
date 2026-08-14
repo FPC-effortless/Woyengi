@@ -1,0 +1,6 @@
+{
+  "apiP95Milliseconds": 250,
+  "reconstructionP95Milliseconds": 1500,
+  "permissionLeakageRate": 0,
+  "maximumCostRegressionPercent": 10
+}
