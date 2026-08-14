@@ -26,6 +26,8 @@ export interface PlatformApiPorts {
     readonly entityId: string;
     readonly limit: number;
     readonly cursor?: string;
+    readonly validAt: string;
+    readonly recordedAt: string;
     readonly traceId: string;
   }) => Promise<StateValue>;
   readonly reconstruct: (input: {
@@ -38,6 +40,13 @@ export interface PlatformApiPorts {
     readonly action: string;
     readonly idempotencyKey: string;
     readonly body: StateValue;
+    readonly traceId: string;
+  }) => Promise<StateValue>;
+  readonly subscribe: (input: {
+    readonly principal: string;
+    readonly subscriptionId: string;
+    readonly limit: number;
+    readonly cursor?: string;
     readonly traceId: string;
   }) => Promise<StateValue>;
 }
@@ -81,9 +90,9 @@ export class PlatformApi {
         return;
       }
       const rateLimit = this.#ports.rateLimit?.({ key: request.socket.remoteAddress ?? "unknown", at: new Date().toISOString() });
-      if (rateLimit !== undefined && !rateLimit.allowed) throw new ApiError(429, "RATE_LIMITED", `Request rate exceeded; retry after ${rateLimit.retryAfterSeconds} seconds.`);
+      if (rateLimit !== undefined && !rateLimit.allowed) throw new PlatformApiError(429, "RATE_LIMITED", `Request rate exceeded; retry after ${rateLimit.retryAfterSeconds} seconds.`);
       const principal = this.#ports.authenticate(singleHeader(request.headers.authorization));
-      if (principal === undefined) throw new ApiError(401, "UNAUTHENTICATED", "A valid principal credential is required.");
+      if (principal === undefined) throw new PlatformApiError(401, "UNAUTHENTICATED", "A valid principal credential is required.");
       const url = new URL(request.url ?? "/", "http://platform.local");
       const route = matchRoute(request.method ?? "GET", url.pathname);
       const purpose = singleHeader(request.headers["x-purpose"]) ?? "platform-api";
@@ -93,7 +102,7 @@ export class PlatformApi {
         resourceId: route.resourceId,
         purpose,
       });
-      if (!permission.allowed) throw new ApiError(403, "FORBIDDEN", permission.rationale);
+      if (!permission.allowed) throw new PlatformApiError(403, "FORBIDDEN", permission.rationale);
 
       let data: StateValue;
       if (route.family === "ingest") {
@@ -106,11 +115,16 @@ export class PlatformApi {
       } else if (route.family === "state") {
         const limit = parseLimit(url.searchParams.get("limit"));
         const cursor = url.searchParams.get("cursor") ?? undefined;
+        const now = new Date().toISOString();
+        const validAt = parseInstant(url.searchParams.get("validAt"), "validAt") ?? now;
+        const recordedAt = parseInstant(url.searchParams.get("recordedAt"), "recordedAt") ?? now;
         data = await this.#ports.state({
           principal: principal.id,
           entityId: route.entityId,
           limit,
           ...(cursor === undefined ? {} : { cursor }),
+          validAt,
+          recordedAt,
           traceId,
         });
       } else if (route.family === "reconstruct") {
@@ -119,7 +133,7 @@ export class PlatformApi {
           body: await readJson(request),
           traceId,
         });
-      } else {
+      } else if (route.family === "control") {
         data = await this.#ports.control({
           principal: principal.id,
           action: route.action,
@@ -127,10 +141,20 @@ export class PlatformApi {
           body: await readJson(request),
           traceId,
         });
+      } else {
+        const limit = parseLimit(url.searchParams.get("limit"));
+        const cursor = url.searchParams.get("cursor") ?? undefined;
+        data = await this.#ports.subscribe({
+          principal: principal.id,
+          subscriptionId: route.subscriptionId,
+          limit,
+          ...(cursor === undefined ? {} : { cursor }),
+          traceId,
+        });
       }
       send(response, 200, { ok: true, data, meta: { traceId } });
     } catch (error) {
-      const apiError = error instanceof ApiError ? error : new ApiError(500, "INTERNAL_ERROR", "Request failed.");
+      const apiError = error instanceof PlatformApiError ? error : new PlatformApiError(500, "INTERNAL_ERROR", "Request failed.");
       send(response, apiError.status, {
         ok: false,
         error: { code: apiError.code, message: apiError.message },
@@ -150,7 +174,8 @@ type Route =
   | { readonly family: "ingest"; readonly operation: "CREATE"; readonly resourceId: "ingestion" }
   | { readonly family: "state"; readonly operation: "READ"; readonly resourceId: string; readonly entityId: string }
   | { readonly family: "reconstruct"; readonly operation: "RECONSTRUCT"; readonly resourceId: "reconstruction" }
-  | { readonly family: "control"; readonly operation: CapabilityOperation; readonly resourceId: string; readonly action: string };
+  | { readonly family: "control"; readonly operation: CapabilityOperation; readonly resourceId: string; readonly action: string }
+  | { readonly family: "subscribe"; readonly operation: "SUBSCRIBE"; readonly resourceId: string; readonly subscriptionId: string };
 
 function matchRoute(method: string, pathname: string): Route {
   if (method === "POST" && pathname === "/v1/ingest") {
@@ -170,7 +195,13 @@ function matchRoute(method: string, pathname: string): Route {
     const operation = controlOperation(action);
     return { family: "control", operation, resourceId: `control:${action}`, action };
   }
-  throw new ApiError(404, "NOT_FOUND", "Route not found.");
+  const subscription = /^\/v1\/subscriptions\/([^/]+)$/.exec(pathname);
+  if (method === "GET" && subscription !== null) {
+    const subscriptionId = decodeURIComponent(subscription[1] as string);
+    if (!subscriptionId.startsWith("subscription:")) throw new PlatformApiError(400, "INVALID_SUBSCRIPTION", "subscriptionId must start with subscription:.");
+    return { family: "subscribe", operation: "SUBSCRIBE", resourceId: subscriptionId, subscriptionId };
+  }
+  throw new PlatformApiError(404, "NOT_FOUND", "Route not found.");
 }
 
 function controlOperation(action: string): CapabilityOperation {
@@ -183,7 +214,7 @@ function controlOperation(action: string): CapabilityOperation {
     subscribe: "SUBSCRIBE",
   };
   const operation = values[action];
-  if (operation === undefined) throw new ApiError(404, "NOT_FOUND", "Control action not found.");
+  if (operation === undefined) throw new PlatformApiError(404, "NOT_FOUND", "Control action not found.");
   return operation;
 }
 
@@ -193,14 +224,14 @@ async function readJson(request: IncomingMessage): Promise<StateValue> {
   for await (const chunk of request) {
     const bytes = typeof chunk === "string" ? new TextEncoder().encode(chunk) : new Uint8Array(chunk);
     size += bytes.byteLength;
-    if (size > 1_048_576) throw new ApiError(413, "PAYLOAD_TOO_LARGE", "JSON body exceeds 1 MiB.");
+    if (size > 1_048_576) throw new PlatformApiError(413, "PAYLOAD_TOO_LARGE", "JSON body exceeds 1 MiB.");
     chunks.push(bytes);
   }
   try {
     const bytes = Buffer.concat(chunks);
     return JSON.parse(bytes.toString("utf8")) as StateValue;
   } catch {
-    throw new ApiError(400, "INVALID_JSON", "Request body must be valid JSON.");
+    throw new PlatformApiError(400, "INVALID_JSON", "Request body must be valid JSON.");
   }
 }
 
@@ -208,15 +239,23 @@ function parseLimit(value: string | null): number {
   if (value === null) return 50;
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) {
-    throw new ApiError(400, "INVALID_PAGINATION", "limit must be an integer from 1 through 100.");
+    throw new PlatformApiError(400, "INVALID_PAGINATION", "limit must be an integer from 1 through 100.");
   }
   return parsed;
+}
+
+function parseInstant(value: string | null, name: string): string | undefined {
+  if (value === null) return undefined;
+  if (!/(?:Z|[+-]\d{2}:\d{2})$/i.test(value)) throw new PlatformApiError(400, "INVALID_TIME", `${name} requires an explicit UTC offset.`);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) throw new PlatformApiError(400, "INVALID_TIME", `${name} must be a valid timestamp.`);
+  return date.toISOString();
 }
 
 function requiredIdempotency(request: IncomingMessage): string {
   const value = singleHeader(request.headers["idempotency-key"]);
   if (value === undefined || value.trim().length === 0) {
-    throw new ApiError(400, "IDEMPOTENCY_KEY_REQUIRED", "Idempotency-Key is required for this operation.");
+    throw new PlatformApiError(400, "IDEMPOTENCY_KEY_REQUIRED", "Idempotency-Key is required for this operation.");
   }
   return value.trim();
 }
@@ -236,7 +275,7 @@ function send(response: ServerResponse, status: number, body: unknown): void {
   response.end(payload);
 }
 
-class ApiError extends Error {
+export class PlatformApiError extends Error {
   readonly status: number;
   readonly code: string;
 

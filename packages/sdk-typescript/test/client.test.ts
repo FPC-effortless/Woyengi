@@ -31,4 +31,6 @@ test("TypeScript SDK follows shared routes and reuses idempotency keys across re
   assert.equal(typeof client.reconstruct, "function");
   assert.equal(typeof client.control, "function");
   assert.equal(typeof client.subscribe, "function");
+  await client.state("entity:alpha", { validAt: "2026-02-01T00:00:00Z", recordedAt: "2026-02-02T00:00:00Z" });
+  assert.match(calls.at(-1)?.url ?? "", /validAt=2026-02-01T00%3A00%3A00Z&recordedAt=2026-02-02T00%3A00%3A00Z/);
 });

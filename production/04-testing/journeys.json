@@ -2,6 +2,9 @@
   "journeys": [
     { "id": "health-readiness", "blocking": true },
     { "id": "authenticated-ingest-state-reconstruct", "blocking": true },
+    { "id": "durable-idempotency-and-event-subscription", "blocking": true },
+    { "id": "bitemporal-state-and-reconstruction-time-travel", "blocking": true },
+    { "id": "authority-conflict-and-append-only-retraction", "blocking": true },
     { "id": "explorer-inspection", "blocking": true, "browser": true },
     { "id": "backup-restore", "blocking": true }
   ]

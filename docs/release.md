@@ -23,7 +23,7 @@ This repository does not certify an internet-facing, multi-tenant, or regulated-
 - Local storage encryption at rest is delegated to the host/deployment.
 - Container versions are pinned by tag, not registry digest.
 - Synchronization policies exist at the platform layer; a production cloud transport and tenant control plane are outside this repository's supported v1 profile.
-- Domain-specific correctness, retention, verification, and benchmark thresholds belong to installed Domain Packages.
+- The platform benchmark uses an independent domain-neutral reference evaluator. Domain-specific correctness, retention, verification, and benchmark thresholds still belong to installed Domain Packages.
 
 ## Rollback
 

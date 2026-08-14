@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 import { createEvent } from "../../core/src/index.ts";
-import { LocalCanonicalLedger, LocalObjectStore, sha256 } from "../src/index.ts";
+import { IdempotencyConflictError, LocalCanonicalLedger, LocalIdempotencyStore, LocalObjectStore, sha256 } from "../src/index.ts";
 
 test("durable local ledger and object store survive restart with exact content", async (context) => {
   const root = await mkdtemp(join(tmpdir(), "woyengi-storage-"));
@@ -46,5 +46,29 @@ test("durable local ledger and object store survive restart with exact content",
   await assert.rejects(
     () => reopenedObjects.put(`sha256:${"0".repeat(64)}`, bytes),
     /content hash mismatch/,
+  );
+});
+
+test("persists idempotent outcomes and rejects key reuse with a different fingerprint", async () => {
+  const root = await mkdtemp(join(tmpdir(), "woyengi-idempotency-"));
+  const path = join(root, "requests.json");
+  const store = await LocalIdempotencyStore.open(path);
+  const first = await store.put({
+    key: "user:123:ingest:request-1",
+    fingerprint: sha256(new TextEncoder().encode("request-one")),
+    result: { accepted: ["claim:1"] },
+    recordedAt: "2026-08-14T00:00:00Z",
+  });
+  const duplicate = await store.put({
+    key: "user:123:ingest:request-1",
+    fingerprint: sha256(new TextEncoder().encode("request-one")),
+    result: { accepted: ["claim:different-result-is-ignored"] },
+    recordedAt: "2026-08-14T00:01:00Z",
+  });
+  assert.deepEqual(duplicate, first);
+  assert.deepEqual((await LocalIdempotencyStore.open(path)).get(first.key), first);
+  await assert.rejects(
+    store.put({ ...first, fingerprint: sha256(new TextEncoder().encode("different-request")) }),
+    IdempotencyConflictError,
   );
 });

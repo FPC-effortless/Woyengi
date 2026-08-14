@@ -5,7 +5,7 @@ import urllib.request
 
 HTTP_ROUTES = {
     "ingest": {"method": "POST", "path": "/v1/ingest", "idempotent": True},
-    "state": {"method": "GET", "path": "/v1/state/entities/{entityId}", "paginated": True},
+    "state": {"method": "GET", "path": "/v1/state/entities/{entityId}", "paginated": True, "query": ["validAt", "recordedAt"]},
     "reconstruct": {"method": "POST", "path": "/v1/reconstruct"},
     "control": {"method": "POST", "path": "/v1/control/{action}", "idempotent": True},
     "subscribe": {"method": "GET", "path": "/v1/subscriptions/{subscriptionId}", "paginated": True},
@@ -32,9 +32,9 @@ class PlatformClient:
     def ingest(self, body, *, idempotency_key):
         return self._request("POST", HTTP_ROUTES["ingest"]["path"], body, idempotency_key=idempotency_key)
 
-    def state(self, entity_id, *, limit=None, cursor=None):
+    def state(self, entity_id, *, limit=None, cursor=None, valid_at=None, recorded_at=None):
         path = HTTP_ROUTES["state"]["path"].replace("{entityId}", urllib.parse.quote(entity_id, safe=""))
-        return self._request("GET", path, query={"limit": limit, "cursor": cursor})
+        return self._request("GET", path, query={"limit": limit, "cursor": cursor, "validAt": valid_at, "recordedAt": recorded_at})
 
     def reconstruct(self, body):
         return self._request("POST", HTTP_ROUTES["reconstruct"]["path"], body)

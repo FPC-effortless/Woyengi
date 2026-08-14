@@ -39,6 +39,50 @@ export class ModularPlatformRuntime {
   }
 }
 
+export const IN_PROCESS_PLATFORM_OPERATIONS: Readonly<Record<PlatformModuleName, string>> = {
+  event: "subscribe",
+  ingestion: "ingest",
+  policy: "authorize",
+  reconstruction: "reconstruct",
+  state: "query",
+  sync: "synchronize",
+  verification: "control",
+};
+
+export interface InProcessPlatformHandlers {
+  readonly event: (input: unknown) => Promise<unknown>;
+  readonly ingestion: (input: unknown) => Promise<unknown>;
+  readonly policy: (input: unknown) => Promise<unknown>;
+  readonly reconstruction: (input: unknown) => Promise<unknown>;
+  readonly state: (input: unknown) => Promise<unknown>;
+  readonly sync: (input: unknown) => Promise<unknown>;
+  readonly verification: (input: unknown) => Promise<unknown>;
+}
+
+export function createInProcessPlatformRuntime(handlers: InProcessPlatformHandlers): ModularPlatformRuntime {
+  return ModularPlatformRuntime.compose({
+    event: inProcessModule("event", handlers.event),
+    ingestion: inProcessModule("ingestion", handlers.ingestion),
+    policy: inProcessModule("policy", handlers.policy),
+    reconstruction: inProcessModule("reconstruction", handlers.reconstruction),
+    state: inProcessModule("state", handlers.state),
+    sync: inProcessModule("sync", handlers.sync),
+    verification: inProcessModule("verification", handlers.verification),
+  });
+}
+
+function inProcessModule(name: PlatformModuleName, handler: (input: unknown) => Promise<unknown>): PlatformModuleContract {
+  return {
+    name,
+    contractVersion: "1.0.0",
+    async execute(operation: string, input: unknown): Promise<unknown> {
+      const expected = IN_PROCESS_PLATFORM_OPERATIONS[name] as string;
+      if (operation !== expected) throw new Error(`unsupported ${name} operation: ${operation}; expected ${expected}`);
+      return handler(input);
+    },
+  };
+}
+
 export type JobStatus = "queued" | "running" | "retryable" | "completed" | "failed";
 export interface WorkerJob {
   readonly id: string;

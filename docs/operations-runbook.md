@@ -15,7 +15,7 @@ Invoke-RestMethod http://127.0.0.1:8080/readyz
 
 ## Health and shutdown
 
-`/healthz` proves the API process can serve traffic. `/readyz` proves required runtime checks are available. Compose waits for PostgreSQL, object storage, and search before starting API and worker health supervision. `docker compose ... stop` sends SIGTERM; API stops accepting new connections before exit and the worker stops polling before exit.
+`/healthz` proves the API process can serve traffic. `/readyz` probes the canonical ledger and, when their endpoints are configured, PostgreSQL, object storage, and search. Compose waits for those dependencies before starting API and worker health supervision. `docker compose ... stop` sends SIGTERM; API stops accepting new connections before exit and the worker stops polling before exit.
 
 ## Migration, backup, restore, and replay
 

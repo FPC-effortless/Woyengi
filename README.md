@@ -67,6 +67,8 @@ pnpm woyengi replay --workspace C:\woyengi\workspace --until 2026-08-13T00:00:00
 
 Explorer provides entity, claim, event, relationship, state-history, evidence, provenance, authority, lifecycle, conflict, graph-neighborhood, and reconstruction-trace views.
 
+The HTTP state boundary preserves both clocks. For example, `GET /v1/state/entities/entity%3Aalpha?validAt=2026-06-01T00%3A00%3A00Z&recordedAt=2026-08-14T00%3A01%3A30Z` asks what was valid on June 1 using only knowledge recorded by August 14 at 00:01:30. Reconstruction accepts `validAt` and `recordedAt` independently, or `as_of` as a shared shorthand.
+
 ## Repository map
 
 | Path | Purpose |
@@ -76,6 +78,7 @@ Explorer provides entity, claim, event, relationship, state-history, evidence, p
 | `apps/` | Explorer and admin diagnostics |
 | `deploy/` | Local container topology and deployment tests |
 | `benchmarks/` | Adversarial state/reconstruction evaluation |
+| `examples/` | Independently installable personal-memory, regulatory-state, and hotel-state Domain Packages |
 | `production/` | Fail-closed readiness gates and evidence contracts |
 | `docs/` | Architecture, operations, release, and SDK versioning |
 

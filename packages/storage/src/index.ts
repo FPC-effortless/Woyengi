@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
+import type { StateValue } from "../../core/src/index.ts";
 import type { LedgerQuery, LedgerRecord } from "../../ledger/src/index.ts";
 
 export interface DurableLedgerPort<RecordType extends LedgerRecord = LedgerRecord> {
@@ -33,6 +34,66 @@ export interface CachePort<Value = unknown> {
   get(key: string): Promise<Value | undefined>;
   set(key: string, value: Value, expiresAt?: string): Promise<void>;
   delete(key: string): Promise<void>;
+}
+
+export interface IdempotencyEntry {
+  readonly key: string;
+  readonly fingerprint: string;
+  readonly result: StateValue;
+  readonly recordedAt: string;
+}
+
+export class IdempotencyConflictError extends Error {
+  readonly key: string;
+
+  constructor(key: string) {
+    super(`idempotency key was already used with a different request: ${key}`);
+    this.name = "IdempotencyConflictError";
+    this.key = key;
+  }
+}
+
+export class LocalIdempotencyStore {
+  readonly #path: string;
+  readonly #entries = new Map<string, IdempotencyEntry>();
+  #writeQueue: Promise<void> = Promise.resolve();
+
+  private constructor(path: string, entries: readonly IdempotencyEntry[]) {
+    this.#path = path;
+    for (const entry of entries) {
+      const normalized = normalizeIdempotencyEntry(entry);
+      if (this.#entries.has(normalized.key)) throw new Error(`duplicate idempotency key: ${normalized.key}`);
+      this.#entries.set(normalized.key, normalized);
+    }
+  }
+
+  static async open(path: string): Promise<LocalIdempotencyStore> {
+    return new LocalIdempotencyStore(path, await readJsonArray<IdempotencyEntry>(path, "idempotency store"));
+  }
+
+  get(key: string): IdempotencyEntry | undefined {
+    return this.#entries.get(requiredText("idempotency key", key));
+  }
+
+  async put(entry: IdempotencyEntry): Promise<IdempotencyEntry> {
+    const normalized = normalizeIdempotencyEntry(entry);
+    let stored = normalized;
+    const run = async (): Promise<void> => {
+      const existing = this.#entries.get(normalized.key);
+      if (existing !== undefined) {
+        if (existing.fingerprint !== normalized.fingerprint) throw new IdempotencyConflictError(normalized.key);
+        stored = existing;
+        return;
+      }
+      const next = [...this.#entries.values(), normalized].sort((left, right) => left.key.localeCompare(right.key));
+      await atomicWriteJson(this.#path, next);
+      this.#entries.set(normalized.key, normalized);
+    };
+    const result = this.#writeQueue.then(run);
+    this.#writeQueue = result.catch(() => undefined);
+    await result;
+    return stored;
+  }
 }
 
 export class LocalCanonicalLedger<RecordType extends LedgerRecord = LedgerRecord>
@@ -136,14 +197,27 @@ export function sha256(bytes: Uint8Array): string {
 }
 
 async function readJsonRecords<RecordType extends LedgerRecord>(path: string): Promise<RecordType[]> {
+  return readJsonArray<RecordType>(path, "local ledger");
+}
+
+async function readJsonArray<Value>(path: string, name: string): Promise<Value[]> {
   try {
     const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
-    if (!Array.isArray(parsed)) throw new Error("local ledger must contain a JSON array");
-    return parsed as RecordType[];
+    if (!Array.isArray(parsed)) throw new Error(`${name} must contain a JSON array`);
+    return parsed as Value[];
   } catch (error) {
     if (isMissing(error)) return [];
     throw error;
   }
+}
+
+function normalizeIdempotencyEntry(value: IdempotencyEntry): IdempotencyEntry {
+  return deepFreeze({
+    key: requiredText("idempotency key", value.key),
+    fingerprint: normalizeHash(value.fingerprint),
+    result: structuredClone(value.result),
+    recordedAt: normalizeInstant(value.recordedAt),
+  });
 }
 
 async function atomicWriteJson(path: string, value: unknown): Promise<void> {
@@ -168,6 +242,12 @@ function normalizeInstant(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) throw new TypeError(`invalid timestamp: ${value}`);
   return date.toISOString();
+}
+
+function requiredText(name: string, value: string): string {
+  const normalized = value.trim();
+  if (normalized.length === 0) throw new TypeError(`${name} must not be empty`);
+  return normalized;
 }
 
 function isMissing(error: unknown): boolean {

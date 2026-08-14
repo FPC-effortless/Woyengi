@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "routes": {
     "ingest": { "method": "POST", "path": "/v1/ingest", "idempotent": true },
-    "state": { "method": "GET", "path": "/v1/state/entities/{entityId}", "paginated": true },
+    "state": { "method": "GET", "path": "/v1/state/entities/{entityId}", "paginated": true, "query": ["validAt", "recordedAt"] },
     "reconstruct": { "method": "POST", "path": "/v1/reconstruct" },
     "control": { "method": "POST", "path": "/v1/control/{action}", "idempotent": true },
     "subscribe": { "method": "GET", "path": "/v1/subscriptions/{subscriptionId}", "paginated": true }

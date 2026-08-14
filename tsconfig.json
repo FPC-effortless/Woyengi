@@ -12,5 +12,5 @@
     "noUncheckedIndexedAccess": true,
     "types": ["node"]
   },
-  "include": ["packages/**/*.ts", "services/**/*.ts", "apps/**/*.ts", "benchmarks/**/*.ts", "deploy/**/*.ts"]
+  "include": ["packages/**/*.ts", "services/**/*.ts", "apps/**/*.ts", "benchmarks/**/*.ts", "deploy/**/*.ts", "examples/**/*.ts"]
 }

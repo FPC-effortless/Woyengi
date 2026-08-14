@@ -4,7 +4,22 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { LocalJobStore, ModularPlatformRuntime, PlatformWorker, REQUIRED_PLATFORM_MODULES } from "../src/index.ts";
+import { createInProcessPlatformRuntime, IN_PROCESS_PLATFORM_OPERATIONS, LocalJobStore, ModularPlatformRuntime, PlatformWorker, REQUIRED_PLATFORM_MODULES } from "../src/index.ts";
+
+test("composes the concrete in-process platform operation boundary", async () => {
+  const calls: string[] = [];
+  const handler = (name: string) => async (input: unknown) => { calls.push(name); return { name, input }; };
+  const handlers = {
+    event: handler("event"), ingestion: handler("ingestion"), policy: handler("policy"),
+    reconstruction: handler("reconstruction"), state: handler("state"), sync: handler("sync"),
+    verification: handler("verification"),
+  };
+  const runtime = createInProcessPlatformRuntime(handlers);
+  for (const name of REQUIRED_PLATFORM_MODULES) await runtime.invoke(name, IN_PROCESS_PLATFORM_OPERATIONS[name], { request: name });
+  assert.deepEqual(calls, REQUIRED_PLATFORM_MODULES);
+  await assert.rejects(runtime.invoke("state", "reconstruct", {}), /unsupported state operation/);
+  assert.ok(runtime.boundaries().every((boundary) => boundary.transport === "in-process" && boundary.contractVersion === "1.0.0"));
+});
 
 test("composes in-process modules and runs idempotent retryable observable jobs", async () => {
   const calls: string[] = [];

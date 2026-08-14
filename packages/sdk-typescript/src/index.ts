@@ -2,7 +2,7 @@ import type { StateValue } from "../../core/src/index.ts";
 
 export const HTTP_ROUTES = {
   ingest: { method: "POST", path: "/v1/ingest", idempotent: true },
-  state: { method: "GET", path: "/v1/state/entities/{entityId}", paginated: true },
+  state: { method: "GET", path: "/v1/state/entities/{entityId}", paginated: true, query: ["validAt", "recordedAt"] },
   reconstruct: { method: "POST", path: "/v1/reconstruct" },
   control: { method: "POST", path: "/v1/control/{action}", idempotent: true },
   subscribe: { method: "GET", path: "/v1/subscriptions/{subscriptionId}", paginated: true },
@@ -46,10 +46,10 @@ export class PlatformClient {
     return this.#request(HTTP_ROUTES.ingest.method, HTTP_ROUTES.ingest.path, body, options);
   }
 
-  state(entityId: string, options: { readonly limit?: number; readonly cursor?: string } = {}): Promise<StateValue> {
+  state(entityId: string, options: { readonly limit?: number; readonly cursor?: string; readonly validAt?: string; readonly recordedAt?: string } = {}): Promise<StateValue> {
     const path = HTTP_ROUTES.state.path.replace("{entityId}", encodeURIComponent(entityId));
     return this.#request(HTTP_ROUTES.state.method, path, undefined, {
-      query: { limit: options.limit, cursor: options.cursor },
+      query: { limit: options.limit, cursor: options.cursor, validAt: options.validAt, recordedAt: options.recordedAt },
     });
   }
 

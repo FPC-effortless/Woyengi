@@ -30,6 +30,10 @@ class PlatformClientTest(unittest.TestCase):
         for method in ("state", "reconstruct", "control", "subscribe"):
             self.assertTrue(callable(getattr(client, method)))
 
+        client.state("entity:alpha", valid_at="2026-02-01T00:00:00Z", recorded_at="2026-02-02T00:00:00Z")
+        self.assertIn("validAt=2026-02-01T00%3A00%3A00Z", calls[-1][0])
+        self.assertIn("recordedAt=2026-02-02T00%3A00%3A00Z", calls[-1][0])
+
 
 if __name__ == "__main__":
     unittest.main()

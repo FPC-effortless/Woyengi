@@ -9,6 +9,8 @@ test("defines secret-externalized deployment and exercises health, readiness, an
   const dockerfile = await readFile(new URL("../docker/Dockerfile", import.meta.url), "utf8");
   for (const service of ["api:", "worker:", "database:", "object-storage:", "search:"]) assert.match(compose, new RegExp(`\\n  ${service}`));
   for (const secret of ["WOYENGI_API_TOKEN", "WOYENGI_POSTGRES_PASSWORD", "WOYENGI_OBJECT_STORE_SECRET", "WOYENGI_SEARCH_KEY"]) assert.match(compose, new RegExp(`\\$\\{${secret}:\\?`));
+  assert.match(compose, /WOYENGI_HOST:\s*0\.0\.0\.0/);
+  assert.match(await readFile(new URL("../../services/platform-api/src/main.ts", import.meta.url), "utf8"), /WOYENGI_HOST \?\? "127\.0\.0\.1"/);
   assert.doesNotMatch(`${compose}\n${dockerfile}`, /password:\s*(?:password|postgres|woyengi)|api[_-]?key:\s*(?:master|secret)/i);
   assert.match(dockerfile, /USER woyengi/);
 
@@ -17,7 +19,7 @@ test("defines secret-externalized deployment and exercises health, readiness, an
     operational: async () => ({ healthy: true, ready, checks: { ledger: ready ? "up" : "down" } }),
     authenticate: () => undefined,
     authorize: () => ({ allowed: false, rationale: "not used" }),
-    ingest: async () => ({}), state: async () => ({}), reconstruct: async () => ({}), control: async () => ({}),
+    ingest: async () => ({}), state: async () => ({}), reconstruct: async () => ({}), control: async () => ({}), subscribe: async () => ({}),
   });
   const server = await api.listen({ hostname: "127.0.0.1", port: 0 });
   assert.equal((await fetch(`${server.url}/healthz`)).status, 200);

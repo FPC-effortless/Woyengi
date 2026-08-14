@@ -65,7 +65,7 @@ Expected: every command exits zero and the final decision is `GO`. The release g
 - PostgreSQL, MinIO, and Meilisearch are composed as operational dependencies; the reference vertical slice keeps its canonical local ledger behind storage ports. Managed adapters and production object/search integrations require deployment-specific validation.
 - Image tags are pinned to versions but not immutable registry digests.
 - MinIO in this Compose file is for local evaluation; production operators must choose a supported object-store deployment.
-- Adversarial benchmarks validate the harness and declared platform invariants; deployment-specific accuracy baselines must be measured against the installed Domain Packages and real data distributions.
+- Adversarial benchmarks run an independent reference evaluator over temporal, identity, authority, evidence, lifecycle, agent-origin, permission, chronology, and provenance-invalidity signals. Deployment-specific accuracy baselines must still be measured against installed Domain Packages and real data distributions.
 
 ## Human acknowledgement
 
