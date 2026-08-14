@@ -60,10 +60,12 @@ function executeGate(gate, activeProfile, activeConfig) {
       return result(gate, passed, [check(Boolean(schema.required?.includes("transactionTime")), "canonical schema requires transaction time"), check(Number.isInteger(migrations.currentVersion), "migration manifest has a current version"), check(Object.values(invariants).every(Boolean), "data invariants enabled")]);
     }
     if (gate === "e2e") {
+      const build = runPackageScript("build");
+      const boundaries = runPackageScript("boundaries");
       const tests = runPackageScript("test:all");
       const browser = readJson("production/04-testing/browser-evidence.json");
       const browserPassed = browser.status === "passed" && browser.consoleErrors === 0 && browser.horizontalOverflow === false;
-      return result(gate, tests.ok && browserPassed, [check(tests.ok, tests.detail), check(browserPassed, "real-browser Explorer evidence is clean")]);
+      return result(gate, build.ok && boundaries.ok && tests.ok && browserPassed, [check(build.ok, build.detail), check(boundaries.ok, boundaries.detail), check(tests.ok, tests.detail), check(browserPassed, "real-browser Explorer evidence is clean")]);
     }
     if (gate === "security") return commandGate(gate, process.execPath, [join(root, "production/scripts/security_scan.js")]);
     if (gate === "benchmark") {

@@ -165,7 +165,7 @@ function uniqueRequired(name: string, values: readonly string[]): string[] {
 function sortedRecord(value: Readonly<Record<string, string>>): Readonly<Record<string, string>> {
   return Object.fromEntries(
     Object.entries(value)
-      .map(([key, item]) => [requiredText("condition name", key), requiredText("condition value", item)])
+      .map(([key, item]): [string, string] => [requiredText("condition name", key), requiredText("condition value", item)])
       .sort(([left], [right]) => left.localeCompare(right)),
   );
 }

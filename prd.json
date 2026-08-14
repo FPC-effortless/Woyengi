@@ -138,7 +138,7 @@
         "Build and test commands run from the workspace root.",
         "Package imports remain acyclic and explicit."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 6,
       "blocked_by": ["PLAT-005"]
     },

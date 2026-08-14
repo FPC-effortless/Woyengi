@@ -127,13 +127,14 @@ export class ClaimLedger {
       )
       .sort(compareProjectionPriority);
     const selected = governing[0];
+    const selectedClaimId = selected?.claim.id;
     const selectedValue = selected === undefined ? undefined : canonicalValue(selected.claim.object);
     const conflicts =
       selectedValue === undefined
         ? []
         : governing.filter(
             (candidate) =>
-              candidate.claim.id !== selected.claim.id &&
+              candidate.claim.id !== selectedClaimId &&
               canonicalValue(candidate.claim.object) !== selectedValue,
           );
 

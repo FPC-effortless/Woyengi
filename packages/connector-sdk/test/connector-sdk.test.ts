@@ -29,7 +29,7 @@ test("exposes versioned compatible domain, agent, and idempotent connector contr
     },
   });
   const delivered: string[] = [];
-  const runner = new ConnectorRunner("1.0.0", async (item) => delivered.push(item.idempotencyKey));
+  const runner = new ConnectorRunner("1.0.0", async (item) => { delivered.push(item.idempotencyKey); });
 
   await runner.poll(connector);
   await runner.poll(connector);

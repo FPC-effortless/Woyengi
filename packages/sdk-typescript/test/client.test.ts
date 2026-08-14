@@ -22,7 +22,8 @@ test("TypeScript SDK follows shared routes and reuses idempotency keys across re
   const result = await client.ingest({ source: "document" }, { idempotencyKey: "request:stable" });
 
   assert.deepEqual(HTTP_ROUTES, fixture.routes);
-  assert.equal(result.id, "ingestion:1");
+  assert.ok(typeof result === "object" && result !== null && !Array.isArray(result));
+  assert.equal((result as { readonly id?: unknown }).id, "ingestion:1");
   assert.equal(calls.length, 2);
   assert.equal(calls[0]?.init.headers["idempotency-key"], "request:stable");
   assert.equal(calls[1]?.init.headers["idempotency-key"], "request:stable");

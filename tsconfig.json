@@ -9,7 +9,8 @@
     "verbatimModuleSyntax": true,
     "strict": true,
     "exactOptionalPropertyTypes": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "types": ["node"]
   },
-  "include": ["packages/**/*.ts", "services/**/*.ts", "apps/**/*.ts"]
+  "include": ["packages/**/*.ts", "services/**/*.ts", "apps/**/*.ts", "benchmarks/**/*.ts", "deploy/**/*.ts"]
 }

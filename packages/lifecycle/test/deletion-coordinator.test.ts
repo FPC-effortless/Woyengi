@@ -59,7 +59,7 @@ test("applies retention-aware deletion and prevents downstream index or reconstr
   });
   assert.equal(logicalGraph.supportStatus("reconstruction:1"), "unsupported");
   assert.equal(indexed.size, 0);
-  assert.deepEqual(deletedObjects, []);
+  assert.equal(deletedObjects.length, 0);
   assert.equal(appended.length, 1);
   assert.equal(notifications.length, 1);
 
@@ -67,7 +67,7 @@ test("applies retention-aware deletion and prevents downstream index or reconstr
     authorize: () => ({ allowed: true, rationale: "owner" }),
     retention: () => ({ mode: "physical-erasure", rationale: "retention expired" }),
     removeFromIndexes: async () => undefined,
-    deleteObject: async (id) => deletedObjects.push(id),
+    deleteObject: async (id) => { deletedObjects.push(id); },
     append: async () => undefined,
     publish: async () => undefined,
   });

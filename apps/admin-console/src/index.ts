@@ -45,7 +45,8 @@ export class AdminDiagnostics {
     const principal = namespaced("principal", input.principal);
     this.#authorize(principal, "diagnostics");
     const raw = await this.#ports.inspect();
-    return deepFreeze({ ...redact(raw), generatedAt: normalizeInstant(input.recordedAt) }) as DiagnosticSnapshot;
+    const redacted = redact(raw) as Omit<DiagnosticSnapshot, "generatedAt">;
+    return deepFreeze({ ...redacted, generatedAt: normalizeInstant(input.recordedAt) });
   }
 
   async execute(input: {

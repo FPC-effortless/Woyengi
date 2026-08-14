@@ -48,7 +48,7 @@ test("resumes from durable cursors with deterministic duplicate-detectable deliv
   const resumed: string[] = [];
   await reopened.consume(
     { id: "subscription:regulation", topicPrefixes: ["claim."] },
-    async (delivery) => resumed.push(delivery.deliveryId),
+    async (delivery) => { resumed.push(delivery.deliveryId); },
   );
 
   assert.equal(seen.length, 2);

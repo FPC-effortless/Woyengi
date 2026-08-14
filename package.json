@@ -12,6 +12,9 @@
     "woyengi": "packages/cli/src/bin.ts"
   },
   "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "boundaries": "node scripts/package-boundaries.mjs && node production/scripts/deep_module_enforce.js",
     "test": "node --test",
     "test:python": "node scripts/run-python-tests.mjs",
     "test:all": "node --test && node scripts/run-python-tests.mjs",
@@ -22,5 +25,9 @@
     "prod:check": "node production/scripts/production-os.js --profile standard",
     "prod:check:fast": "node production/scripts/production-os.js --profile fast",
     "prod:release": "node production/scripts/production-os.js --profile release"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
   }
 }

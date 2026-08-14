@@ -8,7 +8,9 @@ test("separates agent reads, proposals, verification, and executed action proven
   const gateway = new AgentGateway({
     authorize({ principal, operation }) {
       const allowed = operation === "RECONSTRUCT" || principal === "agent:writer";
-      return { allowed, capabilityId: allowed ? `capability:${operation.toLowerCase()}` : undefined, rationale: allowed ? "granted" : "denied" };
+      return allowed
+        ? { allowed: true, capabilityId: `capability:${operation.toLowerCase()}`, rationale: "granted" }
+        : { allowed: false, rationale: "denied" };
     },
     async reconstruct() {
       return { workspaceId: "reconstruction:1" };
