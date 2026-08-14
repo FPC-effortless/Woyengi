@@ -9,7 +9,7 @@ test("aggregates redacted diagnostics and guards dangerous audited operations", 
   const admin = new AdminDiagnostics({
     authorize: ({ principal, operation }) => ({ allowed: principal === "user:operator" && operation === "ADMIN", rationale: "operator role" }),
     inspect: async () => ({
-      connectors: [{ id: "connector:crm", status: "healthy", cursor: "cursor:9", apiKey: "secret-value" }],
+      connectors: [{ id: "connector:crm", status: "healthy", cursor: "cursor:9", apiKey: "secret-value", refreshToken: "refresh-value" }],
       policies: [{ id: "policy:default-deny", status: "active" }],
       verifiers: [{ id: "verifier:schema", status: "healthy" }],
       subscriptions: [{ id: "subscription:regulation", status: "lagging", authorization: "Bearer token" }],
@@ -22,6 +22,7 @@ test("aggregates redacted diagnostics and guards dangerous audited operations", 
 
   const snapshot = await admin.snapshot({ principal: "user:operator", recordedAt: "2026-04-01T00:00:00Z" });
   assert.equal(snapshot.connectors[0]?.apiKey, "[REDACTED]");
+  assert.equal(snapshot.connectors[0]?.refreshToken, "[REDACTED]");
   assert.equal(snapshot.subscriptions[0]?.authorization, "[REDACTED]");
   assert.deepEqual(snapshot.storage[0]?.detail, { password: "[REDACTED]" });
   assert.deepEqual(snapshot.failedJobs[0]?.payload, "[REDACTED]");

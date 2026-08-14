@@ -40,6 +40,9 @@ const entity: ExplorerEntityView = {
   ],
 };
 
-const app = new ExplorerApp({ loadEntity: async (id) => id === entity.entity.id ? entity : undefined });
+const app = new ExplorerApp({
+  authorize: ({ remoteAddress }) => remoteAddress === "127.0.0.1" || remoteAddress === "::1" || remoteAddress === "::ffff:127.0.0.1",
+  loadEntity: async (id) => id === entity.entity.id ? entity : undefined,
+});
 const server = await app.listen({ hostname: process.env.WOYENGI_HOST ?? "127.0.0.1", port: Number(process.env.WOYENGI_PORT ?? 4310) });
 process.stdout.write(`Woyengi Explorer listening on ${server.url}\n`);

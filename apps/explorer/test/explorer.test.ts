@@ -24,7 +24,7 @@ const view: ExplorerEntityView = {
 };
 
 test("serves an accessible Explorer shell and complete entity inspection data", async () => {
-  const app = new ExplorerApp({ loadEntity: async (id) => id === view.entity.id ? view : undefined });
+  const app = new ExplorerApp({ authorize: ({ authorization }) => authorization === "Bearer test", loadEntity: async (id) => id === view.entity.id ? view : undefined });
   const server = await app.listen({ hostname: "127.0.0.1", port: 0 });
   try {
     const page = await fetch(server.url);
@@ -35,12 +35,13 @@ test("serves an accessible Explorer shell and complete entity inspection data", 
     assert.match(html, /data-theme-toggle/);
     assert.match(html, /Claims.*Events.*Relationships.*History.*Evidence.*Provenance.*Authority.*Lifecycle.*Conflicts.*Graph.*Reconstruction/s);
 
-    const response = await fetch(`${server.url}/api/entities/entity%3Adaniel`);
+    assert.equal((await fetch(`${server.url}/api/entities/entity%3Adaniel`)).status, 401);
+    const response = await fetch(`${server.url}/api/entities/entity%3Adaniel`, { headers: { authorization: "Bearer test" } });
     assert.equal(response.status, 200);
     const body = await response.json() as { data: ExplorerEntityView };
     assert.deepEqual(body.data, view);
 
-    const missing = await fetch(`${server.url}/api/entities/entity%3Amissing`);
+    const missing = await fetch(`${server.url}/api/entities/entity%3Amissing`, { headers: { authorization: "Bearer test" } });
     assert.equal(missing.status, 404);
   } finally {
     await server.close();

@@ -2,9 +2,9 @@
 
 Decision: **GO**
 
-- Run: plat-038-standard-2
+- Run: plat-039-standard-1
 - Profile: standard
-- Commit: 7ab8d71a936673102522c989b5a4b9038bf02b06
+- Commit: 7bed280c2eda7cceee906232d2a00768c4c5e45c
 
 ## Gates
 

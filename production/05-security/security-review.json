@@ -1,0 +1,13 @@
+{
+  "reviewedAt": "2026-08-14T02:30:00Z",
+  "assumptions": ["restricted data", "future internet exposure", "future multi-tenancy", "external TLS and identity edge"],
+  "findings": [
+    { "id": "SEC-001", "severity": "high", "title": "Reconstruction accepted unfiltered retrieval records", "status": "remediated", "evidence": "packages/reconstruction/src/index.ts authorizeRecord" },
+    { "id": "SEC-002", "severity": "high", "title": "Administrator browser embedded a bearer-shaped value", "status": "remediated", "evidence": "apps/admin-console/public/app.js same-origin credentials" },
+    { "id": "SEC-003", "severity": "high", "title": "API lacked pre-auth request throttling", "status": "remediated", "evidence": "services/platform-api/src/security.ts SlidingWindowRateLimiter" },
+    { "id": "SEC-004", "severity": "high", "title": "Explorer entity endpoint lacked an authorization boundary", "status": "remediated", "evidence": "apps/explorer/src/index.ts ExplorerPorts.authorize" },
+    { "id": "SEC-005", "severity": "medium", "title": "Local deployment uses one broad static operator token", "status": "accepted-conditional", "rationale": "Compose binds API to loopback and is documented as local; managed deployments must add short-lived external identity and scoped capabilities." },
+    { "id": "SEC-006", "severity": "medium", "title": "Container images are version-tagged rather than digest-pinned", "status": "open", "rationale": "Pin after the first successful container pull records platform-specific multi-architecture digests." },
+    { "id": "SEC-007", "severity": "medium", "title": "Local storage adapters do not enforce at-rest encryption", "status": "open", "rationale": "Requires deployment KMS and encryption-key lifecycle design; local-only storage policy remains explicit." }
+  ]
+}

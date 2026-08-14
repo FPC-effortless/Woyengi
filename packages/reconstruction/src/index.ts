@@ -143,6 +143,7 @@ export interface ReconstructionEnginePorts {
     readonly recordIds: readonly string[];
     readonly trace: readonly WorkspaceItem[];
   }>;
+  readonly authorizeRecord: (plan: StateRequirementPlan, recordId: string) => boolean;
   readonly assemble: (
     plan: StateRequirementPlan,
     recordIds: readonly string[],
@@ -168,13 +169,15 @@ export class ReconstructionEngine {
       throw new Error(`reconstruction denied: ${permission.rationale}`);
     }
     const retrieval = await this.#ports.retrieve(plan);
-    const recordIds = unique("retrieved record ids", retrieval.recordIds.map((item) => namespaced("record id", item)));
+    const candidates = unique("retrieved record ids", retrieval.recordIds.map((item) => namespaced("record id", item)));
+    const recordIds = candidates.filter((recordId) => this.#ports.authorizeRecord(plan, recordId));
+    const deniedRecordCount = candidates.length - recordIds.length;
     const assembly = await this.#ports.assemble(plan, recordIds);
     const trace: ReconstructiveWorkspace["trace"] = [
       { stage: "intent", detail: { intent: plan.intent, subjects: plan.subjects } },
       { stage: "permission", detail: { capabilityId: permission.capabilityId, rationale: permission.rationale } },
       { stage: "graph-activation", detail: { graphIds: plan.graphIds } },
-      { stage: "retrieval", detail: { recordIds, providers: retrieval.trace } },
+      { stage: "retrieval", detail: { recordIds, deniedRecordCount, providers: retrieval.trace } },
       { stage: "temporal-resolution", detail: { validAt: plan.validAt, recordedAt: plan.recordedAt } },
       { stage: "authority-resolution", detail: assembly.authorityContext },
       {

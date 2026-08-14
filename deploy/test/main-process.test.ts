@@ -7,7 +7,7 @@ import { test } from "node:test";
 
 test("boots the deployed API entrypoint and exercises ingest, state, and reconstruct", async () => {
   const dataDirectory = await mkdtemp(join(tmpdir(), "woyengi-main-"));
-  const token = "test-token-at-least-16-characters";
+  const token = `test-${"x".repeat(32)}`;
   const child = spawn(process.execPath, ["services/platform-api/src/main.ts"], {
     cwd: new URL("../..", import.meta.url),
     env: { ...process.env, WOYENGI_API_TOKEN: token, WOYENGI_DATA_DIR: dataDirectory, WOYENGI_HOST: "127.0.0.1", WOYENGI_PORT: "0" },

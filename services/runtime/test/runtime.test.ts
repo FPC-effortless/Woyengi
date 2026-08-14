@@ -29,7 +29,7 @@ test("composes in-process modules and runs idempotent retryable observable jobs"
     handlers: {
       "state.rebuild": async () => {
         attempts += 1;
-        if (attempts === 1) throw new Error("transient store failure");
+        if (attempts === 1) throw new Error(`transient store failure token=${"x".repeat(24)}`);
         return { rebuilt: true };
       },
     },
@@ -41,6 +41,7 @@ test("composes in-process modules and runs idempotent retryable observable jobs"
 
   await worker.runNext("2026-04-03T00:01:00Z");
   assert.equal(store.get(first.id)?.status, "retryable");
+  assert.equal(store.get(first.id)?.lastError, "transient store failure token=[REDACTED]");
   await worker.runNext("2026-04-03T00:02:00Z");
   assert.equal(store.get(first.id)?.status, "completed");
   assert.equal(store.get(first.id)?.attempts, 2);

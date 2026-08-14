@@ -53,7 +53,7 @@ export interface AuditRecord {
   readonly detail: TelemetryAttributes;
 }
 
-const SENSITIVE = /^(?:authorization|api[-_]?key|password|secret|token|cookie|payload|content|body|prompt|document|transcript)$/i;
+const SENSITIVE = /^(?:authorization|.*(?:password|secret|token)|.*(?:api|access)[-_]?key|cookie|payload|content|body|prompt|document|transcript)$/i;
 
 export class PlatformObservability {
   readonly #metrics = new Map<QualityMetricName, { correct: number; total: number }>();

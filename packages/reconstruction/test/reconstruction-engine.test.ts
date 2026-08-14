@@ -29,11 +29,15 @@ test("builds a permission-checked structured reconstructive workspace with a com
     },
     async retrieve() {
       return {
-        recordIds: ["claim:role", "event:last-meeting", "decision:launch"],
+        recordIds: ["claim:role", "event:last-meeting", "decision:launch", "claim:restricted"],
         trace: [{ modality: "state", candidates: 3 }],
       };
     },
-    async assemble() {
+    authorizeRecord(_plan, recordId) {
+      return recordId !== "claim:restricted";
+    },
+    async assemble(_plan, recordIds) {
+      assert.equal(recordIds.includes("claim:restricted"), false);
       return {
         currentState: [{ subject: "entity:daniel", predicate: "organization:role", value: "CTO" }],
         historicalState: [{ subject: "entity:daniel", predicate: "project:lead", value: "Project Alpha" }],
@@ -60,6 +64,8 @@ test("builds a permission-checked structured reconstructive workspace with a com
   assert.equal(workspace.currentState[0]?.value, "CTO");
   assert.equal(workspace.contradictions[0]?.status, "unresolved");
   assert.equal(workspace.permissionContext.capabilityId, "capability:meeting-reader");
+  const retrievalDetail = workspace.trace.find((step) => step.stage === "retrieval")?.detail as { readonly deniedRecordCount?: unknown } | undefined;
+  assert.equal(retrievalDetail?.deniedRecordCount, 1);
   assert.deepEqual(workspace.trace.map((step) => step.stage), [
     "intent",
     "permission",

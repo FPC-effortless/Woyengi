@@ -14,8 +14,14 @@ services:
       WOYENGI_OBJECT_STORE_SECRET: ${WOYENGI_OBJECT_STORE_SECRET:?set WOYENGI_OBJECT_STORE_SECRET}
       WOYENGI_SEARCH_ENDPOINT: http://search:7700
       WOYENGI_SEARCH_KEY: ${WOYENGI_SEARCH_KEY:?set WOYENGI_SEARCH_KEY}
+      WOYENGI_RATE_LIMIT_PER_MINUTE: "120"
     ports: ["127.0.0.1:8080:8080"]
     volumes: ["platform-data:/data"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    init: true
     depends_on:
       database: { condition: service_healthy }
       object-storage: { condition: service_healthy }
@@ -38,6 +44,11 @@ services:
       WOYENGI_OBJECT_STORE_ENDPOINT: http://object-storage:9000
       WOYENGI_SEARCH_ENDPOINT: http://search:7700
     volumes: ["platform-data:/data"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    init: true
     depends_on:
       database: { condition: service_healthy }
       object-storage: { condition: service_healthy }

@@ -7,6 +7,7 @@ import type { CapabilityOperation } from "../../../packages/permissions/src/inde
 
 export interface PlatformApiPorts {
   readonly operational?: () => Promise<{ readonly healthy: boolean; readonly ready: boolean; readonly checks: Readonly<Record<string, "up" | "down">> }>;
+  readonly rateLimit?: (input: { readonly key: string; readonly at: string }) => { readonly allowed: boolean; readonly retryAfterSeconds: number };
   readonly authenticate: (authorization: string | undefined) => { readonly id: string } | undefined;
   readonly authorize: (input: {
     readonly principal: string;
@@ -79,6 +80,8 @@ export class PlatformApi {
         send(response, available ? 200 : 503, { ok: available, data: { status: available ? "up" : "down", checks: status.checks }, meta: { traceId } });
         return;
       }
+      const rateLimit = this.#ports.rateLimit?.({ key: request.socket.remoteAddress ?? "unknown", at: new Date().toISOString() });
+      if (rateLimit !== undefined && !rateLimit.allowed) throw new ApiError(429, "RATE_LIMITED", `Request rate exceeded; retry after ${rateLimit.retryAfterSeconds} seconds.`);
       const principal = this.#ports.authenticate(singleHeader(request.headers.authorization));
       if (principal === undefined) throw new ApiError(401, "UNAUTHENTICATED", "A valid principal credential is required.");
       const url = new URL(request.url ?? "/", "http://platform.local");
@@ -229,7 +232,7 @@ function singleHeader(value: string | string[] | undefined): string | undefined 
 
 function send(response: ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body);
-  response.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(payload) });
+  response.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(payload), "cache-control": "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" });
   response.end(payload);
 }
 

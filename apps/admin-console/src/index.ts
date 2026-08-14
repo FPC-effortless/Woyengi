@@ -32,7 +32,7 @@ export interface AdminDiagnosticsPorts {
   readonly appendAudit: (record: AdminAuditRecord) => Promise<void>;
 }
 
-const SENSITIVE_KEYS = /^(?:authorization|api[-_]?key|password|secret|token|cookie|payload|content|body)$/i;
+const SENSITIVE_KEYS = /^(?:authorization|.*(?:password|secret|token)|.*(?:api|access)[-_]?key|cookie|payload|content|body)$/i;
 
 export class AdminDiagnostics {
   readonly #ports: AdminDiagnosticsPorts;

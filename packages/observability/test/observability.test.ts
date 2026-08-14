@@ -13,7 +13,7 @@ test("records complete quality metrics and privacy-safe correlated traces and au
     principal: "user:7",
     operation: "RECONSTRUCT",
     startedAt: "2026-04-02T00:00:00Z",
-    attributes: { domain: "personal", payload: "private diagnosis", authorization: "Bearer secret" },
+    attributes: { domain: "personal", payload: "private diagnosis", authorization: "Bearer secret", refreshToken: "rotation secret" },
   });
   trace.span({ name: "authority-evaluation", startedAt: "2026-04-02T00:00:01Z", endedAt: "2026-04-02T00:00:02Z", attributes: { selectedId: "decision:8", content: "secret meeting text" } });
   const completed = trace.end({ status: "ok", endedAt: "2026-04-02T00:00:03Z" });
@@ -39,6 +39,6 @@ test("records complete quality metrics and privacy-safe correlated traces and au
   assert.equal(audit.stateChangeId, "lifecycle:7");
   assert.equal(audit.reconstructionId, "reconstruction:7");
   const serialized = JSON.stringify(snapshot);
-  assert.doesNotMatch(serialized, /private diagnosis|Bearer secret|secret meeting text|sensitive user text/);
+  assert.doesNotMatch(serialized, /private diagnosis|Bearer secret|rotation secret|secret meeting text|sensitive user text/);
   assert.match(serialized, /\[REDACTED\]/);
 });

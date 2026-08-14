@@ -20,6 +20,7 @@ export interface ExplorerEntityView {
 }
 
 export interface ExplorerPorts {
+  readonly authorize: (input: { readonly authorization?: string; readonly cookie?: string; readonly remoteAddress: string }) => boolean;
   readonly loadEntity: (id: string) => Promise<ExplorerEntityView | undefined>;
 }
 
@@ -50,6 +51,10 @@ export class ExplorerApp {
       const url = new URL(request.url ?? "/", "http://explorer.local");
       const entityMatch = /^\/api\/entities\/([^/]+)$/.exec(url.pathname);
       if (request.method === "GET" && entityMatch !== null) {
+        const authorization = singleHeader(request.headers.authorization);
+        const cookie = singleHeader(request.headers.cookie);
+        const allowed = this.#ports.authorize({ ...(authorization === undefined ? {} : { authorization }), ...(cookie === undefined ? {} : { cookie }), remoteAddress: request.socket.remoteAddress ?? "unknown" });
+        if (!allowed) return json(response, 401, { error: { code: "UNAUTHENTICATED", message: "An authorized Explorer session is required." } });
         const entity = await this.#ports.loadEntity(decodeURIComponent(entityMatch[1] as string));
         if (entity === undefined) return json(response, 404, { error: { code: "NOT_FOUND", message: "Entity was not found." } });
         return json(response, 200, { data: entity });
@@ -65,6 +70,8 @@ export class ExplorerApp {
     }
   }
 }
+
+function singleHeader(value: string | string[] | undefined): string | undefined { return Array.isArray(value) ? value[0] : value; }
 
 function contentType(path: string): string {
   const values: Readonly<Record<string, string>> = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8" };

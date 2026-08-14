@@ -171,7 +171,10 @@ export class PlatformWorker {
   }
 }
 
-function safeError(error: unknown): string { return error instanceof Error ? error.message.slice(0, 500) : "unknown worker failure"; }
+function safeError(error: unknown): string {
+  const message = error instanceof Error ? error.message : "unknown worker failure";
+  return message.replace(/Bearer\s+[A-Za-z0-9._~+\/-]+/gi, "Bearer [REDACTED]").replace(/(password|secret|token)\s*[:=]\s*\S+/gi, "$1=[REDACTED]").slice(0, 500);
+}
 function isMissing(error: unknown): boolean { return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT"; }
 function semanticVersion(value: string): string { const normalized = requiredText("contract version", value); if (!/^\d+\.\d+\.\d+$/.test(normalized)) throw new TypeError("contract version must be semantic"); return normalized; }
 function namespaced(name: string, value: string): string { const normalized = requiredText(name, value); if (!normalized.includes(":")) throw new TypeError(`${name} must be namespace-qualified`); return normalized; }

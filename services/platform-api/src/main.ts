@@ -5,16 +5,20 @@ import type { StateValue } from "../../../packages/core/src/index.ts";
 import type { LedgerRecord } from "../../../packages/ledger/src/index.ts";
 import { LocalCanonicalLedger } from "../../../packages/storage/src/index.ts";
 import { PlatformApi } from "./index.ts";
+import { createBearerAuthenticator, SlidingWindowRateLimiter } from "./security.ts";
 
 const token = requiredEnvironment("WOYENGI_API_TOKEN");
 const dataDirectory = resolve(process.env.WOYENGI_DATA_DIR ?? "./.woyengi-data");
 await mkdir(dataDirectory, { recursive: true });
 type StoredRecord = LedgerRecord & Readonly<Record<string, StateValue>>;
 const ledger = await LocalCanonicalLedger.open<StoredRecord>(join(dataDirectory, "ledger", "records.json"));
+const authenticate = createBearerAuthenticator({ token, principal: "user:local-operator" });
+const rateLimiter = new SlidingWindowRateLimiter({ maximumRequests: numericEnvironment("WOYENGI_RATE_LIMIT_PER_MINUTE", 120), windowMilliseconds: 60_000, maximumKeys: 10_000 });
 
 const api = new PlatformApi({
   operational: async () => ({ healthy: true, ready: true, checks: { ledger: "up" } }),
-  authenticate: (authorization) => authorization === `Bearer ${token}` ? { id: "user:local-operator" } : undefined,
+  rateLimit: (input) => rateLimiter.allow(input),
+  authenticate,
   authorize: () => ({ allowed: true, rationale: "authenticated local operator" }),
   async ingest({ body }) {
     const object = asStateObject(body, "ingestion body");
@@ -61,6 +65,13 @@ function requiredEnvironment(name: string): string {
   const value = process.env[name]?.trim();
   if (value === undefined || value.length < 16) throw new Error(`${name} must be set to at least 16 characters`);
   return value;
+}
+function numericEnvironment(name: string, fallback: number): number {
+  const value = process.env[name];
+  if (value === undefined) return fallback;
+  const numeric = Number(value);
+  if (!Number.isSafeInteger(numeric) || numeric < 1) throw new Error(`${name} must be a positive integer`);
+  return numeric;
 }
 function asObject(value: unknown, name: string): Record<string, unknown> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) throw new TypeError(`${name} must be an object`);
