@@ -40,22 +40,31 @@ function executeGate(gate, activeProfile, activeConfig) {
   try {
     if (gate === "requirements") {
       const prd = readJson("prd.json");
+      const evidence = readJson("production/01-requirements/evidence.json");
       const requiredArtifacts = ["CONSTITUTION.md", "prd.json", "README.md", "QA.md", "docs/release.md", "docs/operations-runbook.md"];
       const missing = requiredArtifacts.filter((path) => !existsSync(join(root, path)));
       const incomplete = activeProfile === "release"
         ? prd.tickets.filter((ticket) => ticket.id !== "PLAT-040" && ticket.passes !== true).map((ticket) => ticket.id)
         : [];
       const humanQa = readJson("production/08-release/human-qa.json");
+      const evidenceIssues = [];
+      for (const ticket of prd.tickets) {
+        const paths = evidence[ticket.id];
+        if (!Array.isArray(paths) || paths.length === 0) evidenceIssues.push(`${ticket.id} has no evidence`);
+        else for (const path of paths) if (typeof path !== "string" || !existsSync(join(root, path))) evidenceIssues.push(`${ticket.id} missing evidence path: ${String(path)}`);
+      }
+      for (const id of Object.keys(evidence)) if (!prd.tickets.some((ticket) => ticket.id === id)) evidenceIssues.push(`unknown evidence ticket: ${id}`);
       const humanQaPassed = activeProfile !== "release" || (
         humanQa.status === "acknowledged"
         && humanQa.acknowledgement === humanQa.requiredText
         && typeof humanQa.acknowledgedAt === "string"
         && humanQa.acknowledgedAt.length > 0
       );
-      return result(gate, missing.length === 0 && incomplete.length === 0 && humanQaPassed, [
+      return result(gate, missing.length === 0 && incomplete.length === 0 && humanQaPassed && evidenceIssues.length === 0, [
         check(missing.length === 0, missing.length === 0 ? "required scope artifacts exist" : `missing: ${missing.join(", ")}`),
         check(incomplete.length === 0, incomplete.length === 0 ? "ticket state accepted for profile" : `incomplete tickets: ${incomplete.join(", ")}`),
         check(humanQaPassed, humanQaPassed ? "human QA evidence accepted for profile" : "human QA acknowledgement is pending"),
+        check(evidenceIssues.length === 0, evidenceIssues.length === 0 ? `all ${prd.tickets.length} tickets have resolvable evidence` : evidenceIssues.join("; ")),
       ]);
     }
     if (gate === "architecture") {
