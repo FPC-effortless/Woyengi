@@ -327,6 +327,14 @@
 - Verification: `pnpm benchmark` passed 11/11 fixtures at 100% correctness and 0% leakage; `pnpm test` passed (35 tests).
 - Next: PLAT-037 modular-monolith composition and observable worker jobs.
 
+## 2026-08-13 — Woyengi Memory compatibility specification
+
+- Reviewed the complete Woyengi Memory product brief against the Platform constitution, architecture, PRD, progress log, Domain/Agent/Connector SDKs, canonical records, graph/binding, ingestion, semantic compiler, reconstruction, permission, authority, sync, deletion, HTTP, and client contracts.
+- Added a separate-repository technical specification covering the strict Platform/Memory boundary, ontology and aggregate mappings, graph federation, capture and correction flows, reconstruction, APIs, agents, organization spaces, security, benchmarks, delivery order, and a 12-ticket executable first slice.
+- Added a standalone master build prompt that enforces PlatformPort isolation, PRD-first TDD, fail-closed handling of current Platform capability gaps, and the imported-transcript-to-meeting-brief vertical slice.
+- Compatibility notes are anchored to Platform revision `7ab8d71`: PLAT-033 through PLAT-037 passed; PLAT-009 and PLAT-038 through PLAT-040 remain release dependencies.
+- Verification: `pnpm test:all` passed against snapshot `7ab8d71` (36 Node tests and 1 Python test); documentation coverage, UTF-8, trailing-whitespace, final-newline, and tracked-diff checks passed. The test run correctly reported that the local Node 24.6.0 runtime is below the repository's required Node 24.12.0 baseline. No Platform implementation or user-owned application changes were modified.
+
 ## 2026-08-13 — PLAT-037 RED → GREEN
 
 - RED: runtime test failed because there was no deployable module composition or worker boundary.
@@ -334,3 +342,23 @@
 - The worker persists jobs atomically, deduplicates by stable idempotency key, bounds retries, survives reopen, and emits queued/started/retryable/completed/failed events. Contract versions and module names preserve future extraction boundaries.
 - Verification: `pnpm test` passed on Node v24.19.0 (36 tests).
 - Next: PLAT-038 local deployment, health/recovery exercises, and operational runbooks.
+
+## 2026-08-21 — WYG-001 DESIGNING → FOUNDATION
+
+- Audited the existing persistent-state platform against the complete Woyengi ecosystem brief using three bounded read-only lanes.
+- Preserved the functional bitemporal, provenance, authority, evidence, verification, storage, event, API, SDK, CLI, and deployment foundations; documented their real integration limits.
+- Added the full-product status matrix, grouped brief gap matrix, and ADRs for plane/kernel boundaries, workspace/principal isolation, governed effects/execution, reactive composition, and App portability.
+- Expanded `prd.json` with the first executable full-product Wave 0/1 tickets while leaving the prior release-candidate tickets pending human acceptance.
+- Verification: `pnpm test:all`, `pnpm typecheck`, `pnpm boundaries`, and `pnpm prod:check:fast` passed. The local Node 24.6.0 runtime remains below the declared 24.12.0 minimum.
+- Next: WYG-002 account, workspace, principal, and membership kernel using public-behavior TDD.
+
+## 2026-08-21 — WYG-002/003/004/006/007 RED → GREEN → INTEGRATED
+
+- Added the immutable replayable Account, Personal/Organization Workspace, membership, workspace switching, and four-principal-kind kernel; integration review added the one-account-per-human invariant.
+- Made capabilities workspace-scoped, expiring, revocable, delegation-depth bounded, strictly narrowed, and aligned to constitutional `principal:` IDs; AgentPrincipals cannot inherit a human's complete grant.
+- Added durable workspace-scoped WorkInstances, multiple WorkEpisodes, activities, assignments, role bindings, optimistic versions, ordered activity streams, outcomes, and context-preserving multiplayer transitions with explicit authorization references.
+- Added a separate fail-closed reactive Composition Runtime with PENDING activation, provider scopes, applicability/authority checks, provider-loss suspension/unload, runtime lease disposal, surfaced disposer failures, fresh replacement bindings, and no semantic/external replay.
+- Added a deterministic provider-neutral Composer slice from AppIntent through SoftwareRequirementGraph, CompositionPlan, AppBlueprint, and readable diff; reuse/update preference and minimal blocking questions are tested.
+- Integration review repaired zero-similarity App selection, multiple Personal Workspaces per human, implicit runtime authorization, and legacy principal-ID acceptance before merge.
+- Verification: lane-level targeted tests, typecheck, boundaries, and full suites passed. Integrated fast production gate is intentionally `NO-GO` because the newly active full-product requirements are unfinished; architecture/deep-module/security remain green. Final serialized integration suite pending after concurrent test-worker resource pressure clears.
+- Next: WYG-005 governed execution, WYG-008 App package lifecycle, and WYG-010 collaboration event/presence contracts in parallel.
