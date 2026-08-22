@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+
+jobs:
+  quality:
+    name: Quality and conformance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v2
+        with:
+          runtime: node@24.12.0
+          cache: true
+          install: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Verify toolchain
+        run: |
+          node --version
+          pnpm --version
+          python --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Enforce package boundaries
+        run: pnpm boundaries
+
+      - name: Run Node and Python tests
+        run: pnpm test:all
+
+      - name: Run adversarial benchmark
+        run: pnpm benchmark
+
+      - name: Run automated architecture gate
+        run: pnpm prod:check:fast --gate architecture --run-id ci-architecture
+
+      - name: Run automated security gate
+        run: pnpm prod:check:fast --gate security --run-id ci-security
+
+  container:
+    name: Container smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build image
+        run: docker build --tag woyengi-ci -f deploy/docker/Dockerfile .
+
+      - name: Start API and check readiness
+        env:
+          WOYENGI_API_TOKEN: ci-only-token-123456789
+          WOYENGI_DATA_DIR: /data
+        run: |
+          container_id="$(docker run --detach             --env WOYENGI_API_TOKEN             --env WOYENGI_DATA_DIR             --publish 127.0.0.1:8080:8080             woyengi-ci)"
+          cleanup() {
+            docker logs "$container_id" || true
+            docker rm --force "$container_id" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/readyz; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          exit 1
