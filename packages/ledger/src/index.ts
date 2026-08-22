@@ -1,6 +1,8 @@
 export interface LedgerRecord {
   readonly id: string;
   readonly kind: string;
+  readonly workspaceId?: string;
+  readonly ledgerSequence?: number;
   readonly transactionTime: {
     readonly from: string;
     readonly to?: string;

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -12,7 +12,7 @@ test("resumes from durable cursors with deterministic duplicate-detectable deliv
   const first = await LocalEventBus.open(root);
   await first.publish(
     createPlatformEvent({
-      id: "platform-event:claim-created",
+      id: "platform-event:z-claim-created",
       topic: "claim.created",
       aggregateId: "claim:1",
       causedBy: "command:1",
@@ -22,12 +22,12 @@ test("resumes from durable cursors with deterministic duplicate-detectable deliv
   );
   await first.publish(
     createPlatformEvent({
-      id: "platform-event:claim-verified",
+      id: "platform-event:a-claim-verified",
       topic: "claim.verified",
       aggregateId: "claim:1",
       causedBy: "verification:1",
       payload: { claimId: "claim:1" },
-      recordedAt: "2026-03-01T00:01:00Z",
+      recordedAt: "2026-03-01T00:00:00Z",
     }),
   );
 
@@ -54,4 +54,5 @@ test("resumes from durable cursors with deterministic duplicate-detectable deliv
   assert.equal(seen.length, 2);
   assert.deepEqual(resumed, [seen[1]]);
   assert.equal((await reopened.pending({ id: "subscription:regulation", topicPrefixes: ["claim."] })).length, 0);
+  assert.equal(JSON.parse(await readFile(join(root, "cursors.json"), "utf8"))["subscription:regulation"], "2");
 });

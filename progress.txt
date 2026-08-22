@@ -385,3 +385,26 @@
 - Integration review repaired sensitive provenance leakage, cross-plane trace namespace drift, unsafe external retry after adapter uncertainty, missing external reconciliation, and authority/credential leakage through surface definitions and selected data.
 - Verification: 79 serialized Node tests and 1 Python SDK test pass; typecheck, package-boundary, deep-module, and responsive browser QA gates pass. The release gate remains intentionally `NO-GO` because broader requirements and human acceptance remain open. Node 24.6.0 remains below the declared 24.12.0 minimum.
 - Next: WYG-019 offline personal start, durable multiplayer serve, and separately hosted compute node; then WYG-020 coding-first engineering reference flow.
+
+## 2026-08-22 — REVIEW REMEDIATION PLANNED
+
+- Froze feature breadth after the independent architecture review and created corrective tickets WYG-025 and WYG-026.
+- Baseline: `pnpm test` passed 82/82 Node tests; the local Node v24.6.0 runtime remains below the declared >=24.12.0 engine.
+- Working on WYG-025 first: fail-closed kind-specific canonical validation plus one atomic record/event/idempotency commit.
+- Next: reproduce unknown-kind and malformed-timestamp persistence probes as failing deployed-API tests.
+
+## 2026-08-22 — WYG-025 RED → GREEN → INTEGRATED
+
+- RED: deployed API tests proved unknown kinds returned 200, malformed timestamps could leave a partial record, missing workspace scope was accepted, and a mixed invalid batch had no atomic boundary.
+- GREEN: public canonical ingestion now requires a workspace-scoped records envelope, rebuilds every supported kind through constitutional constructors, maps invalid input to HTTP 400, and rejects the complete batch before mutation.
+- Added one atomic local ledger batch for canonical records, generated platform events, and durable idempotency results; accepted retries survive restart without replaying effects.
+- Verification: targeted storage/deployed API tests passed, typecheck passed, package boundaries passed, and the serialized integration suite passed 84/84 before starting WYG-026.
+
+## 2026-08-22 — WYG-026 RED → GREEN → INTEGRATED
+
+- RED: equal-time parent/child records sorted by identifier, Workspace and Work operation replays lacked causal metadata, API pagination used mutable offsets, and event cursors stored event IDs.
+- GREEN: durable storage assigns immutable positive per-workspace ledger sequences, persists and continues them after restart, and deterministically backfills legacy arrays from their stored order.
+- Workspace and Work operation journals now carry causal sequence; transaction time remains the bitemporal cutoff while state pagination, API subscriptions, local event delivery, and replay order use sequence.
+- Added ADR 0006 and corrected the status/gap matrices: Waves 0-2 are broadly functional, Wave 3 is partial, and the system is not production-ready.
+- Verification: 88/88 serialized Node tests and the Python SDK test pass; typecheck, package boundaries, and deep-module gates pass. The fast production gate remains the expected `NO-GO` because full-product requirements and human acceptance are open; architecture, deep-module, and security gates pass.
+- Next: finish WYG-019B durable self-hosted multiplayer server composition, then WYG-020 coding-first reference vertical.

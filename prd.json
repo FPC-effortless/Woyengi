@@ -3,8 +3,8 @@
   "problem": "People and organizations need one local-first workspace where durable human-and-agent work, adaptive software, shared semantic state, and consequential execution remain governed, reconstructible, and verifiable.",
   "outcome": "Woyengi composes software around intent and executes durable human-and-agent work toward verified outcomes while preserving the existing persistent-state foundation.",
   "active_milestone": {
-    "name": "Full-product Wave 3 local runtime and coding reference",
-    "tickets": ["WYG-019", "WYG-020"],
+    "name": "Review remediation: canonical integrity and causal replay",
+    "tickets": ["WYG-025", "WYG-026"],
     "qa_status": "implementation_in_progress"
   },
   "completed_milestones": [
@@ -825,6 +825,30 @@
       "passes": false,
       "priority": 65,
       "blocked_by": ["WYG-023"]
+    },
+    {
+      "id": "WYG-025",
+      "title": "Make canonical HTTP ingestion validated and atomic",
+      "acceptance_criteria": [
+        "The public API rejects unknown record kinds, malformed timestamps, invalid kind-specific fields, and records without an explicit workspace scope before durable mutation.",
+        "Known canonical record kinds are rebuilt through canonical constructors instead of being cast from client JSON.",
+        "Canonical records, their platform events, and the idempotency result commit atomically so a failed request leaves no partial durable state."
+      ],
+      "passes": false,
+      "priority": 0,
+      "blocked_by": []
+    },
+    {
+      "id": "WYG-026",
+      "title": "Order replay by a monotonic causal ledger sequence",
+      "acceptance_criteria": [
+        "Every workspace and Work operation receives an immutable monotonic ledger sequence when appended.",
+        "Replay, pagination, and subscription-facing order use the causal sequence instead of timestamp and arbitrary identifier ties.",
+        "Equal-timestamp parent and child operations replay deterministically in append order across restart."
+      ],
+      "passes": false,
+      "priority": 1,
+      "blocked_by": ["WYG-025"]
     }
   ]
 }

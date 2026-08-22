@@ -2,7 +2,24 @@ import { mkdir } from "node:fs/promises";
 import { createConnection } from "node:net";
 import { join, resolve } from "node:path";
 
-import { createLifecycleTransition, type CanonicalRecord, type ClaimRecord, type LifecycleTransitionRecord, type RecordKind, type StateValue } from "../../../packages/core/src/index.ts";
+import {
+  createArtifact,
+  createClaim,
+  createDecision,
+  createEvent,
+  createEvidence,
+  createLifecycleTransition,
+  createObservation,
+  createRelationship,
+  type Authority,
+  type CanonicalRecord,
+  type ClaimRecord,
+  type LifecycleStatus,
+  type LifecycleTransitionRecord,
+  type ProvenanceInput,
+  type RecordKind,
+  type StateValue,
+} from "../../../packages/core/src/index.ts";
 import { createPlatformEvent, type PlatformEvent } from "../../../packages/event-bus/src/index.ts";
 import type { LedgerRecord } from "../../../packages/ledger/src/index.ts";
 import { ClaimLedger } from "../../../packages/state/src/index.ts";
@@ -82,31 +99,166 @@ function asStateObject(value: StateValue, name: string): Readonly<Record<string,
   return value;
 }
 function isStateArray(value: StateValue): value is readonly StateValue[] { return Array.isArray(value); }
-function asLedgerRecord(value: StateValue): StoredRecord {
-  const object = asObject(value, "canonical record");
-  if (typeof object.id !== "string" || typeof object.kind !== "string") throw new TypeError("canonical record requires string id and kind");
-  const transactionTime = asObject(object.transactionTime, "transaction time");
-  if (typeof transactionTime.from !== "string") throw new TypeError("canonical record requires transactionTime.from");
-  return object as unknown as StoredRecord;
-}
 
 async function invokeState(module: PlatformModuleName, input: unknown): Promise<StateValue> {
   return await runtime.invoke(module, IN_PROCESS_PLATFORM_OPERATIONS[module], input) as StateValue;
 }
 
 async function handleIngest({ body, principal, idempotencyKey }: IngestInput): Promise<StateValue> {
-  return idempotent({ principal, family: "ingest", key: idempotencyKey, body }, async () => {
+  let workspaceId: string;
+  let records: readonly StoredRecord[];
+  try {
     const object = asStateObject(body, "ingestion body");
-    const records = Array.isArray(object.records) ? object.records : [object];
-    const ids: string[] = [];
-    for (const item of records) {
-      const record = asLedgerRecord(item);
-      await appendCanonical(record);
-      await appendEvent(record, idempotencyKey);
-      ids.push(record.id);
+    workspaceId = requiredWorkspaceId(object.workspaceId);
+    if (!Array.isArray(object.records) || object.records.length === 0) {
+      throw new TypeError("ingestion records must be a non-empty array");
     }
-    return { accepted: ids };
+    records = object.records.map((item) => rebuildCanonicalRecord(item, workspaceId));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "canonical ingestion input is invalid";
+    throw new PlatformApiError(400, "INVALID_CANONICAL_RECORD", message);
+  }
+  return idempotentInLedger({ principal, workspaceId, key: idempotencyKey, body, records });
+}
+
+function rebuildCanonicalRecord(value: StateValue, workspaceId: string): StoredRecord {
+  const input = asStateObject(value, "canonical record");
+  const kind = requiredStateString(input.kind, "canonical record kind");
+  const id = requiredStateString(input.id, "canonical record id");
+  const transactionTime = stateObject(input.transactionTime, "transactionTime");
+  const recordedAt = requiredStateString(transactionTime.from, "transactionTime.from");
+  const provenance = provenanceInput(input.provenance);
+  const lifecycle = lifecycleStatus(input.lifecycle);
+  const lifecycleOption = lifecycle === undefined ? {} : { lifecycle };
+  let record: object;
+  switch (kind) {
+    case "observation":
+      record = createObservation({ id, sourceId: requiredStateString(input.sourceId, "sourceId"), observedAt: requiredStateString(input.observedAt, "observedAt"), recordedAt, payload: input.payload ?? null, provenance, ...lifecycleOption });
+      break;
+    case "evidence":
+      record = createEvidence({ id, sourceId: requiredStateString(input.sourceId, "sourceId"), locator: requiredStateString(input.locator, "locator"), recordedAt, provenance, ...lifecycleOption });
+      break;
+    case "claim": {
+      const validTime = stateObject(input.validTime, "validTime");
+      record = createClaim({
+        id,
+        subject: requiredStateString(input.subject, "subject"),
+        predicate: requiredStateString(input.predicate, "predicate"),
+        object: input.object ?? null,
+        validTime: intervalInput(validTime),
+        recordedAt,
+        observationIds: stateStringArray(input.observationIds, "observationIds"),
+        evidenceIds: stateStringArray(input.evidenceIds, "evidenceIds"),
+        provenance,
+        authority: authorityInput(input.authority),
+        confidence: requiredStateNumber(input.confidence, "confidence"),
+        ...lifecycleOption,
+      });
+      break;
+    }
+    case "event": {
+      const validTime = stateObject(input.validTime, "validTime");
+      const participants = stateArray(input.participants, "participants").map((value, index) => {
+        const participant = stateObject(value, `participants[${index}]`);
+        return { entityId: requiredStateString(participant.entityId, `participants[${index}].entityId`), role: requiredStateString(participant.role, `participants[${index}].role`) };
+      });
+      record = createEvent({ id, eventType: requiredStateString(input.eventType, "eventType"), participants, validTime: intervalInput(validTime), recordedAt, evidenceIds: stateStringArray(input.evidenceIds, "evidenceIds"), provenance, ...lifecycleOption });
+      break;
+    }
+    case "relationship": {
+      const validTime = stateObject(input.validTime, "validTime");
+      record = createRelationship({ id, relationshipType: requiredStateString(input.relationshipType, "relationshipType"), fromEntityId: requiredStateString(input.fromEntityId, "fromEntityId"), toEntityId: requiredStateString(input.toEntityId, "toEntityId"), validTime: intervalInput(validTime), recordedAt, evidenceIds: stateStringArray(input.evidenceIds, "evidenceIds"), provenance, authority: authorityInput(input.authority), confidence: requiredStateNumber(input.confidence, "confidence"), ...lifecycleOption });
+      break;
+    }
+    case "decision": {
+      const validTime = stateObject(input.validTime, "validTime");
+      record = createDecision({ id, decisionType: requiredStateString(input.decisionType, "decisionType"), subjects: stateStringArray(input.subjects, "subjects"), decidedBy: stateStringArray(input.decidedBy, "decidedBy"), outcome: input.outcome ?? null, validTime: intervalInput(validTime), recordedAt, evidenceIds: stateStringArray(input.evidenceIds, "evidenceIds"), provenance, authority: authorityInput(input.authority), ...lifecycleOption });
+      break;
+    }
+    case "artifact":
+      record = createArtifact({ id, mediaType: requiredStateString(input.mediaType, "mediaType"), contentHash: requiredStateString(input.contentHash, "contentHash"), storageLocator: requiredStateString(input.storageLocator, "storageLocator"), residualDetails: stateArray(input.residualDetails ?? [], "residualDetails").map((value, index) => { const detail = stateObject(value, `residualDetails[${index}]`); return { locator: requiredStateString(detail.locator, `residualDetails[${index}].locator`), ...(detail.mediaType === undefined ? {} : { mediaType: requiredStateString(detail.mediaType, `residualDetails[${index}].mediaType`) }) }; }), recordedAt, provenance, ...lifecycleOption });
+      break;
+    case "lifecycle-transition":
+      record = createLifecycleTransition({ id, targetId: requiredStateString(input.targetId, "targetId"), status: requiredLifecycleStatus(input.status, "status"), reason: requiredStateString(input.reason, "reason"), recordedAt, provenance, authority: authorityInput(input.authority) });
+      break;
+    default:
+      throw new TypeError(`unsupported canonical record kind: ${kind}`);
+  }
+  return deepFreeze({ ...(record as Record<string, StateValue>), workspaceId }) as unknown as StoredRecord;
+}
+
+function stateObject(value: StateValue | undefined, name: string): Readonly<Record<string, StateValue>> {
+  if (value === undefined) throw new TypeError(`${name} must be an object`);
+  return asStateObject(value, name);
+}
+
+function stateArray(value: StateValue | undefined, name: string): readonly StateValue[] {
+  if (!Array.isArray(value)) throw new TypeError(`${name} must be an array`);
+  return value;
+}
+
+function requiredStateString(value: StateValue | undefined, name: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) throw new TypeError(`${name} must be a non-empty string`);
+  return value.trim();
+}
+
+function requiredStateNumber(value: StateValue | undefined, name: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) throw new TypeError(`${name} must be a finite number`);
+  return value;
+}
+
+function stateStringArray(value: StateValue | undefined, name: string): string[] {
+  if (!Array.isArray(value)) throw new TypeError(`${name} must be an array`);
+  return value.map((item, index) => requiredStateString(item, `${name}[${index}]`));
+}
+
+function intervalInput(value: Readonly<Record<string, StateValue>>): { readonly from: string; readonly to?: string } {
+  const from = requiredStateString(value.from, "time interval from");
+  return value.to === undefined ? { from } : { from, to: requiredStateString(value.to, "time interval to") };
+}
+
+function provenanceInput(value: StateValue | undefined): ProvenanceInput {
+  if (value === undefined) return {};
+  const object = stateObject(value, "provenance");
+  const derivedFrom = stateArray(object.derivedFrom ?? [], "provenance.derivedFrom").map((item, index) => {
+    const reference = stateObject(item, `provenance.derivedFrom[${index}]`);
+    return { kind: requiredCoreRecordKind(reference.kind), id: requiredStateString(reference.id, `provenance.derivedFrom[${index}].id`) };
   });
+  return { derivedFrom, transformations: stateStringArray(object.transformations ?? [], "provenance.transformations") };
+}
+
+function authorityInput(value: StateValue | undefined): Authority {
+  const object = stateObject(value, "authority");
+  const principal = object.principal;
+  const level = requiredStateNumber(object.level, "authority.level");
+  const basis = requiredStateString(object.basis, "authority.basis");
+  if (principal === undefined) return { level, basis };
+  return { level, basis, principal: requiredStateString(principal, "authority.principal") as NonNullable<Authority["principal"]> };
+}
+
+const lifecycleStatuses: readonly LifecycleStatus[] = ["provisional", "verified", "rejected", "superseded", "retracted", "invalidated", "archived"];
+
+function lifecycleStatus(value: StateValue | undefined): LifecycleStatus | undefined {
+  return value === undefined ? undefined : requiredLifecycleStatus(value, "lifecycle");
+}
+
+function requiredLifecycleStatus(value: StateValue | undefined, name: string): LifecycleStatus {
+  const normalized = requiredStateString(value, name);
+  if (!lifecycleStatuses.includes(normalized as LifecycleStatus)) throw new TypeError(`${name} is invalid`);
+  return normalized as LifecycleStatus;
+}
+
+function requiredCoreRecordKind(value: StateValue | undefined): RecordKind {
+  const normalized = requiredStateString(value, "record kind");
+  const kinds: readonly RecordKind[] = ["observation", "claim", "event", "relationship", "decision", "evidence", "lifecycle-transition", "artifact"];
+  if (!kinds.includes(normalized as RecordKind)) throw new TypeError(`unsupported canonical record kind: ${normalized}`);
+  return normalized as RecordKind;
+}
+
+function requiredWorkspaceId(value: StateValue | undefined): string {
+  const normalized = requiredStateString(value, "workspaceId");
+  if (!/^workspace:[a-z0-9][a-z0-9._-]*$/i.test(normalized)) throw new TypeError("workspaceId must be namespace-qualified with workspace:");
+  return normalized;
 }
 
 async function handleState({ entityId, limit, cursor, validAt, recordedAt }: StateInput): Promise<StateValue> {
@@ -168,17 +320,21 @@ async function handleControl({ action, principal, traceId, body, idempotencyKey 
   return idempotent({ principal, family: `control:${action}`, key: idempotencyKey, body }, async () => {
     if (["verify", "supersede", "retract"].includes(action)) {
       const object = asStateObject(body, "control body");
+      const workspaceId = requiredWorkspaceId(object.workspaceId);
       const targetId = requiredString(object.targetId, "control targetId");
-      if (ledger.get(targetId) === undefined) throw new PlatformApiError(404, "TARGET_NOT_FOUND", `Control target ${targetId} does not exist.`);
-      const record = createLifecycleTransition({
+      const target = ledger.get(targetId);
+      if (target === undefined) throw new PlatformApiError(404, "TARGET_NOT_FOUND", `Control target ${targetId} does not exist.`);
+      if (target.workspaceId !== workspaceId) throw new PlatformApiError(404, "TARGET_NOT_FOUND", `Control target ${targetId} does not exist in ${workspaceId}.`);
+      const transition = createLifecycleTransition({
         id: requiredString(object.id, "lifecycle transition id"),
         targetId,
         status: action === "verify" ? "verified" : action === "supersede" ? "superseded" : "retracted",
         reason: requiredString(object.reason, "control reason"),
         recordedAt: requiredString(object.recordedAt, "control recordedAt"),
-        provenance: { derivedFrom: [{ kind: coreRecordKind(ledger.get(targetId)?.kind), id: targetId }], transformations: [`control:${action}`] },
+        provenance: { derivedFrom: [{ kind: coreRecordKind(target.kind), id: targetId }], transformations: [`control:${action}`] },
         authority: { level: 100, basis: `authenticated local operator ${principal}` },
-      }) as unknown as StoredRecord;
+      });
+      const record = deepFreeze({ ...transition, workspaceId }) as unknown as StoredRecord;
       await appendCanonical(record);
       await appendEvent(record, idempotencyKey);
       return { action, principal, traceId, accepted: true, record } as unknown as StateValue;
@@ -189,23 +345,21 @@ async function handleControl({ action, principal, traceId, body, idempotencyKey 
 
 async function handleSubscribe({ subscriptionId, limit, cursor }: SubscriptionInput): Promise<StateValue> {
   const events = ledger.query({ kinds: ["platform-event"] }).map((record) => record as unknown as PlatformEvent);
-  const cursorIndex = cursor === undefined ? -1 : events.findIndex((event) => event.id === cursor);
-  if (cursor !== undefined && cursorIndex < 0) throw new PlatformApiError(400, "INVALID_CURSOR", "Subscription cursor is not present in the event ledger.");
-  const candidates = events.slice(cursorIndex + 1);
+  const afterSequence = sequenceCursor(cursor, "Subscription");
+  const candidates = events.filter((event) => (event.ledgerSequence ?? 0) > afterSequence);
   const page = candidates.slice(0, limit);
-  return { subscriptionId, events: page, nextCursor: candidates.length > page.length ? page.at(-1)?.id ?? null : null } as unknown as StateValue;
+  return { subscriptionId, events: page, nextCursor: candidates.length > page.length ? String(page.at(-1)?.ledgerSequence) : null } as unknown as StateValue;
 }
 
 function entityState(entityId: string, limit: number, cursor: string | undefined, validAt: string, recordedAt: string): StateValue {
-  const offset = cursor === undefined ? 0 : Number(cursor);
-  if (!Number.isSafeInteger(offset) || offset < 0) throw new PlatformApiError(400, "INVALID_CURSOR", "State cursor must be a non-negative integer offset.");
-  const records = relevantRecords(entityId).filter((record) => record.transactionTime.from <= recordedAt);
-  const page = records.slice(offset, offset + limit);
+  const afterSequence = sequenceCursor(cursor, "State");
+  const records = relevantRecords(entityId).filter((record) => record.transactionTime.from <= recordedAt && (record.ledgerSequence ?? 0) > afterSequence);
+  const page = records.slice(0, limit);
   return {
     entityId,
     records: page,
     projections: projectClaims(entityId, validAt, recordedAt),
-    nextCursor: offset + page.length < records.length ? String(offset + page.length) : null,
+    nextCursor: page.length < records.length ? String(page.at(-1)?.ledgerSequence) : null,
   } as unknown as StateValue;
 }
 
@@ -225,7 +379,14 @@ function relevantRecords(subject: string | undefined): StoredRecord[] {
   ]));
   return [...direct, ...ledger.query().filter((record) => referenced.has(record.id))]
     .filter((record, index, values) => values.findIndex((candidate) => candidate.id === record.id) === index)
-    .sort((left, right) => left.transactionTime.from.localeCompare(right.transactionTime.from) || left.id.localeCompare(right.id));
+    .sort((left, right) => (left.ledgerSequence ?? 0) - (right.ledgerSequence ?? 0));
+}
+
+function sequenceCursor(cursor: string | undefined, family: string): number {
+  if (cursor === undefined) return 0;
+  const sequence = Number(cursor);
+  if (!Number.isSafeInteger(sequence) || sequence < 1) throw new PlatformApiError(400, "INVALID_CURSOR", `${family} cursor must be a positive causal ledger sequence.`);
+  return sequence;
 }
 
 function projectClaims(subject: string, validAt = new Date().toISOString(), recordedAt = new Date().toISOString()) {
@@ -275,6 +436,57 @@ function requestInstant(value: StateValue, name: string): string {
   return date.toISOString();
 }
 
+async function idempotentInLedger(input: {
+  readonly principal: string;
+  readonly workspaceId: string;
+  readonly key: string;
+  readonly body: StateValue;
+  readonly records: readonly StoredRecord[];
+}): Promise<StateValue> {
+  const key = `${input.principal}:ingest:${input.key}`;
+  const fingerprint = sha256(new TextEncoder().encode(stableJson(input.body)));
+  const receiptId = `idempotency-result:${sha256(new TextEncoder().encode(key)).slice("sha256:".length)}`;
+  const existing = ledger.get(receiptId);
+  if (existing !== undefined) {
+    if (existing.kind !== "idempotency-result" || existing.fingerprint !== fingerprint) {
+      throw new PlatformApiError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key was already used with a different request.");
+    }
+    return existing.result ?? null;
+  }
+  const active = inFlight.get(key);
+  if (active !== undefined) {
+    if (active.fingerprint !== fingerprint) throw new PlatformApiError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key is already processing a different request.");
+    return active.promise;
+  }
+  const promise = (async (): Promise<StateValue> => {
+    const result: StateValue = { accepted: input.records.map((record) => record.id) };
+    const events = input.records.map((record) => platformEventFor(record, input.key));
+    const recordedAt = input.records.map((record) => record.transactionTime.from).sort().at(-1) as string;
+    const receipt = deepFreeze({
+      id: receiptId,
+      kind: "idempotency-result",
+      workspaceId: input.workspaceId,
+      principal: input.principal,
+      family: "ingest",
+      key: input.key,
+      fingerprint,
+      result,
+      transactionTime: { from: recordedAt },
+    }) as StoredRecord;
+    const pending: StoredRecord[] = [];
+    for (const record of [...input.records, ...events]) {
+      const prior = ledger.get(record.id);
+      if (prior === undefined) pending.push(record);
+      else if (stableJson(prior) !== stableJson(record)) throw new PlatformApiError(409, "RECORD_CONFLICT", `Canonical record ${record.id} already exists with different content.`);
+    }
+    pending.push(receipt);
+    await ledger.appendBatch(pending);
+    return result;
+  })();
+  inFlight.set(key, { fingerprint, promise });
+  try { return await promise; } finally { inFlight.delete(key); }
+}
+
 async function idempotent(
   input: { readonly principal: string; readonly family: string; readonly key: string; readonly body: StateValue },
   execute: () => Promise<StateValue>,
@@ -314,6 +526,10 @@ async function appendCanonical(record: StoredRecord): Promise<void> {
 }
 
 async function appendEvent(record: StoredRecord, causedBy: string): Promise<void> {
+  await appendCanonical(platformEventFor(record, causedBy));
+}
+
+function platformEventFor(record: StoredRecord, causedBy: string): StoredRecord {
   const event = createPlatformEvent({
     id: `platform-event:record-created:${record.id}`,
     topic: `${topicSegment(record.kind)}.created`,
@@ -321,8 +537,8 @@ async function appendEvent(record: StoredRecord, causedBy: string): Promise<void
     causedBy: causedBy.includes(":") ? causedBy : `request:${causedBy}`,
     payload: { recordId: record.id, recordKind: record.kind },
     recordedAt: record.transactionTime.from,
-  }) as unknown as StoredRecord;
-  await appendCanonical(event);
+  });
+  return deepFreeze({ ...event, workspaceId: record.workspaceId ?? null }) as unknown as StoredRecord;
 }
 
 function topicSegment(value: string): string {
@@ -334,6 +550,14 @@ function stableJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
   if (value !== null && typeof value === "object") return `{${Object.entries(value).sort(([left], [right]) => left.localeCompare(right)).map(([key, nested]) => `${JSON.stringify(key)}:${stableJson(nested)}`).join(",")}}`;
   return JSON.stringify(value);
+}
+
+function deepFreeze<Value>(value: Value): Value {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    for (const nested of Object.values(value)) deepFreeze(nested);
+    Object.freeze(value);
+  }
+  return value;
 }
 
 async function dependencyStatus(): Promise<{ readonly healthy: boolean; readonly ready: boolean; readonly checks: Readonly<Record<string, "up" | "down">> }> {

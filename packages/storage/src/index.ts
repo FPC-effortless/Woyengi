@@ -101,13 +101,22 @@ export class LocalCanonicalLedger<RecordType extends LedgerRecord = LedgerRecord
 {
   readonly #path: string;
   readonly #records = new Map<string, RecordType>();
+  readonly #nextSequenceByWorkspace = new Map<string, number>();
   #writeQueue: Promise<void> = Promise.resolve();
 
   private constructor(path: string, records: readonly RecordType[]) {
     this.#path = path;
-    for (const record of records) {
+    for (const rawRecord of records) {
+      const workspace = workspaceScope(rawRecord);
+      const previous = this.#nextSequenceByWorkspace.get(workspace) ?? 0;
+      const sequence = rawRecord.ledgerSequence ?? previous + 1;
+      if (!Number.isSafeInteger(sequence) || sequence < 1 || sequence <= previous) {
+        throw new Error(`invalid ledger sequence for ${rawRecord.id}`);
+      }
+      const record = deepFreeze({ ...structuredClone(rawRecord), ledgerSequence: sequence }) as RecordType;
       if (this.#records.has(record.id)) throw new Error(`canonical record already exists: ${record.id}`);
-      this.#records.set(record.id, deepFreeze(record));
+      this.#records.set(record.id, record);
+      this.#nextSequenceByWorkspace.set(workspace, sequence);
     }
   }
 
@@ -119,12 +128,31 @@ export class LocalCanonicalLedger<RecordType extends LedgerRecord = LedgerRecord
   }
 
   async append(record: RecordType): Promise<void> {
+    return this.appendBatch([record]);
+  }
+
+  async appendBatch(records: readonly RecordType[]): Promise<void> {
     const run = async (): Promise<void> => {
-      if (this.#records.has(record.id)) throw new Error(`canonical record already exists: ${record.id}`);
-      const stored = deepFreeze(structuredClone(record));
-      const next = [...this.#records.values(), stored].sort(compareRecords);
+      const nextSequences = new Map(this.#nextSequenceByWorkspace);
+      const stored = records.map((record) => {
+        if (record.ledgerSequence !== undefined) throw new Error("ledger sequence is assigned by durable storage");
+        const workspace = workspaceScope(record);
+        const sequence = (nextSequences.get(workspace) ?? 0) + 1;
+        nextSequences.set(workspace, sequence);
+        return deepFreeze({ ...structuredClone(record), ledgerSequence: sequence }) as RecordType;
+      });
+      const ids = new Set<string>();
+      for (const record of stored) {
+        if (this.#records.has(record.id) || ids.has(record.id)) {
+          throw new Error(`canonical record already exists: ${record.id}`);
+        }
+        ids.add(record.id);
+      }
+      if (stored.length === 0) return;
+      const next = [...this.#records.values(), ...stored].sort(compareRecords);
       await atomicWriteJson(this.#path, next);
-      this.#records.set(stored.id, stored);
+      for (const record of stored) this.#records.set(record.id, record);
+      for (const [workspace, sequence] of nextSequences) this.#nextSequenceByWorkspace.set(workspace, sequence);
     };
     const result = this.#writeQueue.then(run);
     this.#writeQueue = result.catch(() => undefined);
@@ -228,7 +256,18 @@ async function atomicWriteJson(path: string, value: unknown): Promise<void> {
 }
 
 function compareRecords(left: LedgerRecord, right: LedgerRecord): number {
-  return left.transactionTime.from.localeCompare(right.transactionTime.from) || left.id.localeCompare(right.id);
+  const leftWorkspace = workspaceScope(left);
+  const rightWorkspace = workspaceScope(right);
+  if (leftWorkspace === rightWorkspace && left.ledgerSequence !== undefined && right.ledgerSequence !== undefined) {
+    return left.ledgerSequence - right.ledgerSequence;
+  }
+  return leftWorkspace.localeCompare(rightWorkspace)
+    || left.transactionTime.from.localeCompare(right.transactionTime.from)
+    || left.id.localeCompare(right.id);
+}
+
+function workspaceScope(record: LedgerRecord): string {
+  return record.workspaceId ?? "workspace:legacy-global";
 }
 
 function normalizeHash(value: string): string {

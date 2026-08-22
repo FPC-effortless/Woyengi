@@ -32,7 +32,8 @@ test("replays, inspects, migrates, backs up, verifies, and restores a workspace"
 
   await invoke(["replay", "--workspace", workspace, "--until", "2026-03-02T23:00:00Z", "--output", replayPath]);
   const replay = JSON.parse(await readFile(replayPath, "utf8"));
-  assert.deepEqual(replay.records.map((item: { id: string }) => item.id), ["provenance:1", "capability:1"]);
+  assert.deepEqual(replay.records.map((item: { id: string }) => item.id), ["capability:1", "provenance:1"]);
+  assert.deepEqual(replay.records.map((item: { ledgerSequence: number }) => item.ledgerSequence), [2, 3]);
 
   for (const [view, expected] of [
     ["provenance", "provenance:1"],
