@@ -362,3 +362,14 @@
 - Integration review repaired zero-similarity App selection, multiple Personal Workspaces per human, implicit runtime authorization, and legacy principal-ID acceptance before merge.
 - Verification: lane-level targeted tests, typecheck, boundaries, and full suites passed. Integrated fast production gate is intentionally `NO-GO` because the newly active full-product requirements are unfinished; architecture/deep-module/security remain green. Final serialized integration suite pending after concurrent test-worker resource pressure clears.
 - Next: WYG-005 governed execution, WYG-008 App package lifecycle, and WYG-010 collaboration event/presence contracts in parallel.
+
+## 2026-08-22 — WYG-005/008/009/010/011/012 GREEN → INTEGRATED
+
+- Added the governed execution spine from ActionIntent through disjoint effects, manifest, receipt, observations, reconciliation, evidence, independent verification, acceptance decision, and exactly one Verified Semantic Commit; provider success alone remains insufficient.
+- Added portable workspace-bound ApplicationPackages and ApplicationInstances with isolation, overlays, filesystem import/export, compatibility migrations, update, and rollback.
+- Added provider-neutral governed compute with explicit authority, budgets, idempotency, workspace-scoped node heartbeat/leases, and immutable observation-only usage receipts.
+- Added resumable collaboration envelopes, optimistic versions, ephemeral presence, fail-closed authorization, and public payload filtering over the existing durable event port.
+- Added the responsive local Woyengi shell with Home, Work, Apps, Inbox, Search, Personal/Organization switching, Ask/Create/Delegate, Composer preview, and hidden Inspect mode. Real-browser QA passed at 375×812 and 1280×900 in light/dark mode.
+- Added a cross-package conformance flow proving Account and Personal/Organization isolation, App installation, two-human plus separately granted Agent work, governed local compute, reconciliation, evidence, verification, acceptance, and a Verified Semantic Commit under one trace.
+- Integration verification: 61 Node tests and 1 Python SDK test pass serially; typecheck, package-boundary, deep-module, architecture, and security gates pass. The release gate remains intentionally `NO-GO` because the broader full-product requirements and human acceptance remain open. Node 24.6.0 is still below the declared 24.12.0 minimum.
+- Next: Wave 2 context/memory, Applicability/Harness, provider gateway, Surface Runtime, and eval/simulation contracts; then the self-hosted coding-first reference flow.
