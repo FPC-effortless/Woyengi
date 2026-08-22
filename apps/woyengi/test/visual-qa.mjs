@@ -3,14 +3,16 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const browserPath = process.env.WOYENGI_BROWSER ?? "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const appPort = 43817;
 const debugPort = 43818;
 const baseUrl = `http://127.0.0.1:${appPort}`;
-const outputRoot = new URL("../artifacts/", import.meta.url);
 const profile = await mkdtemp(join(tmpdir(), "woyengi-shell-qa-"));
+const outputRoot = process.env.WOYENGI_VISUAL_UPDATE === "1"
+  ? new URL("../artifacts/", import.meta.url)
+  : pathToFileURL(`${join(profile, "artifacts")}\\`);
 const app = spawn(process.execPath, [fileURLToPath(new URL("../src/demo.ts", import.meta.url))], {
   env: { ...process.env, WOYENGI_SHELL_PORT: String(appPort) },
   stdio: ["ignore", "pipe", "pipe"],
