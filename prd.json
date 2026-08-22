@@ -3,8 +3,8 @@
   "problem": "People and organizations need one local-first workspace where durable human-and-agent work, adaptive software, shared semantic state, and consequential execution remain governed, reconstructible, and verifiable.",
   "outcome": "Woyengi composes software around intent and executes durable human-and-agent work toward verified outcomes while preserving the existing persistent-state foundation.",
   "active_milestone": {
-    "name": "Full-product Wave 0 and Wave 1",
-    "tickets": ["WYG-001", "WYG-002", "WYG-003", "WYG-004", "WYG-005", "WYG-006", "WYG-007", "WYG-008", "WYG-009", "WYG-010", "WYG-011", "WYG-012"],
+    "name": "Review remediation: canonical integrity and causal replay",
+    "tickets": ["WYG-025", "WYG-026"],
     "qa_status": "implementation_in_progress"
   },
   "completed_milestones": [
@@ -22,6 +22,16 @@
       "name": "Persistent-state release candidate",
       "tickets": ["PLAT-038", "PLAT-039", "PLAT-040"],
       "qa_status": "automated_green_human_acceptance_pending"
+    },
+    {
+      "name": "Full-product Wave 0 and Wave 1 implementation",
+      "tickets": ["WYG-001", "WYG-002", "WYG-003", "WYG-004", "WYG-005", "WYG-006", "WYG-007", "WYG-008", "WYG-009", "WYG-010", "WYG-011", "WYG-012"],
+      "qa_status": "automated_green_release_requirements_and_human_acceptance_open"
+    },
+    {
+      "name": "Full-product Wave 2 intelligence and application runtime",
+      "tickets": ["WYG-013", "WYG-014", "WYG-015", "WYG-016", "WYG-017", "WYG-018"],
+      "qa_status": "automated_green_release_requirements_and_human_acceptance_open"
     }
   ],
   "definition_of_done": [
@@ -671,6 +681,174 @@
       "passes": false,
       "priority": 53,
       "blocked_by": ["WYG-005", "WYG-006", "WYG-008", "WYG-009", "WYG-010", "WYG-011"]
+    },
+    {
+      "id": "WYG-013",
+      "title": "Build bounded episode capability context and agent knowledge workspaces",
+      "acceptance_criteria": [
+        "An EpisodeCapabilityContext contains only the providers, resources, authority, budgets, and policies applicable to one WorkEpisode.",
+        "An AgentKnowledgeWorkspace is reconstructible from governed records and cannot retrieve or write outside the episode's workspace and grant scope.",
+        "Context segments retain source, trust class, valid time, transaction time, provenance, and authority-filtering rationale."
+      ],
+      "passes": false,
+      "priority": 54,
+      "blocked_by": ["WYG-003", "WYG-004", "WYG-005", "WYG-006"]
+    },
+    {
+      "id": "WYG-014",
+      "title": "Add authority-filtered memory and applicability learning",
+      "acceptance_criteria": [
+        "Memory retrieval distinguishes episodic, semantic, procedural, preference, and failure-condition records and evaluates read authority before ranking.",
+        "Successful and failed procedures are learned with explicit applicability conditions rather than global confidence alone.",
+        "Revoked, invalidated, cross-workspace, or out-of-time memory cannot enter an episode context."
+      ],
+      "passes": false,
+      "priority": 55,
+      "blocked_by": ["WYG-013"]
+    },
+    {
+      "id": "WYG-015",
+      "title": "Implement Harness routing and ApplicabilityEvaluation",
+      "acceptance_criteria": [
+        "Skills, Procedures, models, agents, tools, and providers are candidates until an explicit ApplicabilityEvaluation accepts them for current bindings and context.",
+        "Jurisdiction, missing-provider, binding override, known-failure, authority, and budget constraints can reject a relevant candidate.",
+        "Harness selection is deterministic for equal inputs and records the chosen candidate, rejected alternatives, budget, and rationale."
+      ],
+      "passes": false,
+      "priority": 56,
+      "blocked_by": ["WYG-006", "WYG-013", "WYG-014"]
+    },
+    {
+      "id": "WYG-016",
+      "title": "Create a scoped provider gateway and first local integrations",
+      "acceptance_criteria": [
+        "Filesystem, Git, generic REST/MCP, and model providers bind behind provider-neutral capability and tool contracts.",
+        "Provider credentials remain external to Apps and every operation carries workspace, principal, authority, idempotency, expected effects, and reconciliation metadata.",
+        "Provider loss updates Composition Runtime availability without replaying consequential external actions."
+      ],
+      "passes": false,
+      "priority": 57,
+      "blocked_by": ["WYG-005", "WYG-006", "WYG-009"]
+    },
+    {
+      "id": "WYG-017",
+      "title": "Build the shared Surface Runtime and narrow public capabilities",
+      "acceptance_criteria": [
+        "Application surfaces render from shared App and Work state rather than creating a private backend or duplicate semantic identities.",
+        "Public and embedded sessions receive narrow expiring capability contexts that cannot expose internal App grants or inspect mode.",
+        "Two Apps can render the same semantic object identity with different workspace-authorized views."
+      ],
+      "passes": false,
+      "priority": 58,
+      "blocked_by": ["WYG-008", "WYG-010", "WYG-011"]
+    },
+    {
+      "id": "WYG-018",
+      "title": "Add replay, simulation, cost accounting, and package certification",
+      "acceptance_criteria": [
+        "Episode execution records usage and cost by principal, provider, procedure, workload, App, and trace.",
+        "Replay and counterfactual simulation compare strategies without reissuing semantic or external effects.",
+        "Failure injection and conformance results produce inspectable package certification metadata."
+      ],
+      "passes": false,
+      "priority": 59,
+      "blocked_by": ["WYG-005", "WYG-009", "WYG-013", "WYG-015"]
+    },
+    {
+      "id": "WYG-019",
+      "title": "Deliver offline personal start and self-hosted multiplayer serve modes",
+      "acceptance_criteria": [
+        "A seeded Personal Workspace starts locally without Woyengi-operated services and installs a package from the filesystem.",
+        "Team server mode persists state in Postgres-compatible storage and supports two humans plus one AgentPrincipal over a durable realtime transport.",
+        "A compute node can run separately from the state server while authority, usage, and effect reconciliation stay traceable."
+      ],
+      "passes": false,
+      "priority": 60,
+      "blocked_by": ["WYG-013", "WYG-016", "WYG-017", "WYG-018"]
+    },
+    {
+      "id": "WYG-020",
+      "title": "Prove the coding-first engineering reference vertical",
+      "acceptance_criteria": [
+        "A GitHub issue becomes shared Work, is delegated to a separately granted coding agent, and executes in a governed sandbox.",
+        "Code, tests, evidence, independent verification, review, and pull-request publication remain under one trace and accepted-outcome boundary.",
+        "Provider failure, human takeover, and resumed agent work preserve durable context without duplicating external effects."
+      ],
+      "passes": false,
+      "priority": 61,
+      "blocked_by": ["WYG-016", "WYG-018", "WYG-019"]
+    },
+    {
+      "id": "WYG-021",
+      "title": "Compose reusable business App collections",
+      "acceptance_criteria": [
+        "Customers, Finance, People, Operations, and Compliance collections reuse shared semantic identities, Work primitives, authority, and surfaces.",
+        "Installing multiple collections does not create duplicate Customer, Person, Project, Document, or Money identities.",
+        "Each collection ships portable packages, seeded examples, verification contracts, and conformance tests."
+      ],
+      "passes": false,
+      "priority": 62,
+      "blocked_by": ["WYG-017", "WYG-018", "WYG-019"]
+    },
+    {
+      "id": "WYG-022",
+      "title": "Build hospitality, construction, and manufacturing reference solutions",
+      "acceptance_criteria": [
+        "Each industry solution is composed from the constitutional substrate and reusable business packages rather than new platform semantics.",
+        "Industry Work, evidence, approvals, external effects, and verification remain inspectable under shared contracts.",
+        "Reference packages install, export, update, fork, and certify without crossing workspace boundaries."
+      ],
+      "passes": false,
+      "priority": 63,
+      "blocked_by": ["WYG-021"]
+    },
+    {
+      "id": "WYG-023",
+      "title": "Add enterprise identity, policy, residency, and deployment controls",
+      "acceptance_criteria": [
+        "SSO, SCIM, groups, advanced ABAC, approval chains, audit export, retention, residency, BYOC, and air-gap profiles extend existing constitutional semantics.",
+        "Enterprise policies narrow authority and deployment placement without redefining Account, Workspace, Work, App, or Semantic Commit.",
+        "Dedicated, BYOC, hybrid, split-control, and air-gapped profiles have tested backup, restore, upgrade, and incident procedures."
+      ],
+      "passes": false,
+      "priority": 64,
+      "blocked_by": ["WYG-019", "WYG-021"]
+    },
+    {
+      "id": "WYG-024",
+      "title": "Implement optional Woyengi Cloud managed operations",
+      "acceptance_criteria": [
+        "Cloud manages environments, releases, channels, fleets, desired/reported state, deployment plans, health, backups, upgrades, rollback, metering, billing, and domains/TLS.",
+        "Cloud consumes Platform and Compute contracts and never becomes required for local/self-host core operation or defines semantic truth.",
+        "Managed public surfaces and package distribution preserve the same App, Work, authority, and verification model as local deployments."
+      ],
+      "passes": false,
+      "priority": 65,
+      "blocked_by": ["WYG-023"]
+    },
+    {
+      "id": "WYG-025",
+      "title": "Make canonical HTTP ingestion validated and atomic",
+      "acceptance_criteria": [
+        "The public API rejects unknown record kinds, malformed timestamps, invalid kind-specific fields, and records without an explicit workspace scope before durable mutation.",
+        "Known canonical record kinds are rebuilt through canonical constructors instead of being cast from client JSON.",
+        "Canonical records, their platform events, and the idempotency result commit atomically so a failed request leaves no partial durable state."
+      ],
+      "passes": false,
+      "priority": 0,
+      "blocked_by": []
+    },
+    {
+      "id": "WYG-026",
+      "title": "Order replay by a monotonic causal ledger sequence",
+      "acceptance_criteria": [
+        "Every workspace and Work operation receives an immutable monotonic ledger sequence when appended.",
+        "Replay, pagination, and subscription-facing order use the causal sequence instead of timestamp and arbitrary identifier ties.",
+        "Equal-timestamp parent and child operations replay deterministically in append order across restart."
+      ],
+      "passes": false,
+      "priority": 1,
+      "blocked_by": ["WYG-025"]
     }
   ]
 }

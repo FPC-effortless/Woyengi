@@ -239,6 +239,38 @@ test("replays workspace-scoped multiplayer work with durable handoff context", (
   assert.equal(Object.isFrozen(stream), true);
 });
 
+test("replays equal-time Work dependencies by immutable causal sequence", () => {
+  const work = new WorkRegistry();
+  const recordedAt = "2026-08-22T00:00:00Z";
+  const owner = new WorkspaceRegistry().registerPrincipal({ operationId: "workspace-operation:causal-owner", id: "principal:causal-owner", kind: "human", recordedAt });
+  const instance = work.createWorkInstance({
+    operationId: "work-operation:z-parent",
+    id: "work-instance:causal",
+    workspaceId: "workspace:causal",
+    intent: "Preserve causal order",
+    createdByPrincipalId: owner.id,
+    participants: [owner],
+    roles: { workOwners: [owner.id], decisionAuthorities: [owner.id], reviewers: [], approvers: [] },
+    context: {},
+    recordedAt,
+  });
+  work.startEpisode({
+    operationId: "work-operation:a-child",
+    id: "work-episode:causal",
+    workspaceId: instance.workspaceId,
+    workInstanceId: instance.id,
+    expectedVersion: 1,
+    objective: "Replay after parent",
+    actorPrincipalId: owner.id,
+    context: {},
+    recordedAt,
+  });
+
+  assert.deepEqual(work.history().map((operation) => operation.ledgerSequence), [1, 2]);
+  const replayed = WorkRegistry.replay([...work.history()].reverse());
+  assert.equal(replayed.episodesFor({ workspaceId: instance.workspaceId, workInstanceId: instance.id }).length, 1);
+});
+
 function at(minute: number): string {
   return `2026-08-21T10:${String(minute).padStart(2, "0")}:00+01:00`;
 }

@@ -116,3 +116,14 @@ test("replays account, workspace, principal, and membership operations with isol
   assert.equal(Object.isFrozen(context), true);
   assert.equal(Object.isFrozen(registry.history()), true);
 });
+
+test("replays equal-time workspace dependencies by immutable causal sequence", () => {
+  const registry = new WorkspaceRegistry();
+  const recordedAt = "2026-08-22T00:00:00Z";
+  const owner = registry.registerPrincipal({ operationId: "workspace-operation:z-owner", id: "principal:causal-owner", kind: "human", recordedAt });
+  registry.createAccount({ operationId: "workspace-operation:a-account", id: "account:causal", ownerPrincipalId: owner.id, personalWorkspaceId: "workspace:causal-personal", recordedAt });
+
+  assert.deepEqual(registry.history().map((operation) => operation.ledgerSequence), [1, 2]);
+  const replayed = WorkspaceRegistry.replay([...registry.history()].reverse());
+  assert.equal(replayed.workspaceFor({ principalId: owner.id, workspaceId: "workspace:causal-personal" }).kind, "personal");
+});

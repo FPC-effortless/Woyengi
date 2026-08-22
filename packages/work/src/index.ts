@@ -130,6 +130,7 @@ export interface WorkActivityEntry {
 
 interface OperationBase {
   readonly id: WorkOperationId;
+  readonly ledgerSequence: number;
   readonly kind: WorkActivityKind;
   readonly workspaceId: WorkspaceId;
   readonly workInstanceId: WorkInstanceId;
@@ -196,6 +197,8 @@ export class WorkRegistry {
   readonly #streams = new Map<string, WorkActivityEntry[]>();
   readonly #operations: WorkOperation[] = [];
   readonly #operationIds = new Set<string>();
+  readonly #ledgerSequences = new Set<string>();
+  readonly #lastLedgerSequenceByWorkspace = new Map<string, number>();
 
   static replay(operations: readonly WorkOperation[]): WorkRegistry {
     const registry = new WorkRegistry();
@@ -242,6 +245,7 @@ export class WorkRegistry {
       deepFreeze({
         id: operationId(input.operationId),
         kind: "work-instance.created" as const,
+        ledgerSequence: this.#nextLedgerSequence(instance.workspaceId),
         workspaceId: instance.workspaceId,
         workInstanceId: instance.id,
         actorPrincipalId: createdBy,
@@ -279,6 +283,7 @@ export class WorkRegistry {
       deepFreeze({
         id: operationId(input.operationId),
         kind: "work-episode.started" as const,
+        ledgerSequence: this.#nextLedgerSequence(instance.workspaceId),
         workspaceId: instance.workspaceId,
         workInstanceId: instance.id,
         actorPrincipalId: episode.startedByPrincipalId,
@@ -318,6 +323,7 @@ export class WorkRegistry {
       deepFreeze({
         id: operationId(input.operationId),
         kind: "activity.added" as const,
+        ledgerSequence: this.#nextLedgerSequence(instance.workspaceId),
         workspaceId: instance.workspaceId,
         workInstanceId: instance.id,
         actorPrincipalId: activity.createdByPrincipalId,
@@ -370,6 +376,7 @@ export class WorkRegistry {
       deepFreeze({
         id: operationId(input.operationId),
         kind: "activity.assigned" as const,
+        ledgerSequence: this.#nextLedgerSequence(instance.workspaceId),
         workspaceId: instance.workspaceId,
         workInstanceId: instance.id,
         actorPrincipalId: actor,
@@ -427,6 +434,7 @@ export class WorkRegistry {
       deepFreeze({
         id: operationId(input.operationId),
         kind: "outcome.recorded" as const,
+        ledgerSequence: this.#nextLedgerSequence(instance.workspaceId),
         workspaceId: instance.workspaceId,
         workInstanceId: instance.id,
         actorPrincipalId: outcome.recordedByPrincipalId,
@@ -479,6 +487,7 @@ export class WorkRegistry {
     const operation: AssignmentChangedOperation = deepFreeze({
       id: operationId(input.operationId),
       kind: input.kind,
+      ledgerSequence: this.#nextLedgerSequence(instance.workspaceId),
       workspaceId: instance.workspaceId,
       workInstanceId: instance.id,
       actorPrincipalId: principalId(input.actorPrincipalId),
@@ -497,6 +506,8 @@ export class WorkRegistry {
     const operation = deepFreeze(structuredClone(rawOperation));
     validateOperation(operation);
     if (this.#operationIds.has(operation.id)) throw new Error(`work operation already exists: ${operation.id}`);
+    const sequenceKey = `${operation.workspaceId}\u0000${operation.ledgerSequence}`;
+    if (this.#ledgerSequences.has(sequenceKey)) throw new Error(`work ledger sequence already exists: ${operation.workspaceId}:${operation.ledgerSequence}`);
     if (operation.kind === "work-instance.created") {
       if (this.#instances.has(operation.workInstanceId)) {
         throw new Error(`work instance already exists: ${operation.workInstanceId}`);
@@ -529,7 +540,13 @@ export class WorkRegistry {
     }
     this.#appendActivityEntry(operation);
     this.#operationIds.add(operation.id);
+    this.#ledgerSequences.add(sequenceKey);
+    this.#lastLedgerSequenceByWorkspace.set(operation.workspaceId, Math.max(this.#lastLedgerSequenceByWorkspace.get(operation.workspaceId) ?? 0, operation.ledgerSequence));
     this.#operations.push(operation);
+  }
+
+  #nextLedgerSequence(workspace: WorkspaceId): number {
+    return (this.#lastLedgerSequenceByWorkspace.get(workspace) ?? 0) + 1;
   }
 
   #applyEpisode(instance: WorkInstance, operation: WorkEpisodeStartedOperation): void {
@@ -708,6 +725,7 @@ interface TransitionInput {
 
 function validateOperation(operation: WorkOperation): void {
   operationId(operation.id);
+  if (!Number.isSafeInteger(operation.ledgerSequence) || operation.ledgerSequence < 1) throw new TypeError("work ledgerSequence must be a positive safe integer");
   workspaceId(operation.workspaceId);
   workInstanceId(operation.workInstanceId);
   principalId(operation.actorPrincipalId);
@@ -792,7 +810,7 @@ function cloneContext(value: Readonly<Record<string, WorkValue>>): Readonly<Reco
 }
 
 function compareOperations(left: WorkOperation, right: WorkOperation): number {
-  return left.transactionTime.from.localeCompare(right.transactionTime.from) || left.id.localeCompare(right.id);
+  return left.workspaceId.localeCompare(right.workspaceId) || left.ledgerSequence - right.ledgerSequence;
 }
 
 function workInstanceId(value: string): WorkInstanceId {

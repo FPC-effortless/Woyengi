@@ -21,14 +21,14 @@ test("boots the deployed API entrypoint and exercises ingest, state, and reconst
     assert.equal((await fetch(`${url}/readyz`)).status, 200);
     const headers = { authorization: `Bearer ${token}`, "content-type": "application/json", "idempotency-key": "ingest:deployment-e2e" };
     const governingClaim = claim("claim:deployment-e2e", "October", 90, "2026-08-14T00:00:00Z");
-    const ingest = await fetch(`${url}/v1/ingest`, { method: "POST", headers, body: JSON.stringify(governingClaim) });
+    const ingest = await fetch(`${url}/v1/ingest`, { method: "POST", headers, body: JSON.stringify(ingestion(governingClaim)) });
     assert.equal(ingest.status, 200, await ingest.text());
-    const duplicate = await fetch(`${url}/v1/ingest`, { method: "POST", headers, body: JSON.stringify(governingClaim) });
+    const duplicate = await fetch(`${url}/v1/ingest`, { method: "POST", headers, body: JSON.stringify(ingestion(governingClaim)) });
     assert.equal(duplicate.status, 200);
     assert.deepEqual((await duplicate.json()).data.accepted, ["claim:deployment-e2e"]);
-    const conflictingKey = await fetch(`${url}/v1/ingest`, { method: "POST", headers, body: JSON.stringify(claim("claim:different", "September", 20, "2026-08-14T00:00:01Z")) });
+    const conflictingKey = await fetch(`${url}/v1/ingest`, { method: "POST", headers, body: JSON.stringify(ingestion(claim("claim:different", "September", 20, "2026-08-14T00:00:01Z"))) });
     assert.equal(conflictingKey.status, 409);
-    const lowerClaim = await fetch(`${url}/v1/ingest`, { method: "POST", headers: { ...headers, "idempotency-key": "ingest:lower-authority" }, body: JSON.stringify(claim("claim:lower-authority", "September", 20, "2026-08-14T00:00:01Z")) });
+    const lowerClaim = await fetch(`${url}/v1/ingest`, { method: "POST", headers: { ...headers, "idempotency-key": "ingest:lower-authority" }, body: JSON.stringify(ingestion(claim("claim:lower-authority", "September", 20, "2026-08-14T00:00:01Z"))) });
     assert.equal(lowerClaim.status, 200);
     const state = await fetch(`${url}/v1/state/entities/${encodeURIComponent("entity:alpha")}`, { headers: { authorization: `Bearer ${token}` } });
     assert.equal(state.status, 200);
@@ -41,7 +41,7 @@ test("boots the deployed API entrypoint and exercises ingest, state, and reconst
     assert.deepEqual(workspace.data.provenanceManifest, ["claim:deployment-e2e", "claim:lower-authority"]);
     assert.equal(workspace.data.contradictions[0].id, "claim:lower-authority");
     const retractHeaders = { authorization: `Bearer ${token}`, "content-type": "application/json", "idempotency-key": "control:retract-governing" };
-    const retractBody = { id: "lifecycle:retract-deployment", targetId: "claim:deployment-e2e", reason: "Decision changed", recordedAt: "2026-08-14T00:02:00Z" };
+    const retractBody = { id: "lifecycle:retract-deployment", workspaceId: "workspace:personal-local", targetId: "claim:deployment-e2e", reason: "Decision changed", recordedAt: "2026-08-14T00:02:00Z" };
     const retract = await fetch(`${url}/v1/control/retract`, { method: "POST", headers: retractHeaders, body: JSON.stringify(retractBody) });
     assert.equal(retract.status, 200);
     const retractDuplicate = await fetch(`${url}/v1/control/retract`, { method: "POST", headers: retractHeaders, body: JSON.stringify(retractBody) });
@@ -63,6 +63,107 @@ test("boots the deployed API entrypoint and exercises ingest, state, and reconst
   assert.equal(errors, "");
   const records = JSON.parse(await readFile(join(dataDirectory, "ledger", "records.json"), "utf8"));
   assert.equal(records.find((record: { id: string }) => record.id === "claim:deployment-e2e")?.kind, "claim");
+  assert.equal(records.find((record: { id: string }) => record.id === "platform-event:record-created:claim:deployment-e2e")?.kind, "platform-event");
+  assert.equal(records.filter((record: { kind: string }) => record.kind === "idempotency-result").length, 2);
+  assert.equal(records.filter((record: { kind: string }) => record.kind === "claim" || record.kind === "idempotency-result").every((record: { workspaceId?: string }) => record.workspaceId === "workspace:personal-local"), true);
+});
+
+test("rejects invalid canonical input before any durable mutation", async () => {
+  const dataDirectory = await mkdtemp(join(tmpdir(), "woyengi-invalid-ingest-"));
+  const token = `test-${"x".repeat(32)}`;
+  const child = spawn(process.execPath, ["services/platform-api/src/main.ts"], {
+    cwd: new URL("../..", import.meta.url),
+    env: { ...process.env, WOYENGI_API_TOKEN: token, WOYENGI_DATA_DIR: dataDirectory, WOYENGI_HOST: "127.0.0.1", WOYENGI_PORT: "0" },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let errors = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => { errors += chunk; });
+  let unknownStatus = 0;
+  let malformedStatus = 0;
+  let missingWorkspaceStatus = 0;
+  let atomicBatchStatus = 0;
+  try {
+    const url = await listeningUrl(child.stdout);
+    const headers = { authorization: `Bearer ${token}`, "content-type": "application/json" };
+    unknownStatus = (await fetch(`${url}/v1/ingest`, {
+      method: "POST",
+      headers: { ...headers, "idempotency-key": "ingest:unknown-kind" },
+      body: JSON.stringify(ingestion({ id: "invented:1", kind: "invented", transactionTime: { from: "2026-08-22T00:00:00Z" } })),
+    })).status;
+    malformedStatus = (await fetch(`${url}/v1/ingest`, {
+      method: "POST",
+      headers: { ...headers, "idempotency-key": "ingest:malformed-time" },
+      body: JSON.stringify(ingestion({ id: "claim:malformed", kind: "claim", transactionTime: { from: "not-a-time" } })),
+    })).status;
+    missingWorkspaceStatus = (await fetch(`${url}/v1/ingest`, {
+      method: "POST",
+      headers: { ...headers, "idempotency-key": "ingest:missing-workspace" },
+      body: JSON.stringify({ records: [claim("claim:unscoped", "October", 90, "2026-08-22T00:00:01Z")] }),
+    })).status;
+    atomicBatchStatus = (await fetch(`${url}/v1/ingest`, {
+      method: "POST",
+      headers: { ...headers, "idempotency-key": "ingest:atomic-batch" },
+      body: JSON.stringify({
+        workspaceId: "workspace:personal-local",
+        records: [
+          claim("claim:would-be-partial", "October", 90, "2026-08-22T00:00:02Z"),
+          { id: "invented:batch", kind: "invented", transactionTime: { from: "2026-08-22T00:00:03Z" } },
+        ],
+      }),
+    })).status;
+  } finally {
+    const exited = new Promise<void>((resolve) => child.once("exit", () => resolve()));
+    if (child.exitCode === null) child.kill("SIGTERM");
+    if (child.exitCode === null) await exited;
+  }
+
+  assert.equal(errors, "");
+  assert.equal(unknownStatus, 400);
+  assert.equal(malformedStatus, 400);
+  assert.equal(missingWorkspaceStatus, 400);
+  assert.equal(atomicBatchStatus, 400);
+  const records = await persistedRecords(dataDirectory);
+  assert.deepEqual(records, []);
+});
+
+test("paginates equal-time records and subscriptions by causal ledger sequence", async () => {
+  const dataDirectory = await mkdtemp(join(tmpdir(), "woyengi-causal-api-"));
+  const token = `test-${"x".repeat(32)}`;
+  const child = spawn(process.execPath, ["services/platform-api/src/main.ts"], {
+    cwd: new URL("../..", import.meta.url),
+    env: { ...process.env, WOYENGI_API_TOKEN: token, WOYENGI_DATA_DIR: dataDirectory, WOYENGI_HOST: "127.0.0.1", WOYENGI_PORT: "0" },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let errors = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => { errors += chunk; });
+  try {
+    const url = await listeningUrl(child.stdout);
+    const authorization = { authorization: `Bearer ${token}` };
+    const response = await fetch(`${url}/v1/ingest`, {
+      method: "POST",
+      headers: { ...authorization, "content-type": "application/json", "idempotency-key": "ingest:causal-api" },
+      body: JSON.stringify({ workspaceId: "workspace:causal-api", records: [
+        claim("claim:z-parent", "parent", 90, "2026-08-22T00:00:00Z"),
+        claim("claim:a-child", "child", 90, "2026-08-22T00:00:00Z"),
+      ] }),
+    });
+    assert.equal(response.status, 200, await response.text());
+    const firstPage = (await (await fetch(`${url}/v1/state/entities/${encodeURIComponent("entity:alpha")}?limit=1`, { headers: authorization })).json()) as any;
+    assert.equal(firstPage.data.records[0].id, "claim:z-parent");
+    assert.equal(firstPage.data.nextCursor, "1");
+    const secondPage = (await (await fetch(`${url}/v1/state/entities/${encodeURIComponent("entity:alpha")}?limit=1&cursor=1`, { headers: authorization })).json()) as any;
+    assert.equal(secondPage.data.records[0].id, "claim:a-child");
+    const eventPage = (await (await fetch(`${url}/v1/subscriptions/${encodeURIComponent("subscription:causal")}?limit=1`, { headers: authorization })).json()) as any;
+    assert.equal(eventPage.data.events[0].aggregateId, "claim:z-parent");
+    assert.equal(eventPage.data.nextCursor, "3");
+  } finally {
+    const exited = new Promise<void>((resolve) => child.once("exit", () => resolve()));
+    if (child.exitCode === null) child.kill("SIGTERM");
+    if (child.exitCode === null) await exited;
+  }
+  assert.equal(errors, "");
 });
 
 function claim(id: string, value: string, authority: number, recordedAt: string) {
@@ -73,6 +174,19 @@ function claim(id: string, value: string, authority: number, recordedAt: string)
     authority: { level: authority, basis: authority > 50 ? "approved decision" : "discussion" },
     confidence: authority > 50 ? 0.9 : 0.99, lifecycle: "verified",
   };
+}
+
+function ingestion(record: unknown) {
+  return { workspaceId: "workspace:personal-local", records: [record] };
+}
+
+async function persistedRecords(dataDirectory: string): Promise<unknown[]> {
+  try {
+    return JSON.parse(await readFile(join(dataDirectory, "ledger", "records.json"), "utf8"));
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return [];
+    throw error;
+  }
 }
 
 async function listeningUrl(stream: NodeJS.ReadableStream): Promise<string> {

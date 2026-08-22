@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Woyengi — work, shaped around you</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2322342b'/%3E%3Cpath d='M15 18l9 29 8-19 8 19 9-29' fill='none' stroke='%23f7efdc' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to your work</a>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Woyengi navigation">
+        <div class="brand-row">
+          <a class="brand" href="#home" aria-label="Woyengi home"><span class="brand-mark" aria-hidden="true">W</span><span>Woyengi</span></a>
+          <button class="mobile-close icon-button" type="button" data-close-menu aria-label="Close navigation">×</button>
+        </div>
+
+        <nav aria-label="Primary">
+          <a class="nav-link active" href="#home" aria-current="page" data-view="home"><span class="nav-icon" aria-hidden="true">⌂</span><span>Home</span></a>
+          <a class="nav-link" href="#work" data-view="work"><span class="nav-icon" aria-hidden="true">◫</span><span>Work</span><span class="nav-count" id="work-count">3</span></a>
+          <a class="nav-link" href="#apps" data-view="apps"><span class="nav-icon" aria-hidden="true">◇</span><span>Apps</span></a>
+          <a class="nav-link" href="#inbox" data-view="inbox"><span class="nav-icon" aria-hidden="true">○</span><span>Inbox</span><span class="nav-dot" aria-label="Unread items"></span></a>
+          <a class="nav-link" href="#search" data-view="search"><span class="nav-icon" aria-hidden="true">⌕</span><span>Search</span><kbd>⌘ K</kbd></a>
+        </nav>
+
+        <div class="sidebar-spacer"></div>
+        <button class="inspect-entry" type="button" data-open-inspect aria-haspopup="dialog"><span aria-hidden="true">···</span> Inspect mode</button>
+        <div class="profile-card">
+          <span class="avatar" data-principal-initials>AO</span>
+          <span><strong data-principal-name>Ada</strong><small>Working locally</small></span>
+          <span class="local-status" aria-label="Local workspace available"></span>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="topbar">
+          <button class="mobile-menu icon-button" type="button" data-open-menu aria-label="Open navigation" aria-expanded="false">☰</button>
+          <div class="workspace-control">
+            <label for="workspace-switcher">Workspace</label>
+            <select id="workspace-switcher" aria-label="Switch workspace"><option>Loading…</option></select>
+          </div>
+          <div class="topbar-actions">
+            <span class="sync-state"><i aria-hidden="true"></i> Local-first</span>
+            <button class="icon-button" type="button" data-theme-toggle aria-label="Switch to dark theme">☾</button>
+            <button class="top-avatar" type="button" aria-label="Open profile menu" data-principal-initials>AO</button>
+          </div>
+        </header>
+
+        <main id="main-content" tabindex="-1">
+          <section class="welcome" id="home" aria-labelledby="welcome-title">
+            <p class="eyebrow">Your workspace, in motion</p>
+            <div class="welcome-row">
+              <div><h1 id="welcome-title" data-greeting>Good morning, Ada</h1><p data-summary>See what matters and move it forward.</p></div>
+              <time datetime="2026-08-22">Friday, 22 August</time>
+            </div>
+
+            <form class="intent-card" aria-label="Ask, create, or delegate">
+              <div class="intent-modes" role="group" aria-label="Intent type">
+                <button type="button" aria-pressed="true" data-intent-mode="Ask">Ask</button>
+                <button type="button" aria-pressed="false" data-intent-mode="Create">Create</button>
+                <button type="button" aria-pressed="false" data-intent-mode="Delegate">Delegate</button>
+              </div>
+              <label class="sr-only" for="intent-input">Tell Woyengi what you want to accomplish</label>
+              <textarea id="intent-input" rows="2" placeholder="What would you like to move forward?" autocomplete="off"></textarea>
+              <div class="intent-footer">
+                <p><span aria-hidden="true">✦</span> Woyengi will shape the right workspace around your intent.</p>
+                <button class="send-button" type="submit" aria-label="Send intent">↗</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="pulse-grid" aria-label="Workspace pulse">
+            <article><span class="metric-icon warm" aria-hidden="true">↗</span><span><small>Active work</small><strong data-active-work>3</strong></span><em>2 moving today</em></article>
+            <article><span class="metric-icon lilac" aria-hidden="true">◷</span><span><small>Waiting for you</small><strong data-waiting>1</strong></span><em>One decision</em></article>
+            <article><span class="metric-icon mint" aria-hidden="true">✓</span><span><small>Completed this week</small><strong data-completed>7</strong></span><em>Up from last week</em></article>
+          </section>
+
+          <div class="content-grid">
+            <section class="section-block work-section" id="work" aria-labelledby="work-title">
+              <div class="section-heading"><div><p class="eyebrow">In focus</p><h2 id="work-title">Work moving now</h2></div><a href="#work-all">See all work <span aria-hidden="true">→</span></a></div>
+              <div class="work-list" data-work-list aria-live="polite"></div>
+            </section>
+
+            <aside class="section-block attention-section" id="inbox" aria-labelledby="attention-title">
+              <div class="section-heading"><div><p class="eyebrow">Inbox</p><h2 id="attention-title">Needs your attention</h2></div><button class="quiet-button" type="button" aria-label="Open inbox">•••</button></div>
+              <div data-inbox-list></div>
+              <a class="full-link" href="#inbox-all">Open inbox <span aria-hidden="true">→</span></a>
+            </aside>
+          </div>
+
+          <section class="section-block apps-section" id="apps" aria-labelledby="apps-title">
+            <div class="section-heading"><div><p class="eyebrow">Made for this workspace</p><h2 id="apps-title">Your Apps</h2></div><button class="outline-button" type="button" data-create-app><span aria-hidden="true">＋</span> Create an App</button></div>
+            <div class="apps-grid" data-app-list></div>
+          </section>
+
+          <section class="composer-preview" data-composer-preview aria-labelledby="composer-title">
+            <div class="composer-copy">
+              <span class="composer-mark" aria-hidden="true">✦</span>
+              <p class="eyebrow">Composer preview</p>
+              <h2 id="composer-title">Shape an App from a sentence.</h2>
+              <p>Describe the way you want to work. Woyengi assembles a useful first version from your workspace context, then lets you tune it.</p>
+              <button class="primary-button" type="button" data-start-composer>Open Composer <span aria-hidden="true">→</span></button>
+            </div>
+            <div class="preview-window" aria-label="Daily briefing App preview">
+              <div class="preview-bar"><i></i><i></i><i></i><span>Daily briefing</span></div>
+              <div class="preview-body"><span class="preview-label">Today · Atlas Studio</span><strong>Three things worth your focus.</strong><div class="preview-item"><b>01</b><span>Partner portal launch<small>Audience decision ready</small></span></div><div class="preview-item"><b>02</b><span>Regional policy<small>New synthesis from Mira</small></span></div><div class="preview-item muted"><b>03</b><span>September narrative<small>Draft is ready to review</small></span></div></div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="scrim" data-scrim hidden></div>
+    <aside class="inspect-panel" role="dialog" aria-modal="true" aria-labelledby="inspect-title" data-inspect-panel hidden>
+      <div class="inspect-heading"><div><p class="eyebrow">Advanced</p><h2 id="inspect-title">Inspect mode</h2></div><button class="icon-button" type="button" data-close-inspect aria-label="Close inspect mode">×</button></div>
+      <p>Technical records stay here so your everyday workspace remains calm.</p>
+      <dl><div><dt>Workspace record</dt><dd>workspace:personal-ada</dd></div><div><dt>Authority</dt><dd>Human owner · governing</dd></div><div><dt>Provenance</dt><dd>7 canonical sources</dd></div><div><dt>Lifecycle</dt><dd>Active · local-first</dd></div></dl>
+    </aside>
+    <div class="toast" role="status" aria-live="polite" data-toast hidden></div>
+  </body>
+</html>

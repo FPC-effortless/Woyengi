@@ -8,6 +8,8 @@ import { LocalCanonicalLedger } from "../../storage/src/index.ts";
 export interface PlatformEvent {
   readonly id: string;
   readonly kind: "platform-event";
+  readonly workspaceId?: string;
+  readonly ledgerSequence?: number;
   readonly topic: string;
   readonly aggregateId: string;
   readonly causedBy: string;
@@ -77,9 +79,14 @@ export class LocalEventBus {
     const normalized = normalizeSubscription(subscription);
     const all = this.#ledger.query();
     const cursor = this.#cursors.get(normalized.id);
-    const cursorIndex = cursor === undefined ? -1 : all.findIndex((event) => event.id === cursor);
+    const afterSequence = cursor === undefined
+      ? 0
+      : /^\d+$/.test(cursor)
+        ? Number(cursor)
+        : all.find((event) => event.id === cursor)?.ledgerSequence ?? -1;
+    if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) throw new Error(`event cursor is invalid for ${normalized.id}`);
     const candidates = all
-      .slice(cursorIndex + 1)
+      .filter((event) => (event.ledgerSequence ?? 0) > afterSequence)
       .filter((event) => normalized.topicPrefixes.some((prefix) => event.topic.startsWith(prefix)))
       .map((event) => delivery(normalized.id, event));
     return Object.freeze(candidates);
@@ -92,7 +99,9 @@ export class LocalEventBus {
     const normalized = normalizeSubscription(subscription);
     for (const item of await this.pending(normalized)) {
       await handler(item);
-      await this.#commitCursor(normalized.id, item.event.id);
+      const sequence = item.event.ledgerSequence;
+      if (sequence === undefined) throw new Error(`event has no causal ledger sequence: ${item.event.id}`);
+      await this.#commitCursor(normalized.id, String(sequence));
     }
   }
 

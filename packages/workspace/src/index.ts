@@ -57,6 +57,7 @@ export interface WorkspaceContext {
 
 interface WorkspaceOperationBase {
   readonly id: WorkspaceOperationId;
+  readonly ledgerSequence: number;
   readonly transactionTime: { readonly from: string };
 }
 
@@ -103,7 +104,9 @@ export class WorkspaceRegistry {
   readonly #workspaces = new Map<string, Workspace>();
   readonly #memberships = new Map<string, Membership>();
   readonly #operationIds = new Set<string>();
+  readonly #ledgerSequences = new Set<number>();
   readonly #operations: WorkspaceOperation[] = [];
+  #lastLedgerSequence = 0;
 
   static replay(operations: readonly WorkspaceOperation[]): WorkspaceRegistry {
     const registry = new WorkspaceRegistry();
@@ -126,6 +129,7 @@ export class WorkspaceRegistry {
     const operation = deepFreeze({
       id: operationId(input.operationId),
       kind: "principal.registered" as const,
+      ledgerSequence: this.#nextLedgerSequence(),
       principal,
       transactionTime: { from: normalizeInstant(input.recordedAt) },
     });
@@ -153,6 +157,7 @@ export class WorkspaceRegistry {
     const operation = deepFreeze({
       id: operationId(input.operationId),
       kind: "account.created" as const,
+      ledgerSequence: this.#nextLedgerSequence(),
       account,
       workspace,
       transactionTime: { from: normalizeInstant(input.recordedAt) },
@@ -196,6 +201,7 @@ export class WorkspaceRegistry {
     const operation = deepFreeze({
       id: operationId(input.operationId),
       kind: "organization.created" as const,
+      ledgerSequence: this.#nextLedgerSequence(),
       organization,
       workspace,
       membership,
@@ -230,6 +236,7 @@ export class WorkspaceRegistry {
     const operation = deepFreeze({
       id: operationId(input.operationId),
       kind: "membership.invited" as const,
+      ledgerSequence: this.#nextLedgerSequence(),
       membership,
       transactionTime: { from: membership.invitedAt },
     });
@@ -246,6 +253,7 @@ export class WorkspaceRegistry {
     const operation = deepFreeze({
       id: operationId(input.operationId),
       kind: "membership.accepted" as const,
+      ledgerSequence: this.#nextLedgerSequence(),
       membershipId: membershipId(input.membershipId),
       principalId: principalId(input.principalId),
       transactionTime: { from: normalizeInstant(input.recordedAt) },
@@ -293,6 +301,7 @@ export class WorkspaceRegistry {
     if (this.#operationIds.has(operation.id)) {
       throw new Error(`workspace operation already exists: ${operation.id}`);
     }
+    if (this.#ledgerSequences.has(operation.ledgerSequence)) throw new Error(`workspace ledger sequence already exists: ${operation.ledgerSequence}`);
     switch (operation.kind) {
       case "principal.registered":
         if (this.#principals.has(operation.principal.id)) {
@@ -314,7 +323,13 @@ export class WorkspaceRegistry {
         break;
     }
     this.#operationIds.add(operation.id);
+    this.#ledgerSequences.add(operation.ledgerSequence);
+    this.#lastLedgerSequence = Math.max(this.#lastLedgerSequence, operation.ledgerSequence);
     this.#operations.push(deepFreeze(structuredClone(operation)));
+  }
+
+  #nextLedgerSequence(): number {
+    return this.#lastLedgerSequence + 1;
   }
 
   #applyAccountCreated(operation: AccountCreatedOperation): void {
@@ -449,6 +464,7 @@ export class WorkspaceRegistry {
 
 function validateOperation(operation: WorkspaceOperation): void {
   operationId(operation.id);
+  if (!Number.isSafeInteger(operation.ledgerSequence) || operation.ledgerSequence < 1) throw new TypeError("workspace ledgerSequence must be a positive safe integer");
   normalizeInstant(operation.transactionTime.from);
   switch (operation.kind) {
     case "principal.registered":
@@ -490,10 +506,7 @@ function validateMembership(membership: Membership): void {
 }
 
 function compareOperations(left: WorkspaceOperation, right: WorkspaceOperation): number {
-  return (
-    left.transactionTime.from.localeCompare(right.transactionTime.from) ||
-    left.id.localeCompare(right.id)
-  );
+  return left.ledgerSequence - right.ledgerSequence;
 }
 
 function accountId(value: string): AccountId {

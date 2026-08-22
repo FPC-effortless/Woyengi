@@ -362,3 +362,49 @@
 - Integration review repaired zero-similarity App selection, multiple Personal Workspaces per human, implicit runtime authorization, and legacy principal-ID acceptance before merge.
 - Verification: lane-level targeted tests, typecheck, boundaries, and full suites passed. Integrated fast production gate is intentionally `NO-GO` because the newly active full-product requirements are unfinished; architecture/deep-module/security remain green. Final serialized integration suite pending after concurrent test-worker resource pressure clears.
 - Next: WYG-005 governed execution, WYG-008 App package lifecycle, and WYG-010 collaboration event/presence contracts in parallel.
+
+## 2026-08-22 — WYG-005/008/009/010/011/012 GREEN → INTEGRATED
+
+- Added the governed execution spine from ActionIntent through disjoint effects, manifest, receipt, observations, reconciliation, evidence, independent verification, acceptance decision, and exactly one Verified Semantic Commit; provider success alone remains insufficient.
+- Added portable workspace-bound ApplicationPackages and ApplicationInstances with isolation, overlays, filesystem import/export, compatibility migrations, update, and rollback.
+- Added provider-neutral governed compute with explicit authority, budgets, idempotency, workspace-scoped node heartbeat/leases, and immutable observation-only usage receipts.
+- Added resumable collaboration envelopes, optimistic versions, ephemeral presence, fail-closed authorization, and public payload filtering over the existing durable event port.
+- Added the responsive local Woyengi shell with Home, Work, Apps, Inbox, Search, Personal/Organization switching, Ask/Create/Delegate, Composer preview, and hidden Inspect mode. Real-browser QA passed at 375×812 and 1280×900 in light/dark mode.
+- Added a cross-package conformance flow proving Account and Personal/Organization isolation, App installation, two-human plus separately granted Agent work, governed local compute, reconciliation, evidence, verification, acceptance, and a Verified Semantic Commit under one trace.
+- Integration verification: 61 Node tests and 1 Python SDK test pass serially; typecheck, package-boundary, deep-module, architecture, and security gates pass. The release gate remains intentionally `NO-GO` because the broader full-product requirements and human acceptance remain open. Node 24.6.0 is still below the declared 24.12.0 minimum.
+- Next: Wave 2 context/memory, Applicability/Harness, provider gateway, Surface Runtime, and eval/simulation contracts; then the self-hosted coding-first reference flow.
+
+## 2026-08-22 — WYG-013/014/015/016/017/018 GREEN → INTEGRATED
+
+- Added exact workspace/work/episode/time/revocation-scoped EpisodeCapabilityContext and reconstructible AgentKnowledgeWorkspace boundaries with default-deny read/write/applicability and sensitive provenance filtering.
+- Added five typed memory categories with authority-before-rank retrieval, bitemporal lifecycle, provenance, applicability conditions, procedure outcome learning, and known-failure penalties.
+- Added deterministic Harness routing for skills, procedures, models, agents, tools, and providers after explicit jurisdiction, provider, binding, memory, authority, budget, and risk gates.
+- Added provider-neutral filesystem, Git, REST, MCP, and model contracts with external credential references, scoped bindings, effect/reconciliation envelopes, lifecycle availability, and sticky idempotency after uncertain consequential execution.
+- Added a shared Surface Runtime that preserves semantic identity across Apps while narrowing and recursively filtering public/embedded contexts from grants, capabilities, credentials, secrets, tokens, inspect data, and private authority context.
+- Added immutable evaluation traces, same-currency cost attribution by principal/provider/procedure/workload/App, recorded-only replay and strategy comparison, controlled failure injection, and evaluated-scope certification that explicitly cannot claim production readiness.
+- Integration review repaired sensitive provenance leakage, cross-plane trace namespace drift, unsafe external retry after adapter uncertainty, missing external reconciliation, and authority/credential leakage through surface definitions and selected data.
+- Verification: 79 serialized Node tests and 1 Python SDK test pass; typecheck, package-boundary, deep-module, and responsive browser QA gates pass. The release gate remains intentionally `NO-GO` because broader requirements and human acceptance remain open. Node 24.6.0 remains below the declared 24.12.0 minimum.
+- Next: WYG-019 offline personal start, durable multiplayer serve, and separately hosted compute node; then WYG-020 coding-first engineering reference flow.
+
+## 2026-08-22 — REVIEW REMEDIATION PLANNED
+
+- Froze feature breadth after the independent architecture review and created corrective tickets WYG-025 and WYG-026.
+- Baseline: `pnpm test` passed 82/82 Node tests; the local Node v24.6.0 runtime remains below the declared >=24.12.0 engine.
+- Working on WYG-025 first: fail-closed kind-specific canonical validation plus one atomic record/event/idempotency commit.
+- Next: reproduce unknown-kind and malformed-timestamp persistence probes as failing deployed-API tests.
+
+## 2026-08-22 — WYG-025 RED → GREEN → INTEGRATED
+
+- RED: deployed API tests proved unknown kinds returned 200, malformed timestamps could leave a partial record, missing workspace scope was accepted, and a mixed invalid batch had no atomic boundary.
+- GREEN: public canonical ingestion now requires a workspace-scoped records envelope, rebuilds every supported kind through constitutional constructors, maps invalid input to HTTP 400, and rejects the complete batch before mutation.
+- Added one atomic local ledger batch for canonical records, generated platform events, and durable idempotency results; accepted retries survive restart without replaying effects.
+- Verification: targeted storage/deployed API tests passed, typecheck passed, package boundaries passed, and the serialized integration suite passed 84/84 before starting WYG-026.
+
+## 2026-08-22 — WYG-026 RED → GREEN → INTEGRATED
+
+- RED: equal-time parent/child records sorted by identifier, Workspace and Work operation replays lacked causal metadata, API pagination used mutable offsets, and event cursors stored event IDs.
+- GREEN: durable storage assigns immutable positive per-workspace ledger sequences, persists and continues them after restart, and deterministically backfills legacy arrays from their stored order.
+- Workspace and Work operation journals now carry causal sequence; transaction time remains the bitemporal cutoff while state pagination, API subscriptions, local event delivery, and replay order use sequence.
+- Added ADR 0006 and corrected the status/gap matrices: Waves 0-2 are broadly functional, Wave 3 is partial, and the system is not production-ready.
+- Verification: 88/88 serialized Node tests and the Python SDK test pass; typecheck, package boundaries, and deep-module gates pass. The fast production gate remains the expected `NO-GO` because full-product requirements and human acceptance are open; architecture, deep-module, and security gates pass.
+- Next: finish WYG-019B durable self-hosted multiplayer server composition, then WYG-020 coding-first reference vertical.
