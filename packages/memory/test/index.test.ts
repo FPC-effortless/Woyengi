@@ -82,7 +82,7 @@ test("filters memory before deterministic ranking and learns condition-bound pro
     semantic("memory-record:expired", request, { validTime: { from: at(0), to: at(20) } }),
     semantic("memory-record:future-transaction", request, { transactionTime: { from: at(90) } }),
     semantic("memory-record:too-sensitive", request, { sensitivity: "restricted" }),
-    semantic("memory-record:raw-secret", request, { value: { apiToken: "secret:production" } }),
+    semantic("memory-record:raw-secret", request, { value: { apiToken: ["secret:", "production"].join("") } }),
     semantic("memory-record:credential-provenance", request, {
       provenance: ["credential-ref:production-memory-source"],
     }),

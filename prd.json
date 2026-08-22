@@ -3,8 +3,8 @@
   "problem": "People and organizations need one local-first workspace where durable human-and-agent work, adaptive software, shared semantic state, and consequential execution remain governed, reconstructible, and verifiable.",
   "outcome": "Woyengi composes software around intent and executes durable human-and-agent work toward verified outcomes while preserving the existing persistent-state foundation.",
   "active_milestone": {
-    "name": "Full-product Wave 2 intelligence and application runtime",
-    "tickets": ["WYG-013", "WYG-014", "WYG-015", "WYG-016", "WYG-017", "WYG-018"],
+    "name": "Full-product Wave 3 local runtime and coding reference",
+    "tickets": ["WYG-019", "WYG-020"],
     "qa_status": "implementation_in_progress"
   },
   "completed_milestones": [
@@ -26,6 +26,11 @@
     {
       "name": "Full-product Wave 0 and Wave 1 implementation",
       "tickets": ["WYG-001", "WYG-002", "WYG-003", "WYG-004", "WYG-005", "WYG-006", "WYG-007", "WYG-008", "WYG-009", "WYG-010", "WYG-011", "WYG-012"],
+      "qa_status": "automated_green_release_requirements_and_human_acceptance_open"
+    },
+    {
+      "name": "Full-product Wave 2 intelligence and application runtime",
+      "tickets": ["WYG-013", "WYG-014", "WYG-015", "WYG-016", "WYG-017", "WYG-018"],
       "qa_status": "automated_green_release_requirements_and_human_acceptance_open"
     }
   ],

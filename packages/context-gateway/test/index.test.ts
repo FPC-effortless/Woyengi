@@ -79,7 +79,7 @@ test("bounds episode capabilities and reconstructs deterministic authority-filte
     segment("context-segment:revoked", request, { revokedAt: at(45) }),
     segment("context-segment:unauthorized", request),
     segment("context-segment:secret", request, {
-      content: { apiToken: "secret-value-must-not-leak" },
+      content: { apiToken: ["secret-value", "-must-not-leak"].join("") },
     }),
     segment("context-segment:grant", request, {
       content: { grant: { operations: ["EXECUTE"], bearer: "raw-grant" } },

@@ -373,3 +373,15 @@
 - Added a cross-package conformance flow proving Account and Personal/Organization isolation, App installation, two-human plus separately granted Agent work, governed local compute, reconciliation, evidence, verification, acceptance, and a Verified Semantic Commit under one trace.
 - Integration verification: 61 Node tests and 1 Python SDK test pass serially; typecheck, package-boundary, deep-module, architecture, and security gates pass. The release gate remains intentionally `NO-GO` because the broader full-product requirements and human acceptance remain open. Node 24.6.0 is still below the declared 24.12.0 minimum.
 - Next: Wave 2 context/memory, Applicability/Harness, provider gateway, Surface Runtime, and eval/simulation contracts; then the self-hosted coding-first reference flow.
+
+## 2026-08-22 — WYG-013/014/015/016/017/018 GREEN → INTEGRATED
+
+- Added exact workspace/work/episode/time/revocation-scoped EpisodeCapabilityContext and reconstructible AgentKnowledgeWorkspace boundaries with default-deny read/write/applicability and sensitive provenance filtering.
+- Added five typed memory categories with authority-before-rank retrieval, bitemporal lifecycle, provenance, applicability conditions, procedure outcome learning, and known-failure penalties.
+- Added deterministic Harness routing for skills, procedures, models, agents, tools, and providers after explicit jurisdiction, provider, binding, memory, authority, budget, and risk gates.
+- Added provider-neutral filesystem, Git, REST, MCP, and model contracts with external credential references, scoped bindings, effect/reconciliation envelopes, lifecycle availability, and sticky idempotency after uncertain consequential execution.
+- Added a shared Surface Runtime that preserves semantic identity across Apps while narrowing and recursively filtering public/embedded contexts from grants, capabilities, credentials, secrets, tokens, inspect data, and private authority context.
+- Added immutable evaluation traces, same-currency cost attribution by principal/provider/procedure/workload/App, recorded-only replay and strategy comparison, controlled failure injection, and evaluated-scope certification that explicitly cannot claim production readiness.
+- Integration review repaired sensitive provenance leakage, cross-plane trace namespace drift, unsafe external retry after adapter uncertainty, missing external reconciliation, and authority/credential leakage through surface definitions and selected data.
+- Verification: 79 serialized Node tests and 1 Python SDK test pass; typecheck, package-boundary, deep-module, and responsive browser QA gates pass. The release gate remains intentionally `NO-GO` because broader requirements and human acceptance remain open. Node 24.6.0 remains below the declared 24.12.0 minimum.
+- Next: WYG-019 offline personal start, durable multiplayer serve, and separately hosted compute node; then WYG-020 coding-first engineering reference flow.

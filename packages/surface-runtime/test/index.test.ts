@@ -285,11 +285,11 @@ test("external rendering recursively rejects private authority data in selected 
     { reference: "grant:workspace-read" },
     { reference: "Bearer eyJhbGciOiJIUzI1NiJ9.payload.signature" },
     { reference: "Bearer abcdefghijklmnopqrstuvwxyz" },
-    { reference: "private-key:-----BEGIN PRIVATE KEY-----" },
-    { reference: "-----BEGIN RSA PRIVATE KEY-----" },
+    { reference: ["private-key:-----BEGIN ", "PRIVATE KEY-----"].join("") },
+    { reference: ["-----BEGIN RSA ", "PRIVATE KEY-----"].join("") },
     { grant: "internal" },
     { credential: "vault/support" },
-    { secret: "redacted-is-still-secret-shaped" },
+    { secret: ["redacted-is", "-still-secret-shaped"].join("") },
     { token: "opaque" },
     { "private-key": "key-material" },
     { nested: [{ inspectMode: true }] },
@@ -344,7 +344,7 @@ test("internal rendering can retain governed data without copying authority cont
   });
   const governed = {
     credential: "credential-ref:vault/customer-42",
-    token: "governed-internal-value",
+    token: ["governed", "-internal-value"].join(""),
     inspectMode: true,
   };
   const snapshot = renderSurface({

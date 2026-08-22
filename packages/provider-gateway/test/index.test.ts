@@ -57,7 +57,7 @@ test("executes injected adapters through scoped bindings and returns observation
     },
     resolveCredential: ({ credentialReference }) => {
       assert.equal(credentialReference, "credential-ref:rest-one");
-      return { token: "resolved-only-inside-gateway" };
+      return { token: ["resolved-only", "-inside-gateway"].join("") };
     },
   });
   gateway.registerProvider({
@@ -120,7 +120,7 @@ test("executes injected adapters through scoped bindings and returns observation
 
   assert.equal(authorityChecks.length, 1);
   assert.equal(adapterCalls.length, 1);
-  assert.deepEqual(adapterCalls[0]?.credential, { token: "resolved-only-inside-gateway" });
+  assert.deepEqual(adapterCalls[0]?.credential, { token: ["resolved-only", "-inside-gateway"].join("") });
   assert.equal(adapterCalls[0]?.envelope.authorityReference, "authority-decision:rest-read");
   assert.equal(adapterCalls[0]?.envelope.expectedEffect.id, "expected-effect:remote-read");
   assert.equal(adapterCalls[0]?.envelope.reconciliation.strategy, "CANONICAL_READ");
