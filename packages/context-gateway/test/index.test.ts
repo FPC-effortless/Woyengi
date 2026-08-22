@@ -94,6 +94,9 @@ test("bounds episode capabilities and reconstructs deterministic authority-filte
     segment("context-segment:credential-reference", request, {
       content: { reference: "credential-ref:production-database" },
     }),
+    segment("context-segment:credential-provenance", request, {
+      provenance: ["credential-ref:production-database"],
+    }),
   ];
   let reverse = false;
   const appended: ContextSegment[] = [];
@@ -176,7 +179,7 @@ test("bounds episode capabilities and reconstructs deterministic authority-filte
   assert.equal(JSON.stringify(first).includes("raw-grant"), false);
   assert.equal(JSON.stringify(first).includes("secret:production-database-password"), false);
   assert.equal(JSON.stringify(first).includes("credential-ref:production-database"), false);
-  assert.deepEqual(first.journal.map(({ sequence }) => sequence), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+  assert.deepEqual(first.journal.map(({ sequence }) => sequence), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
 
   const defaultDeny = new ContextGateway({
     capabilitySource: { async query() { return capabilities; } },

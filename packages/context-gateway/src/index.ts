@@ -470,6 +470,7 @@ function containsSensitiveData(value: StateValue): boolean {
 function containsSensitiveSegmentData(record: ContextSegmentRecord): boolean {
   return (
     containsSensitiveData(record.content) ||
+    containsSensitiveData(record.provenance) ||
     containsSensitiveData({
       id: record.source.id,
       kind: record.source.kind,
