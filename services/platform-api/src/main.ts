@@ -23,7 +23,7 @@ import {
 import { createPlatformEvent, type PlatformEvent } from "../../../packages/event-bus/src/index.ts";
 import type { LedgerRecord } from "../../../packages/ledger/src/index.ts";
 import { ClaimLedger } from "../../../packages/state/src/index.ts";
-import { IdempotencyConflictError, LocalCanonicalLedger, LocalIdempotencyStore, sha256 } from "../../../packages/storage/src/index.ts";
+import { IdempotencyConflictError, LocalCanonicalLedger, LocalIdempotencyStore, PostgresCanonicalLedger, sha256 } from "../../../packages/storage/src/index.ts";
 import { createInProcessPlatformRuntime, IN_PROCESS_PLATFORM_OPERATIONS, type PlatformModuleName } from "../../runtime/index.ts";
 import { PlatformApi, PlatformApiError } from "./index.ts";
 import { createBearerAuthenticator, SlidingWindowRateLimiter } from "./security.ts";
@@ -37,7 +37,10 @@ interface StateInput { readonly principal: string; readonly entityId: string; re
 interface ReconstructionInput { readonly principal: string; readonly body: StateValue; readonly traceId: string }
 interface ControlInput { readonly principal: string; readonly action: string; readonly idempotencyKey: string; readonly body: StateValue; readonly traceId: string }
 interface SubscriptionInput { readonly principal: string; readonly subscriptionId: string; readonly limit: number; readonly cursor?: string; readonly traceId: string }
-const ledger = await LocalCanonicalLedger.open<StoredRecord>(join(dataDirectory, "ledger", "records.json"));
+const postgresUrl = process.env.WOYENGI_POSTGRES_URL?.trim();
+const ledger = postgresUrl === undefined || postgresUrl.length === 0
+  ? await LocalCanonicalLedger.open<StoredRecord>(join(dataDirectory, "ledger", "records.json"))
+  : await PostgresCanonicalLedger.open<StoredRecord>({ connectionString: postgresUrl });
 const idempotency = await LocalIdempotencyStore.open(join(dataDirectory, "idempotency", "requests.json"));
 const inFlight = new Map<string, { readonly fingerprint: string; readonly promise: Promise<StateValue> }>();
 const authenticate = createBearerAuthenticator({ token, principal: "user:local-operator" });
@@ -73,6 +76,7 @@ async function shutdown(signal: string): Promise<void> {
   stopping = true;
   process.stdout.write(`Received ${signal}; closing Platform API.\n`);
   await server.close();
+  if (ledger instanceof PostgresCanonicalLedger) await ledger.close();
   process.exitCode = 0;
 }
 process.once("SIGTERM", () => { void shutdown("SIGTERM"); });
@@ -561,7 +565,7 @@ function deepFreeze<Value>(value: Value): Value {
 }
 
 async function dependencyStatus(): Promise<{ readonly healthy: boolean; readonly ready: boolean; readonly checks: Readonly<Record<string, "up" | "down">> }> {
-  const checks: Record<string, "up" | "down"> = { ledger: "up" };
+  const checks: Record<string, "up" | "down"> = { ledger: ledger instanceof PostgresCanonicalLedger && !await ledger.ready() ? "down" : "up" };
   const postgres = process.env.WOYENGI_POSTGRES_URL;
   const objectStore = process.env.WOYENGI_OBJECT_STORE_ENDPOINT;
   const search = process.env.WOYENGI_SEARCH_ENDPOINT;

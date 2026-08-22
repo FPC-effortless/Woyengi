@@ -51,3 +51,31 @@ Start with a dependency-light TypeScript pnpm monorepo targeting Node.js 24.12 o
 - Local/cloud synchronization and object-specific merge policies.
 - Cryptographic deletion, retention, and jurisdictional storage requirements.
 - Search, graph, and vector index implementations.
+
+## PostgreSQL self-hosted composition (2026-08-22)
+
+### Official sources reviewed
+
+- node-postgres transactions: https://node-postgres.com/features/transactions
+- node-postgres parameterized queries: https://node-postgres.com/features/queries
+- node-postgres pooling and shutdown: https://node-postgres.com/features/pooling
+- node-postgres connection configuration: https://node-postgres.com/features/connecting
+- PostgreSQL transaction isolation: https://www.postgresql.org/docs/current/transaction-iso.html
+- PostgreSQL JSON types: https://www.postgresql.org/docs/current/datatype-json.html
+
+### Decision
+
+- Use the pure-JavaScript `pg` driver with one bounded application pool and `WOYENGI_POSTGRES_URL`; keep credentials external to packages and deployment images.
+- Execute every multi-record canonical commit on one checked-out client with explicit `BEGIN`, `COMMIT`, `ROLLBACK`, and guaranteed client release. Never use `pool.query` for a transaction.
+- Store immutable payloads as `jsonb`, while keeping workspace ID, record ID, kind, causal sequence, transaction time, and idempotency fingerprint/result in indexed relational columns.
+- Serialize each workspace append by locking its sequence row inside the transaction. Do not use a PostgreSQL sequence for causal ledger ordering because sequence increments are not rolled back with failed transactions.
+- Use parameterized values exclusively. Table and column names remain static migration-owned identifiers.
+- Keep the current JSON adapter only for explicit offline personal mode. Team/server mode must fail startup when the configured PostgreSQL store cannot migrate or become ready.
+
+### Failure modes and edge cases
+
+- Network loss or server failure during a transaction must roll back and must never return an accepted idempotency result.
+- Duplicate record IDs, idempotency-key fingerprint conflicts, and non-contiguous per-workspace sequences must fail the whole transaction.
+- Concurrent appends in one workspace must receive unique increasing causal sequences; independent workspaces may proceed concurrently.
+- Pool clients must always be released, and process shutdown must drain the pool.
+- Serializable transactions can fail and require whole-transaction retry; the initial adapter instead uses a locked per-workspace sequence row plus uniqueness constraints so retries stay bounded and explicit.

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -166,6 +167,47 @@ test("paginates equal-time records and subscriptions by causal ledger sequence",
   assert.equal(errors, "");
 });
 
+test("uses PostgreSQL for deployed API state and reopens it after process restart", {
+  skip: process.env.WOYENGI_TEST_POSTGRES_URL === undefined ? "WOYENGI_TEST_POSTGRES_URL is not configured" : false,
+}, async () => {
+  const connectionString = process.env.WOYENGI_TEST_POSTGRES_URL;
+  assert.ok(connectionString);
+  const suffix = randomUUID();
+  const token = `test-${"x".repeat(32)}`;
+  const workspaceId = `workspace:deployed-postgres-${suffix}`;
+  const subject = `entity:deployed-postgres-${suffix}`;
+  const record = { ...claim(`claim:deployed-postgres-${suffix}`, "durable", 90, "2026-08-22T00:00:00Z"), subject };
+
+  const first = deployedPostgresProcess(token, connectionString);
+  try {
+    const url = await listeningUrl(first.child.stdout);
+    const response = await fetch(`${url}/v1/ingest`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json", "idempotency-key": `ingest:${suffix}` },
+      body: JSON.stringify({ workspaceId, records: [record] }),
+    });
+    assert.equal(response.status, 200, await response.text());
+  } finally {
+    await stop(first.child);
+  }
+  assert.equal(first.errors(), "");
+
+  const second = deployedPostgresProcess(token, connectionString);
+  try {
+    const url = await listeningUrl(second.child.stdout);
+    const response = await fetch(`${url}/v1/state/entities/${encodeURIComponent(subject)}`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const responseBody = await response.text();
+    assert.equal(response.status, 200, responseBody);
+    const state = JSON.parse(responseBody) as any;
+    assert.equal(state.data.projections[0].selected.claim.id, record.id);
+  } finally {
+    await stop(second.child);
+  }
+  assert.equal(second.errors(), "");
+});
+
 function claim(id: string, value: string, authority: number, recordedAt: string) {
   return {
     id, kind: "claim", subject: "entity:alpha", predicate: "project:launch-month", object: value,
@@ -187,6 +229,32 @@ async function persistedRecords(dataDirectory: string): Promise<unknown[]> {
     if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return [];
     throw error;
   }
+}
+
+function deployedPostgresProcess(token: string, connectionString: string) {
+  const child = spawn(process.execPath, ["services/platform-api/src/main.ts"], {
+    cwd: new URL("../..", import.meta.url),
+    env: {
+      ...process.env,
+      WOYENGI_API_TOKEN: token,
+      WOYENGI_DATA_DIR: ".woyengi-ci-postgres",
+      WOYENGI_HOST: "127.0.0.1",
+      WOYENGI_PORT: "0",
+      WOYENGI_POSTGRES_URL: connectionString,
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let stderr = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => { stderr += chunk; });
+  return { child, errors: () => stderr };
+}
+
+async function stop(child: ReturnType<typeof spawn>): Promise<void> {
+  if (child.exitCode !== null) return;
+  const exited = new Promise<void>((resolve) => child.once("exit", () => resolve()));
+  child.kill("SIGTERM");
+  await exited;
 }
 
 async function listeningUrl(stream: NodeJS.ReadableStream): Promise<string> {

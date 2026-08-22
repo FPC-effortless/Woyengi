@@ -300,3 +300,5 @@ function deepFreeze<Value>(value: Value): Value {
   }
   return value;
 }
+
+export { PostgresCanonicalLedger, type PostgresCanonicalLedgerOptions } from "./postgres.ts";

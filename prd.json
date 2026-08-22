@@ -3,8 +3,8 @@
   "problem": "People and organizations need one local-first workspace where durable human-and-agent work, adaptive software, shared semantic state, and consequential execution remain governed, reconstructible, and verifiable.",
   "outcome": "Woyengi composes software around intent and executes durable human-and-agent work toward verified outcomes while preserving the existing persistent-state foundation.",
   "active_milestone": {
-    "name": "Review remediation: canonical integrity and causal replay",
-    "tickets": ["WYG-025", "WYG-026"],
+    "name": "Durable self-hosted product vertical",
+    "tickets": ["WYG-027", "WYG-028", "WYG-029", "WYG-030", "WYG-031", "WYG-032", "WYG-033"],
     "qa_status": "implementation_in_progress"
   },
   "completed_milestones": [
@@ -834,7 +834,7 @@
         "Known canonical record kinds are rebuilt through canonical constructors instead of being cast from client JSON.",
         "Canonical records, their platform events, and the idempotency result commit atomically so a failed request leaves no partial durable state."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 0,
       "blocked_by": []
     },
@@ -846,9 +846,141 @@
         "Replay, pagination, and subscription-facing order use the causal sequence instead of timestamp and arbitrary identifier ties.",
         "Equal-timestamp parent and child operations replay deterministically in append order across restart."
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
       "blocked_by": ["WYG-025"]
+    },
+    {
+      "id": "WYG-027",
+      "title": "Commit canonical state atomically in PostgreSQL",
+      "acceptance_criteria": [
+        "A versioned migration creates durable workspace sequence, canonical record, and idempotency tables with immutable identifiers and uniqueness constraints.",
+        "One PostgreSQL transaction allocates causal sequence and commits canonical records, platform events, and the idempotency result; any failure leaves all tables unchanged.",
+        "Concurrent same-workspace appends remain contiguous and deterministic across pool restart, and the production API uses PostgreSQL when WOYENGI_POSTGRES_URL is configured."
+      ],
+      "passes": false,
+      "priority": 2,
+      "blocked_by": ["WYG-026"]
+    },
+    {
+      "id": "WYG-028",
+      "title": "Persist Workspace, Work, App, runtime, and collaboration journals",
+      "acceptance_criteria": [
+        "Account, Workspace, membership, Work, App installation, runtime lifecycle, and collaboration operations share a durable workspace-scoped journal without private in-memory truth.",
+        "Registries rebuild byte-equivalent state after server restart and reject cross-workspace or invalid causal dependencies before commit.",
+        "The team server composes these journals and readiness fails if durable state cannot be read or written."
+      ],
+      "passes": false,
+      "priority": 3,
+      "blocked_by": ["WYG-027"]
+    },
+    {
+      "id": "WYG-029",
+      "title": "Provision principals, sessions, and workspace authorization",
+      "acceptance_criteria": [
+        "Production flows provision Human, Agent, Service, and Automation principals and issue expiring revocable sessions without a shared operator identity.",
+        "Every API and realtime operation derives an evaluated workspace-scoped capability from the authenticated session and defaults to denied.",
+        "Session rotation, revocation, cross-workspace isolation, and authorization audit evidence survive restart."
+      ],
+      "passes": false,
+      "priority": 4,
+      "blocked_by": ["WYG-028"]
+    },
+    {
+      "id": "WYG-030",
+      "title": "Serve durable realtime multiplayer collaboration",
+      "acceptance_criteria": [
+        "The self-hosted server exposes an authenticated SSE or WebSocket transport over the durable collaboration journal.",
+        "Two humans and one separately granted AgentPrincipal resume one WorkInstance from causal cursors without duplicate durable effects.",
+        "Presence remains ephemeral, backpressure is bounded, optimistic conflicts are explicit, and reconnect works after server restart."
+      ],
+      "passes": false,
+      "priority": 5,
+      "blocked_by": ["WYG-029"]
+    },
+    {
+      "id": "WYG-031",
+      "title": "Execute coding workloads in a real governed sandbox",
+      "acceptance_criteria": [
+        "A process or Docker provider enforces repository mount, command allowlist, CPU/time/output budgets, cancellation, and network policy before execution.",
+        "Sandbox receipts retain authority, image/runtime identity, inputs, outputs, exit state, and observed effects without becoming accepted semantic truth.",
+        "Timeout, cancellation, path escape, command injection, and duplicate execution tests fail closed."
+      ],
+      "passes": false,
+      "priority": 6,
+      "blocked_by": ["WYG-028"]
+    },
+    {
+      "id": "WYG-032",
+      "title": "Integrate GitHub issues, repositories, checks, and pull requests",
+      "acceptance_criteria": [
+        "A production GitHub App adapter verifies webhooks and imports repository and issue identity idempotently into workspace-scoped Work.",
+        "Repository reads, branches, commits, checks, review evidence, and pull-request publication use narrow installation credentials and governed external-effect reconciliation.",
+        "Retries after uncertain publication cannot create duplicate branches, commits, comments, or pull requests."
+      ],
+      "passes": false,
+      "priority": 7,
+      "blocked_by": ["WYG-029", "WYG-031"]
+    },
+    {
+      "id": "WYG-033",
+      "title": "Prove the repository-to-issue-to-evidence-to-PR product flow",
+      "acceptance_criteria": [
+        "A GitHub issue creates durable shared Work, a governed WorkEpisode, and a separately authorized coding-agent assignment under one trace.",
+        "Sandbox execution, changed code, tests, independent verification, human review, accepted outcome, and pull-request publication remain causally linked and resumable.",
+        "Provider failure, server restart, human takeover, and agent resume preserve context and never duplicate external effects."
+      ],
+      "passes": false,
+      "priority": 8,
+      "blocked_by": ["WYG-030", "WYG-032"]
+    },
+    {
+      "id": "WYG-034",
+      "title": "Connect the shell and Composer to live durable product ports",
+      "acceptance_criteria": [
+        "Home, Work, Apps, Inbox, Search, Ask/Create/Delegate, workspace switching, and Composer preview load and mutate durable authorized server state.",
+        "Composer preview, apply, update, and rollback operate on real ApplicationInstances instead of demo snapshots.",
+        "Responsive two-browser tests prove reload, reconnect, optimistic conflict, and cross-workspace isolation."
+      ],
+      "passes": false,
+      "priority": 9,
+      "blocked_by": ["WYG-030"]
+    },
+    {
+      "id": "WYG-035",
+      "title": "Ship installable reference applications",
+      "acceptance_criteria": [
+        "Personal memory, customer operations, finance, people, operations, compliance, hospitality, construction, and manufacturing references install as portable working Apps.",
+        "Reference Apps reuse shared semantic identities, Work, authority, surfaces, evidence, and verification without redefining kernel concepts.",
+        "Each App includes seeded data, durable end-to-end behavior, export/update/rollback, certification, and workspace-isolation tests."
+      ],
+      "passes": false,
+      "priority": 10,
+      "blocked_by": ["WYG-034"]
+    },
+    {
+      "id": "WYG-036",
+      "title": "Complete enterprise identity, policy, residency, and operational controls",
+      "acceptance_criteria": [
+        "SSO, SCIM, groups, ABAC, approval chains, audit export, retention, residency, BYOC, and air-gap profiles narrow existing constitutional authority.",
+        "Dedicated, BYOC, hybrid, split-control, and air-gapped profiles pass backup, restore, upgrade, rollback, and incident exercises.",
+        "All high-severity threat findings are remediated with reproducible evidence."
+      ],
+      "passes": false,
+      "priority": 11,
+      "blocked_by": ["WYG-033", "WYG-035"]
+    },
+    {
+      "id": "WYG-037",
+      "title": "Deliver optional Woyengi Cloud operations",
+      "acceptance_criteria": [
+        "Managed environments, releases, channels, fleets, desired/reported state, plans, health, backups, upgrades, rollback, metering, billing, and domains/TLS use existing Platform and Compute contracts.",
+        "Local and self-hosted modes remain fully usable without Woyengi-operated services.",
+        "Managed surfaces and package distribution preserve the same App, Work, authority, evidence, and verification model."
+      ],
+      "passes": false,
+      "priority": 12,
+      "blocked_by": ["WYG-036"]
     }
   ]
 }

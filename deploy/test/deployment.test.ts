@@ -7,10 +7,14 @@ import { PlatformApi } from "../../services/platform-api/index.ts";
 test("defines secret-externalized deployment and exercises health, readiness, and graceful shutdown", async () => {
   const compose = await readFile(new URL("../docker/compose.yaml", import.meta.url), "utf8");
   const dockerfile = await readFile(new URL("../docker/Dockerfile", import.meta.url), "utf8");
+  const main = await readFile(new URL("../../services/platform-api/src/main.ts", import.meta.url), "utf8");
   for (const service of ["api:", "worker:", "database:", "object-storage:", "search:"]) assert.match(compose, new RegExp(`\\n  ${service}`));
   for (const secret of ["WOYENGI_API_TOKEN", "WOYENGI_POSTGRES_PASSWORD", "WOYENGI_OBJECT_STORE_SECRET", "WOYENGI_SEARCH_KEY"]) assert.match(compose, new RegExp(`\\$\\{${secret}:\\?`));
   assert.match(compose, /WOYENGI_HOST:\s*0\.0\.0\.0/);
-  assert.match(await readFile(new URL("../../services/platform-api/src/main.ts", import.meta.url), "utf8"), /WOYENGI_HOST \?\? "127\.0\.0\.1"/);
+  assert.match(main, /WOYENGI_HOST \?\? "127\.0\.0\.1"/);
+  assert.match(main, /WOYENGI_POSTGRES_URL/);
+  assert.match(main, /PostgresCanonicalLedger\.open/);
+  assert.match(dockerfile, /pnpm install --prod --frozen-lockfile/);
   assert.doesNotMatch(`${compose}\n${dockerfile}`, /password:\s*(?:password|postgres|woyengi)|api[_-]?key:\s*(?:master|secret)/i);
   assert.match(dockerfile, /USER woyengi/);
 

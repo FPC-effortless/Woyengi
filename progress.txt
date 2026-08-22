@@ -408,3 +408,17 @@
 - Added ADR 0006 and corrected the status/gap matrices: Waves 0-2 are broadly functional, Wave 3 is partial, and the system is not production-ready.
 - Verification: 88/88 serialized Node tests and the Python SDK test pass; typecheck, package boundaries, and deep-module gates pass. The fast production gate remains the expected `NO-GO` because full-product requirements and human acceptance are open; architecture, deep-module, and security gates pass.
 - Next: finish WYG-019B durable self-hosted multiplayer server composition, then WYG-020 coding-first reference vertical.
+
+## 2026-08-22 — DURABLE PRODUCT REMEDIATION PLANNED
+
+- Rebased the implementation effort on merged CI baseline `c599060`; 88/88 Node tests and the Python SDK test pass locally, while the local Node v24.6.0 runtime remains below the declared >=24.12.0 contract.
+- Confirmed the production gate is `NO-GO` only at requirements; architecture, deep-module, and security gates pass.
+- Recorded official PostgreSQL/node-postgres transaction, pooling, parameterization, connection, isolation, and JSON decisions in `research.md`.
+- Accepted merged, clean-CI WYG-025/026 remediation evidence and split the remaining product gaps into dependency-ordered WYG-027 through WYG-037 tickets.
+- Active ticket: WYG-027 real PostgreSQL canonical transaction provider. Next step is a failing public-behavior integration test.
+- WYG-027 RED: the PostgreSQL restart/concurrency/rollback integration test fails because `PostgresCanonicalLedger` is not exported or implemented.
+- WYG-027 GREEN (local): added a versioned PostgreSQL schema, pooled transactional canonical ledger, locked per-workspace causal allocation, relational idempotency results, production API selection/readiness/shutdown, production dependency installation, and real-database CI services.
+- Added deployed API restart and cross-client concurrency/rollback tests. They are registered but skipped on this machine because no PostgreSQL or Docker daemon is available; GitHub Actions is the required real-engine verification.
+- Reconciled `production/01-requirements/evidence.json` for every WYG-001 through WYG-037 ticket; the fast requirements evidence gate now passes instead of failing on missing mappings.
+- Local verification: `pnpm typecheck`, `pnpm boundaries`, 88/88 runnable Node tests plus Python SDK, 11/11 adversarial benchmarks, architecture gate, security gate, and requirements-evidence gate pass. Two PostgreSQL tests await CI.
+- WYG-027 CI attempt 1: the real PostgreSQL adapter test passed; the deployed restart test reached the persisted response but its assertion consumed the body before parsing it. Corrected the test to parse the captured response text once; no production defect was involved.
