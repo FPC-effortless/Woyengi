@@ -1,18 +1,19 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const browserPath = process.env.WOYENGI_BROWSER ?? "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+const browserPath = browserExecutable();
 const appPort = 43817;
 const debugPort = 43818;
 const baseUrl = `http://127.0.0.1:${appPort}`;
 const profile = await mkdtemp(join(tmpdir(), "woyengi-shell-qa-"));
 const outputRoot = process.env.WOYENGI_VISUAL_UPDATE === "1"
   ? new URL("../artifacts/", import.meta.url)
-  : pathToFileURL(`${join(profile, "artifacts")}\\`);
+  : pathToFileURL(`${join(profile, "artifacts")}${sep}`);
 const app = spawn(process.execPath, [fileURLToPath(new URL("../src/demo.ts", import.meta.url))], {
   env: { ...process.env, WOYENGI_SHELL_PORT: String(appPort) },
   stdio: ["ignore", "pipe", "pipe"],
@@ -30,7 +31,8 @@ try {
     `--remote-debugging-port=${debugPort}`,
     "about:blank",
   ], { stdio: "ignore", windowsHide: true });
-  await waitForHttp(`http://127.0.0.1:${debugPort}/json/version`);
+  const browserError = new Promise((_, reject) => browser.once("error", reject));
+  await Promise.race([waitForHttp(`http://127.0.0.1:${debugPort}/json/version`), browserError]);
   const target = await fetch(`http://127.0.0.1:${debugPort}/json/new?${encodeURIComponent(baseUrl)}`, { method: "PUT" }).then((response) => response.json());
   const cdp = await connectCdp(target.webSocketDebuggerUrl);
   const critical = [];
@@ -85,6 +87,38 @@ try {
   browser?.kill();
   await delay(400);
   try { await rm(profile, { recursive: true, force: true, maxRetries: 8, retryDelay: 150 }); } catch (error) { console.warn(`Temporary browser profile cleanup deferred: ${error.message}`); }
+}
+
+function browserExecutable() {
+  const configured = process.env.WOYENGI_BROWSER?.trim();
+  if (configured) return configured;
+
+  const candidates = process.platform === "win32"
+    ? [
+        process.env["PROGRAMFILES(X86)"] && join(process.env["PROGRAMFILES(X86)"], "Microsoft", "Edge", "Application", "msedge.exe"),
+        process.env.PROGRAMFILES && join(process.env.PROGRAMFILES, "Microsoft", "Edge", "Application", "msedge.exe"),
+        process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, "Google", "Chrome", "Application", "chrome.exe"),
+      ]
+    : process.platform === "darwin"
+      ? [
+          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+          "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        ]
+      : [
+          "/usr/bin/google-chrome",
+          "/usr/bin/google-chrome-stable",
+          "/usr/bin/chromium",
+          "/usr/bin/chromium-browser",
+          "/usr/bin/microsoft-edge",
+          "/usr/bin/microsoft-edge-stable",
+          "/snap/bin/chromium",
+        ];
+  const found = candidates.filter(Boolean).find((candidate) => existsSync(candidate));
+  if (found === undefined) {
+    throw new Error("No Chromium-family browser was found. Set WOYENGI_BROWSER to its executable.");
+  }
+  return found;
 }
 
 async function evaluate(cdp, expression) {
