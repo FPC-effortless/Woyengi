@@ -2,7 +2,9 @@
 name: Veritas SRE v4 Private Evidence
 
 on:
-  pull_request:
+  push:
+    branches:
+      - "private/veritas-sre-v4-evidence"
     paths:
       - ".github/workflows/veritas-sre-v4-private-evidence.yml"
       - "private/veritas/sre-v4/**"
@@ -11,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: veritas-sre-v4-private-evidence-${{ github.event.pull_request.number }}
+  group: veritas-sre-v4-private-evidence
   cancel-in-progress: true
 
 jobs:
