@@ -212,7 +212,13 @@ test("WorldBundle keeps public and evaluator-private partitions structurally dis
     public: {
       objective: "activate a supplier safely",
       actorRoles: ["supplier-operator"],
-      actionSurface: [{ id: "world-action:request-approval", name: "request_approval", kind: "WRITE" }],
+      actionSurface: [{
+        id: "world-action:request-approval",
+        name: "request_approval",
+        kind: "WRITE",
+        systemRef: "system:approval",
+        parameterNames: [],
+      }],
       observationRefs: ["observation:supplier-public"],
       assetDescriptors: [],
       outcomeContractRefs: ["outcome-contract:supplier-activated"],
