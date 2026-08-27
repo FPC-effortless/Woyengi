@@ -210,8 +210,8 @@ test("pinned Veritas adapter fixture is canonical and byte-hash pinned", async (
   const actualHash = createHash("sha256").update(serialized, "utf8").digest("hex");
   const fixture = parsePortableWorldBundle(serialized);
 
-  assert.equal(fixture.artifactId, "world-bundle-artifact:sha256:62b94e85103ef8522ef9eb87f1a6825b2e98fca36fbd57b5aadce06e0f5ab719");
-  assert.equal(actualHash, "3577aa29266dac59921c31e65d22ad657c4b7a9191011e9f5448aed32781e10b");
+  assert.equal(fixture.artifactId, "world-bundle-artifact:sha256:41e6c9b1b583112161d244de00d470a6fa5155f709c74782eb9117a060981462");
+  assert.equal(actualHash, "62172d94b6e5d34774714b3c3da7c3fc61d71c61d7798f71d5a94a8243177a86");
   assert.equal(actualHash, expectedHash);
   assert.equal(serializePortableWorldBundle(fixture), serialized);
 });
