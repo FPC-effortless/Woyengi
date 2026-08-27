@@ -1,11 +1,15 @@
 import type { WorldActionDescriptor } from "../../operational-spec/src/index.ts";
+import {
+  assertWorldActionSchemaConformance,
+  WORLD_BUNDLE_ACTION_SCHEMA_KIND,
+} from "./action-schema.ts";
 import type { PortableWorldBundle, PortableWorldMember } from "./index.ts";
 
 export const WORLD_BUNDLE_PUBLIC_TASK_CONTRACT = "woyengi.world-bundle.public-task.v0.1" as const;
 export const WORLD_BUNDLE_PUBLIC_EVIDENCE_CONTRACT = "woyengi.world-bundle.public-evidence.v0.1" as const;
 export const WORLD_BUNDLE_PRIVATE_EVALUATOR_CONTRACT = "woyengi.world-bundle.private-evaluator.v0.1" as const;
 
-export type SemanticWorldMemberKind = "SEMANTIC_TASK" | "EVIDENCE_RECORD" | "EVALUATOR_ORACLE";
+export type SemanticWorldMemberKind = "SEMANTIC_TASK" | "EVIDENCE_RECORD" | "ACTION_SCHEMA" | "EVALUATOR_ORACLE";
 
 export class WorldBundleSemanticConformanceError extends Error {
   constructor(message: string) {
@@ -42,12 +46,19 @@ export function assertWorldBundleSemanticConformance(artifact: PortableWorldBund
   const supportedKinds = new Set<SemanticWorldMemberKind>([
     "SEMANTIC_TASK",
     "EVIDENCE_RECORD",
+    WORLD_BUNDLE_ACTION_SCHEMA_KIND,
     "EVALUATOR_ORACLE",
   ]);
   for (const member of artifact.members) {
     if (!supportedKinds.has(member.kind as SemanticWorldMemberKind)) {
       fail(`semantic profile does not recognize member kind ${member.kind} (${member.id})`);
     }
+  }
+
+  try {
+    assertWorldActionSchemaConformance(artifact);
+  } catch (error) {
+    fail(error instanceof Error ? error.message : String(error));
   }
 
   const taskMembers = artifact.members.filter((member) => member.kind === "SEMANTIC_TASK");
