@@ -1,3 +1,4 @@
+# Private evaluator enclave for Veritas SRE v4. Do not merge into Woyengi main.
 name: Veritas SRE v4 Private Evidence
 
 on:
