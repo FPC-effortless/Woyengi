@@ -72,8 +72,8 @@ test("defines immutable provider-neutral operational contracts and compiles dete
     comprehensionRef: comprehension.id,
     goals: ["supplier activation is controlled", "supplier records are complete"],
     requirements: [
-      { id: "operational-requirement:approval", kind: "AUTHORITY", statement: "authorized finance approval is required", providerNeutral: true as const },
-      { id: "operational-requirement:record", kind: "STATE", statement: "supplier record exists", providerNeutral: true as const },
+      { id: "operational-requirement:approval", kind: "AUTHORITY" as const, statement: "authorized finance approval is required", providerNeutral: true as const },
+      { id: "operational-requirement:record", kind: "STATE" as const, statement: "supplier record exists", providerNeutral: true as const },
     ],
     invariants: [
       { id: "operational-invariant:approval-first", statement: "activation must follow approval", severity: "CRITICAL" as const },
