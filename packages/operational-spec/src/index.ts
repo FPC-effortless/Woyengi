@@ -240,10 +240,18 @@ export interface OperationalIR {
   readonly provenanceRefs: readonly string[];
 }
 
+export interface WorldActionCost {
+  readonly amount: number;
+  readonly currency: string;
+}
+
 export interface WorldActionDescriptor {
   readonly id: string;
   readonly name: string;
   readonly kind: "READ" | "WRITE" | "EXECUTE" | "COMMUNICATE" | "ESCALATE" | "SUBMIT";
+  readonly systemRef: string;
+  readonly parameterNames: readonly string[];
+  readonly cost?: WorldActionCost;
 }
 
 export interface WorldAssetDescriptor {
@@ -563,12 +571,20 @@ export function compileOperationalIR(input: OperationalSystemSpec, options: Oper
 }
 
 export function defineWorldBundle(input: WorldBundleInput): WorldBundle {
-  const actionSurface = input.public.actionSurface.map((item) => ({
-    id: namespaced("world action id", item.id, "world-action:"),
-    name: requiredText("world action name", item.name),
-    kind: worldActionKind(item.kind),
-  })).sort(compareById);
+  const actionSurface = input.public.actionSurface.map((item) => {
+    const cost = item.cost === undefined ? undefined : normalizeWorldActionCost(item.cost);
+    return {
+      id: namespaced("world action id", item.id, "world-action:"),
+      name: requiredText("world action name", item.name),
+      kind: worldActionKind(item.kind),
+      systemRef: namespaced("world action system reference", item.systemRef, "system:"),
+      parameterNames: normalizedList(item.parameterNames),
+      ...(cost === undefined ? {} : { cost }),
+    };
+  }).sort(compareById);
   assertUniqueIds("world action", actionSurface);
+  const duplicateActionNames = duplicates(actionSurface.map((item) => item.name));
+  if (duplicateActionNames.length > 0) throw new Error(`duplicate world action name: ${duplicateActionNames.join(", ")}`);
 
   const assetDescriptors = input.public.assetDescriptors.map((item) => ({
     id: namespaced("world asset id", item.id, "world-asset:"),
@@ -644,6 +660,14 @@ function normalizeBudget(value: OutcomeBudget): OutcomeBudget {
     maximumCost: value.maximumCost,
     currency: requiredText("budget currency", value.currency).toUpperCase(),
     maximumAttempts: value.maximumAttempts,
+  };
+}
+
+function normalizeWorldActionCost(value: WorldActionCost): WorldActionCost {
+  if (!Number.isFinite(value.amount) || value.amount < 0) throw new RangeError("world action cost amount must be finite and non-negative");
+  return {
+    amount: value.amount,
+    currency: requiredText("world action cost currency", value.currency).toUpperCase(),
   };
 }
 
