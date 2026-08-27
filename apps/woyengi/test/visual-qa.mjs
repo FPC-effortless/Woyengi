@@ -22,25 +22,34 @@ const appDiagnostics = captureProcessOutput(app);
 let browser;
 
 try {
-  await waitForHttp(baseUrl, { process: app, diagnostics: appDiagnostics, attempts: 150 });
-  browser = spawn(browserPath, [
+  await waitForHttp(baseUrl, { process: app, diagnostics: appDiagnostics, timeoutMs: 30_000 });
+  const browserArgs = [
     "--headless=new",
     "--disable-gpu",
     "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-default-apps",
     "--disable-dev-shm-usage",
+    "--disable-extensions",
+    "--disable-sync",
     "--no-first-run",
     "--remote-debugging-address=127.0.0.1",
     `--user-data-dir=${profile}`,
     `--remote-debugging-port=${debugPort}`,
     "about:blank",
-  ], { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+  ];
+  // Hosted CI is an isolated ephemeral test runner. Chrome's Linux sandbox can
+  // itself stall during extreme node:test process contention, before CDP binds.
+  // Disable it only there; local visual QA keeps the browser's normal sandbox.
+  if (process.env.CI === "true") browserArgs.splice(1, 0, "--no-sandbox", "--disable-setuid-sandbox");
+  browser = spawn(browserPath, browserArgs, { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
   const browserDiagnostics = captureProcessOutput(browser);
   const browserError = new Promise((_, reject) => browser.once("error", reject));
   await Promise.race([
     waitForHttp(`http://127.0.0.1:${debugPort}/json/version`, {
       process: browser,
       diagnostics: browserDiagnostics,
-      attempts: 200,
+      timeoutMs: 60_000,
     }),
     browserError,
   ]);
@@ -150,9 +159,10 @@ function captureProcessOutput(child) {
 }
 
 async function waitForHttp(url, options = {}) {
-  const attempts = options.attempts ?? 80;
+  const timeoutMs = options.timeoutMs ?? 8_000;
   const delayMs = options.delayMs ?? 100;
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
     if (options.process?.exitCode !== null && options.process?.exitCode !== undefined) {
       const diagnostics = options.diagnostics?.();
       throw new Error(`Process exited with code ${options.process.exitCode} before ${url} became ready${diagnostics ? `\n${diagnostics}` : ""}`);
@@ -161,7 +171,7 @@ async function waitForHttp(url, options = {}) {
     await delay(delayMs);
   }
   const diagnostics = options.diagnostics?.();
-  throw new Error(`Timed out waiting for ${url}${diagnostics ? `\nProcess diagnostics:\n${diagnostics}` : ""}`);
+  throw new Error(`Timed out after ${timeoutMs}ms waiting for ${url}${diagnostics ? `\nProcess diagnostics:\n${diagnostics}` : ""}`);
 }
 
 function delay(milliseconds) { return new Promise((resolve) => setTimeout(resolve, milliseconds)); }
