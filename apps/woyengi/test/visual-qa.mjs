@@ -18,21 +18,32 @@ const app = spawn(process.execPath, [fileURLToPath(new URL("../src/demo.ts", imp
   env: { ...process.env, WOYENGI_SHELL_PORT: String(appPort) },
   stdio: ["ignore", "pipe", "pipe"],
 });
+const appDiagnostics = captureProcessOutput(app);
 let browser;
 
 try {
-  await waitForHttp(baseUrl);
+  await waitForHttp(baseUrl, { process: app, diagnostics: appDiagnostics, attempts: 150 });
   browser = spawn(browserPath, [
     "--headless=new",
     "--disable-gpu",
     "--disable-background-networking",
+    "--disable-dev-shm-usage",
     "--no-first-run",
+    "--remote-debugging-address=127.0.0.1",
     `--user-data-dir=${profile}`,
     `--remote-debugging-port=${debugPort}`,
     "about:blank",
-  ], { stdio: "ignore", windowsHide: true });
+  ], { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+  const browserDiagnostics = captureProcessOutput(browser);
   const browserError = new Promise((_, reject) => browser.once("error", reject));
-  await Promise.race([waitForHttp(`http://127.0.0.1:${debugPort}/json/version`), browserError]);
+  await Promise.race([
+    waitForHttp(`http://127.0.0.1:${debugPort}/json/version`, {
+      process: browser,
+      diagnostics: browserDiagnostics,
+      attempts: 200,
+    }),
+    browserError,
+  ]);
   const target = await fetch(`http://127.0.0.1:${debugPort}/json/new?${encodeURIComponent(baseUrl)}`, { method: "PUT" }).then((response) => response.json());
   const cdp = await connectCdp(target.webSocketDebuggerUrl);
   const critical = [];
@@ -127,12 +138,30 @@ async function evaluate(cdp, expression) {
   return result.result.value;
 }
 
-async function waitForHttp(url) {
-  for (let attempt = 0; attempt < 80; attempt += 1) {
+function captureProcessOutput(child) {
+  let output = "";
+  const append = (chunk) => {
+    output += chunk.toString();
+    if (output.length > 16_384) output = output.slice(-16_384);
+  };
+  child.stdout?.on("data", append);
+  child.stderr?.on("data", append);
+  return () => output.trim();
+}
+
+async function waitForHttp(url, options = {}) {
+  const attempts = options.attempts ?? 80;
+  const delayMs = options.delayMs ?? 100;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (options.process?.exitCode !== null && options.process?.exitCode !== undefined) {
+      const diagnostics = options.diagnostics?.();
+      throw new Error(`Process exited with code ${options.process.exitCode} before ${url} became ready${diagnostics ? `\n${diagnostics}` : ""}`);
+    }
     try { if ((await fetch(url)).ok) return; } catch {}
-    await delay(100);
+    await delay(delayMs);
   }
-  throw new Error(`Timed out waiting for ${url}`);
+  const diagnostics = options.diagnostics?.();
+  throw new Error(`Timed out waiting for ${url}${diagnostics ? `\nProcess diagnostics:\n${diagnostics}` : ""}`);
 }
 
 function delay(milliseconds) { return new Promise((resolve) => setTimeout(resolve, milliseconds)); }
