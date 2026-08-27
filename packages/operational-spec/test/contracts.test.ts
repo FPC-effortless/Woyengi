@@ -192,7 +192,7 @@ test("rejects dangling references, duplicate identities, and malformed temporal/
   assert.throws(() => defineOperationalSystemSpec({
     ...base,
     procedures: [],
-    capabilities: [base.capabilities[0], base.capabilities[0]],
+    capabilities: [base.capabilities[0]!, base.capabilities[0]!],
   }), /duplicate operational capability id/i);
 
   assert.throws(() => defineOperationalSystemSpec({
