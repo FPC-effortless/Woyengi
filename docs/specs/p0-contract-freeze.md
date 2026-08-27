@@ -3,7 +3,7 @@
 Status: verified freeze candidate; awaiting human acceptance
 Date: 2026-08-27
 Normative branch: `feat/p0-operational-alignment`
-Verified head: `8c4b8dcba124aeb8dfa68515fb3d76f5f875c584`
+Verified code head: `3688cd735a9d6c83027adc294de685c070b9906e`
 Program: #6
 Contract ticket: #7
 
@@ -39,6 +39,9 @@ The following contract identities are the P0 v0.1 public seam:
 10. `OutcomeContract` does not itself authorize execution or semantic commit.
 11. Woyengi `public` and `private-evaluator` world partitions are semantically distinct. Public material must never provide a path for resolving evaluator-private bytes.
 12. Veritas evaluator truth is not ordinary Woyengi governing state.
+13. Every portable world action preserves a namespace-qualified logical `systemRef` and an explicit normalized `parameterNames` list; consumers must not invent those semantics from private effects or provider defaults.
+14. Public world action names are unique within a bundle as well as action IDs, because downstream runtimes address actions by public name.
+15. Optional public action cost is an explicit `{ amount, currency }` value; amount is finite/non-negative and currency is normalized uppercase. A downstream runtime must fail closed rather than silently converting incompatible cost units.
 
 ## Frozen enum sets
 
@@ -100,15 +103,17 @@ After P0 v0.1 acceptance:
 
 ## Verification evidence
 
-At verified head `8c4b8dcba124aeb8dfa68515fb3d76f5f875c584`, GitHub Actions run `33068180184` passed:
+At verified code head `3688cd735a9d6c83027adc294de685c070b9906e`, GitHub Actions run `33072398937` passed:
 
 - TypeScript typecheck;
 - package/deep-module boundaries;
-- Node and Python tests;
+- Node and Python tests, including the cross-repo WorldBundle action-seam falsifiers;
 - adversarial benchmark;
 - architecture gate;
 - security gate;
 - container build;
 - API readiness smoke.
+
+The preceding RED/repair sequence is preserved in commits `311e3e2c47c92b23cd4a8a011faabddb08fb2364` (falsifier), `5cd3636edcee7724e9891d475ca13d33d1294c04` (contract fix), and `3688cd735a9d6c83027adc294de685c070b9906e` (existing fixture alignment).
 
 This automated GREEN status does not constitute human acceptance, release readiness, or authority to modify user operational state.
