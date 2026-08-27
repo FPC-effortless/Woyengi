@@ -384,12 +384,15 @@ export function defineOutcomeContract(input: OutcomeContractInput): OutcomeContr
 }
 
 export function defineOperationalSystemSpec(input: OperationalSystemSpecInput): OperationalSystemSpec {
-  const requirements = input.requirements.map((item) => ({
-    id: namespaced("operational requirement id", item.id, "operational-requirement:"),
-    kind: operationalRequirementKind(item.kind),
-    statement: requiredText("operational requirement statement", item.statement),
-    providerNeutral: true as const,
-  })).sort(compareById);
+  const requirements = input.requirements.map((item) => {
+    assertProviderNeutral("operational requirement", item.providerNeutral);
+    return {
+      id: namespaced("operational requirement id", item.id, "operational-requirement:"),
+      kind: operationalRequirementKind(item.kind),
+      statement: requiredText("operational requirement statement", item.statement),
+      providerNeutral: true as const,
+    };
+  }).sort(compareById);
   assertUniqueIds("operational requirement", requirements);
 
   const invariants = input.invariants.map((item) => ({
@@ -406,11 +409,14 @@ export function defineOperationalSystemSpec(input: OperationalSystemSpecInput): 
   })).sort(compareById);
   assertUniqueIds("operational actor", actors);
 
-  const capabilities = input.capabilities.map((item) => ({
-    id: namespaced("operational capability id", item.id, "operational-capability:"),
-    requirement: requiredText("operational capability requirement", item.requirement),
-    providerNeutral: true as const,
-  })).sort(compareById);
+  const capabilities = input.capabilities.map((item) => {
+    assertProviderNeutral("operational capability", item.providerNeutral);
+    return {
+      id: namespaced("operational capability id", item.id, "operational-capability:"),
+      requirement: requiredText("operational capability requirement", item.requirement),
+      providerNeutral: true as const,
+    };
+  }).sort(compareById);
   assertUniqueIds("operational capability", capabilities);
   const capabilityIds = new Set(capabilities.map((item) => item.id));
 
@@ -445,6 +451,7 @@ export function defineOperationalSystemSpec(input: OperationalSystemSpecInput): 
   assertUniqueIds("operational procedure", procedures);
 
   const externalSystemBindings = input.externalSystemBindings.map((item) => {
+    assertProviderNeutral("external system binding", item.providerNeutral);
     const capabilityRefs = normalizedNamespacedList("external binding capability reference", item.capabilityRefs, "operational-capability:");
     for (const ref of capabilityRefs) {
       if (!capabilityIds.has(ref)) throw new Error(`unknown capability reference in ${item.id}: ${ref}`);
@@ -533,7 +540,7 @@ export function compileOperationalIR(input: OperationalSystemSpec, options: Oper
     ...procedure.capabilityRefs.map((capabilityRef) => ({ from: procedure.id, to: capabilityRef, relation: "REQUIRES" as const })),
     ...procedure.outcomeContractRefs.map((outcomeRef) => ({ from: procedure.id, to: outcomeRef, relation: "VERIFIES" as const })),
   ]).sort(compareDependency);
-  const identity = stableJson({ sourceSpecRef: spec.id, sourceSpecVersion: spec.version, compilerVersion });
+  const identity = stableJson({ sourceSpec: spec, compilerVersion });
   return deepFreeze({
     contract: "woyengi.operational-ir.v0.1" as const,
     id: `operational-ir:${fingerprint(identity)}`,
@@ -669,6 +676,10 @@ function duplicates(values: readonly string[]): readonly string[] {
 function assertUniqueIds(name: string, values: readonly { readonly id: string }[]): void {
   const duplicateIds = duplicates(values.map((item) => item.id));
   if (duplicateIds.length > 0) throw new Error(`duplicate ${name} id: ${duplicateIds.join(", ")}`);
+}
+
+function assertProviderNeutral(name: string, value: unknown): void {
+  if (value !== true) throw new TypeError(`${name} must explicitly be provider-neutral`);
 }
 
 function compareById(left: { readonly id: string }, right: { readonly id: string }): number {
