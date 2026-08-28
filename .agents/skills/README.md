@@ -1,15 +1,9 @@
-# Woyengi-adapted Matt Pocock skills
+# Woyengi universal fused skill pack
 
-This directory is derived from the structure and workflow ideas in `mattpocock/skills` and is redistributed under the upstream MIT license in `LICENSE-MATT-POCOCK`.
+This directory preserves the 25 adapted Matt Pocock skill names and adds all six Ponytail compatibility names. It is redistributed under the respective upstream MIT notices in `LICENSE-MATT-POCOCK` and `LICENSE-PONYTAIL`.
 
-The published skill names are retained so existing prompts remain recognizable, but the instructions are adapted to the repository operating contract in `/AGENTS.md`.
+The skills are governed by `/AGENTS.md`, `.agents/woyengi/OVERLAY.md`, and `.agents/universal/CONTRACT.md`. Ponytail is fused rather than bolted on: every coding skill inherits the minimality ladder after durable context reconstruction, while Woyengi constitutional invariants always outrank skill heuristics.
 
-Key changes:
-- Woyengi constitutional invariants outrank skill heuristics.
-- Every implementation begins from reconstructed durable context and ends with evidence + verification.
-- Consequential writes/effects remain proposals until the relevant authority/reconciliation step.
-- Skills support product engineering, RL-environment work, and research/experiments.
-- `handoff` is durable and repo-local instead of relying on ephemeral chat context.
-- `wizard` is PowerShell-first for the current development environment.
-- `code-review` adds invariant and evidence axes to standards/spec review.
-- `research` uses primary sources and explicit uncertainty.
+Key Woyengi behavior remains: reconstructed durable context, evidence + verification, proposal/authority/reconciliation semantics for consequential effects, product/RL/research modes, durable handoffs, and constitutional review axes. Ponytail adds YAGNI/reuse/stdlib/native/dependency/minimum-code selection, root-cause placement, complexity-only review/audit, and deliberate simplification debt tracking.
+
+Compatibility aliases: `ponytail`, `ponytail-review`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`. Provenance/no-information-loss mapping is in `.agents/universal/PONYTAIL-FUSION.md`.
