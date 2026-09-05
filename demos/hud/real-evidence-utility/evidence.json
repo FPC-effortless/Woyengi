@@ -1,0 +1,62 @@
+{
+  "E01": {
+    "kind": "grid_structure",
+    "source": "ACTIVSg2000",
+    "source_url": "https://electricgrids.engr.tamu.edu/electric-grid-test-cases/activsg2000/",
+    "authority": "dataset authors",
+    "observation": "ACTIVSg2000 is a fully synthetic 2000-bus Texas-footprint test case with power-flow and dynamics data. It is not an actual Texas grid."
+  },
+  "E02": {
+    "kind": "historical_event",
+    "source": "DOE OE-417 Annual Summaries",
+    "source_url": "https://openenergyhub.ornl.gov/explore/dataset/oe-417-annual-summaries/",
+    "authority": "U.S. Department of Energy",
+    "record": {
+      "event_month": "January",
+      "date_event_began": "2023-01-23",
+      "date_of_restoration": "2023-01-24",
+      "area_affected": "Connecticut; Rhode Island; Massachusetts; Vermont; New Hampshire; Maine",
+      "event_type": "Severe Weather",
+      "number_of_customers_affected": 41000
+    },
+    "use": "historical incident profile only; not hidden episode ground truth"
+  },
+  "E03": {
+    "kind": "reliability_metrics",
+    "source": "EIA Form EIA-861 Reliability",
+    "source_url": "https://www.eia.gov/electricity/data/eia861/",
+    "authority": "U.S. Energy Information Administration",
+    "observation": "EIA-861 reliability data cover non-momentary interruptions and include SAIDI and SAIFI; EIA also publishes CAIDI in its reliability tables."
+  },
+  "E04": {
+    "kind": "reliability_video",
+    "source": "EIA reliability explainer",
+    "source_url": "https://www.youtube.com/watch?v=oVH9L0fCMTU",
+    "authority": "U.S. Energy Information Administration",
+    "use": "terminology and reporting context; not episode-specific truth"
+  },
+  "E05": {
+    "kind": "incident_reporting_reference",
+    "source": "DOE OE-417 reporting reference",
+    "source_url": "https://doe417.energy.gov/",
+    "authority": "U.S. Department of Energy",
+    "use": "incident-report field requirements and reporting workflow"
+  },
+  "E06": {
+    "kind": "simulator_reference",
+    "source": "ACTIVSg2000 introductory material",
+    "source_url": "https://electricgrids.engr.tamu.edu/electric-grid-test-cases/activsg2000/",
+    "authority": "dataset authors",
+    "use": "interpretation of simulator variables and scenario construction"
+  },
+  "E07": {
+    "kind": "episode_telemetry",
+    "source": "Veritas scenario state",
+    "observation": "F17 remains faulted; energizing it is unsafe."
+  },
+  "E08": {
+    "kind": "episode_telemetry",
+    "source": "Veritas scenario state",
+    "observation": "A4 is available as the alternate restoration path."
+  }
+}
