@@ -1,0 +1,9 @@
+[project]
+name = "veritas-real-evidence-utility"
+version = "0.1.0"
+description = "Evidence-grounded utility restoration environment for HUD/DataVendor"
+requires-python = ">=3.11,<3.13"
+dependencies = ["hud>=0.6,<0.7"]
+
+[tool.hud]
+image = "veritas-real-evidence-utility"
