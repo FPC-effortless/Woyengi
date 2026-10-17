@@ -120,6 +120,13 @@ test("two humans receive durable Work SSE with replay on reconnect, ordered curs
   assert.equal(initial?.id, 1);
   assert.equal(initial.operation.kind, "work-instance.created");
   assert.equal(initial.operation.ledgerSequence, 1);
+  // Both human Work participants can independently resume the same causal
+  // stream without using presence or a non-canonical event cache.
+  const ownerStream = await fetch(url, { headers: auth(ownerToken) });
+  assert.equal(ownerStream.status, 200);
+  const ownerReader = new SseReader(ownerStream);
+  liveReaders.push(ownerReader);
+  assert.equal((await ownerReader.next())?.id, 1);
 
   const episode = await fetch(`${server.url}${prefix}/work-instance%3Astream/episodes`, {
     method: "POST", headers: { ...auth(ownerToken), "content-type": "application/json", "idempotency-key": "stream-episode" },
@@ -129,7 +136,11 @@ test("two humans receive durable Work SSE with replay on reconnect, ordered curs
   const live = await reader.next();
   assert.equal(live?.id, 2);
   assert.equal(live.operation.kind, "work-episode.started");
+  const ownerLive = await ownerReader.next();
+  assert.equal(ownerLive?.id, 2);
+  assert.equal(ownerLive.operation.kind, "work-episode.started");
   await reader.close();
+  await ownerReader.close();
 
   await server.close();
   await work.close();
