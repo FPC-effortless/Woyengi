@@ -80,7 +80,8 @@ class FakePostgres implements PostgresPool {
       }
       if (sql.startsWith("SELECT record FROM")) {
         const wanted = rows.filter((row) => row.namespace === params[0])
-          .filter((row) => params.length < 2 || row.record_id === params[1])
+          .filter((row) => params.length < 2
+            || (sql.includes("AND scope = $2") ? row.scope === params[1] : row.record_id === params[1]))
           .sort((a, b) => a.scope.localeCompare(b.scope) || a.ledger_sequence - b.ledger_sequence);
         return { rows: wanted.map((row) => ({ record: structuredClone(row.record) })) };
       }
@@ -159,9 +160,7 @@ test("PostgreSQL ledger serializes competing writers by scoped row locks", async
 
 test("PostgreSQL ledger refuses caller sequences, malformed time, and invalid namespaces before SQL mutation", async () => {
   const pool = new FakePostgres();
-  await assert.rejects(PostgresCanonicalLedger.open({ pool, namespace: "work;DROP TABLE" }).append({
-    id: "bad:record", kind: "record.created", transactionTime: { from: timestamp },
-  }), /namespace/);
+  assert.throws(() => PostgresCanonicalLedger.open({ pool, namespace: "work;DROP TABLE" }), /namespace/);
   const ledger = PostgresCanonicalLedger.open({ pool, namespace: "work" });
   await assert.rejects(ledger.append({ id: "bad:sequence", kind: "record.created",
     ledgerSequence: 77, transactionTime: { from: timestamp } }), /assigned by/);
