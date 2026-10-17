@@ -73,10 +73,16 @@ export class BoundPrincipalSessions {
   }
 }
 
+export { DurablePrincipalSessions } from "./durable-sessions.ts";
+
+export interface SessionAuthenticator {
+  resolve(authorization: string | undefined): { readonly id: string } | undefined;
+}
+
 export interface SelfHostWorkApiInput {
   readonly workspaces: DurableWorkspaceJournal;
   readonly work: DurableWorkJournal;
-  readonly sessions: BoundPrincipalSessions;
+  readonly sessions: SessionAuthenticator;
   readonly now?: () => Date;
 }
 
@@ -88,7 +94,7 @@ export interface SelfHostWorkApiInput {
 export class SelfHostWorkApi {
   readonly #workspaces: DurableWorkspaceJournal;
   readonly #work: DurableWorkJournal;
-  readonly #sessions: BoundPrincipalSessions;
+  readonly #sessions: SessionAuthenticator;
   readonly #now: () => Date;
 
   constructor(input: SelfHostWorkApiInput) {
