@@ -66,6 +66,7 @@ outside the documented schema are rejected. Request JSON limit: 64 KiB.
 | GET | `/v1/workspaces/:workspaceId/work/:workInstanceId` | Current Work projection for participant |
 | GET | `/v1/workspaces/:workspaceId/work/:workInstanceId/history` | Authorized Work operation history |
 | POST | `/v1/workspaces/:workspaceId/work/:workInstanceId/episodes` | `{ id, objective, expectedVersion, context }` -> episode |
+| GET | `/v1/workspaces/:workspaceId/work/:workInstanceId/events` | Authorized append-only Work operations as SSE. Resume with `Last-Event-ID` or `?after=<ledgerSequence>` |
 
 Success: `{ ok: true, data: ... }`; failure:
 `{ ok: false, error: { code } }`. Errors do not expose tokens or
@@ -84,9 +85,13 @@ actions, external side effects, or administrative mutation routes are exposed.
 - The `BoundPrincipalSessions` credentials are intentionally provisioned
   in-memory by the operator; these are *not* user password authentication,
   persistently revocable sessions, OAuth/OIDC, or an identity provider.
-- No realtime WebSocket/SSE, PostgreSQL provider, cross-ledger transaction,
-  process-distributed lock, durable token/session store, agent grants, or
-  independently hosted compute is implemented here.
+- Resumable **in-process, journal-backed SSE** is available for Work events.
+  It is not a cross-node durable realtime event bus, WebSocket transport,
+  or general collaboration/presence service. Reconnect and reread the ledger
+  after a server restart; no volatile notifications are persisted separately.
+- No PostgreSQL provider, cross-ledger transaction, process-distributed lock,
+  durable token/session store, agent grants, or independently hosted compute
+  is implemented here.
 - WYG-019 `passes=false` and release readiness remains `NO-GO`.
 
 Verify through the repository CI gate. Targeted regression:
@@ -110,3 +115,54 @@ Unrecognized token, missing membership, and missing Work participation all
 fail before any consequential Work operation. Unaccepted invitations provide
 no access. A session token is not itself a delegated AgentPrincipal write
 capability.
+
+## Resumable Work event stream (WYG-019 incremental slice)
+
+Use an authenticated streaming HTTP client (such as `fetch` with
+`Authorization: Bearer ...`). Native browser `EventSource` cannot directly
+supply this custom bearer header.
+
+```http
+GET /v1/workspaces/workspace%3Ateam/work/work-instance%3Areview/events?after=0
+Authorization: Bearer <operator-provisioned-token>
+Accept: text/event-stream
+```
+
+The server verifies **current** workspace membership, Work participation,
+and the bearer session *before* opening the stream. It then reconstructs
+authorized `work-instance.created`, `work-episode.started`, and other Work
+operations from the existing durable Work ledger. On a new append, an
+in-process notification wakes the stream, which rereads the ledger. The hint
+itself is not canonical history. Events use a causal `ledgerSequence` cursor:
+
+```text
+id: 2
+event: work-operation
+data: {"operation":{"id":"work-operation:example","kind":"work-episode.started", "...":"..."}}
+```
+
+The example's fields are illustrative. Actual events contain the full
+canonical Work operation (and potentially sensitive Work context), so never
+publish this stream on an unauthenticated or externally reachable endpoint.
+
+Reconnect with the previous delivered SSE `id` as `Last-Event-ID: 2` or
+`?after=2`. Omitting the cursor replays the authorized Work history from
+its beginning. Nonnegative safe decimal integer cursors only; conflicting
+query/header cursors fail with HTTP 400. An id may skip numbers because the
+ledger assigns sequences per workspace, not per Work instance. A reconnect
+with a future cursor may see no events until later operations exceed it.
+
+Heartbeat comments are emitted periodically. Sessions and current Work
+authorization are checked for each new event and heartbeat; revoked or
+expired sessions are closed rather than allowed to receive subsequent
+operations. Slow readers are disconnected instead of accumulating an
+unbounded in-process queue. Clients must reconnect with their last
+**successfully processed** event id. There is no event acknowledgment or
+durable subscriber offset in this slice.
+
+The stream remains **loopback-only** and tied to the same process as the
+single-writer JSON Work journal. No independent message broker, clustered
+delivery, distributed lock, WebSocket, cross-process subscriber registry,
+production TLS, or PostgreSQL-backed transport is implied.
+
+Regression tests: `node --test services/selfhost-api/test/work-events-sse.test.ts`.
