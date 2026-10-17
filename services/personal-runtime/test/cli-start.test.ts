@@ -61,6 +61,10 @@ test("woyengi start explicitly seeds an offline Personal Workspace and reopens w
   assert.equal(created.evidence.dependencies.networkAccess, "not-used");
   assert.equal(created.evidence.checks.length, 4);
 
+  const duplicate = await run(["start", "--workspace", workspaceDirectory, "--package", packageDirectory]);
+  assert.equal(duplicate.code, 1);
+  assert.match(duplicate.stderr, /already seeded/);
+
   // The persistent ledger and content-addressed object must be enough to reopen.
   await rm(packageDirectory, { recursive: true });
   const reopened = await run(["start", "--workspace", workspaceDirectory]);
