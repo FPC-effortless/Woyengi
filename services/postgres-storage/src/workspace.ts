@@ -11,7 +11,7 @@ const WORKSPACE_KINDS = new Set([
 
 function replay(history: readonly WorkspaceOperation[]): WorkspaceRegistry {
   for (const op of history) {
-    if (!WORKSPACE_KINDS.has(op.kind) || op.workspaceId !== undefined) {
+    if (!WORKSPACE_KINDS.has(op.kind) || ("workspaceId" in op && op.workspaceId !== undefined)) {
       throw new Error(`unexpected PostgreSQL Workspace operation: ${op.id}`);
     }
   }
