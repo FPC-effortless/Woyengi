@@ -97,3 +97,16 @@ pnpm typecheck
 pnpm boundaries
 pnpm test:all
 ```
+
+### Credential lifecycle and authority note
+
+The server intentionally has **no public login or credential issuance route**.
+A bearer token maps to exactly one operator-provisioned PrincipalId, and
+revocation only takes effect in the current process. The startup code must
+obtain distinct random secrets over a trusted secret-management channel. The
+Workspace journal remains the source of truth for active membership, and the
+Work journal remains the source of truth for explicit Work participation.
+Unrecognized token, missing membership, and missing Work participation all
+fail before any consequential Work operation. Unaccepted invitations provide
+no access. A session token is not itself a delegated AgentPrincipal write
+capability.
