@@ -15,6 +15,7 @@ function membership() {
   const reviewer = registry.registerPrincipal({ operationId: "workspace-operation:reviewer", id: "principal:reviewer", kind: "human", recordedAt: instant });
   const outsider = registry.registerPrincipal({ operationId: "workspace-operation:outsider", id: "principal:outsider", kind: "human", recordedAt: instant });
   const agent = registry.registerPrincipal({ operationId: "workspace-operation:agent", id: "principal:agent", kind: "agent", recordedAt: instant });
+  const observer = registry.registerPrincipal({ operationId: "workspace-operation:observer", id: "principal:observer", kind: "human", recordedAt: instant });
   registry.createAccount({
     operationId: "workspace-operation:outsider-account", id: "account:outsider", ownerPrincipalId: outsider.id,
     personalWorkspaceId: "workspace:outsider", recordedAt: instant,
@@ -32,7 +33,16 @@ function membership() {
     operationId: "workspace-operation:reviewer-accepted",
     membershipId: "membership:reviewer", principalId: reviewer.id, recordedAt: instant,
   });
-  return { registry, owner, reviewer, outsider, agent };
+  registry.inviteMember({
+    operationId: "workspace-operation:observer-invited", id: "membership:observer",
+    organizationId: organization.organization.id, principalId: observer.id,
+    invitedByPrincipalId: owner.id, recordedAt: instant,
+  });
+  registry.acceptInvitation({
+    operationId: "workspace-operation:observer-accepted",
+    membershipId: "membership:observer", principalId: observer.id, recordedAt: instant,
+  });
+  return { registry, owner, reviewer, outsider, agent, observer };
 }
 
 function createInput(owner: ReturnType<typeof membership>["owner"], reviewer: ReturnType<typeof membership>["reviewer"]) {
@@ -93,7 +103,7 @@ test("rejects unauthorized access, agent auto-grants, stale versions and concurr
     for (const journal of journals.toReversed()) await journal.close();
     await rm(root, { recursive: true, force: true });
   });
-  const { registry, owner, reviewer, outsider, agent } = membership();
+  const { registry, owner, reviewer, outsider, agent, observer } = membership();
   const ledgerPath = join(root, "work-ledger.json");
   const journal = await DurableWorkJournal.open({ ledgerPath, workspaces: registry });
   journals.push(journal);
@@ -106,6 +116,10 @@ test("rejects unauthorized access, agent auto-grants, stale versions and concurr
   await assert.rejects(
     journal.createWorkInstance({ ...createInput(owner, reviewer), participants: [owner, reviewer, agent] }),
     /requires explicit delegated capability/,
+  );
+  await assert.rejects(
+    journal.createWorkInstance({ ...createInput(owner, reviewer), participants: [owner, reviewer, { ...agent, kind: "human" }] }),
+    /principal kind mismatch/,
   );
   assert.equal(journal.history({ principalId: owner.id, workspaceId: "workspace:team" }).length, 0);
 
@@ -126,6 +140,11 @@ test("rejects unauthorized access, agent auto-grants, stale versions and concurr
     () => journal.history({ principalId: outsider.id, workspaceId: work.workspaceId }),
     /workspace access denied/,
   );
+  assert.throws(
+    () => journal.workInstance({ principalId: observer.id, workspaceId: work.workspaceId, id: work.id }),
+    /Work participant access denied/,
+  );
+  assert.deepEqual(journal.history({ principalId: observer.id, workspaceId: work.workspaceId }), []);
   assert.equal(journal.history({ principalId: owner.id, workspaceId: work.workspaceId }).length, 1);
   assert.equal(JSON.parse(await readFile(ledgerPath, "utf8")).length, 1);
   await journal.close();
