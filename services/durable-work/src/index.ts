@@ -17,7 +17,7 @@ import {
 export interface DurableWorkJournalOpenInput {
   readonly ledgerPath: string;
   /** The caller must reconstruct the authoritative workspace registry from durable operations. */
-  readonly workspaces: WorkspaceRegistry;
+  readonly workspaces: WorkspaceRegistry | (() => WorkspaceRegistry);
 }
 
 /**
@@ -31,7 +31,7 @@ export interface DurableWorkJournalOpenInput {
  */
 export class DurableWorkJournal {
   readonly #ledger: LocalCanonicalLedger<LedgerRecord>;
-  readonly #workspaces: WorkspaceRegistry;
+  readonly #workspaces: () => WorkspaceRegistry;
   readonly #writer: FileHandle;
   readonly #lockPath: string;
   #registry: WorkRegistry;
@@ -41,13 +41,13 @@ export class DurableWorkJournal {
 
   private constructor(
     ledger: LocalCanonicalLedger<LedgerRecord>,
-    workspaces: WorkspaceRegistry,
+    workspaces: WorkspaceRegistry | (() => WorkspaceRegistry),
     writer: FileHandle,
     lockPath: string,
     registry: WorkRegistry,
   ) {
     this.#ledger = ledger;
-    this.#workspaces = workspaces;
+    this.#workspaces = typeof workspaces === "function" ? workspaces : () => workspaces;
     this.#writer = writer;
     this.#lockPath = lockPath;
     this.#registry = registry;
@@ -139,11 +139,11 @@ export class DurableWorkJournal {
   }
 
   #access(principalId: string, workspaceId: string): void {
-    this.#workspaces.workspaceFor({ principalId, workspaceId });
+    this.#workspaces().workspaceFor({ principalId, workspaceId });
   }
 
   #requireHumanWorkspaceParticipant(participant: Principal, workspaceId: string): void {
-    const registration = this.#workspaces.history().find((operation) =>
+    const registration = this.#workspaces().history().find((operation) =>
       operation.kind === "principal.registered" && operation.principal.id === participant.id
     );
     if (registration === undefined || registration.kind !== "principal.registered"
