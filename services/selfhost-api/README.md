@@ -215,9 +215,11 @@ The session ledger persists **SHA-256 token digests**, principal references,
 expiry, issuance and revocation history; it does not persist plaintext bearer
 tokens. Bearer secrets should have at least 32 characters of high-quality
 unpredictable randomness, despite minimum length alone not proving entropy.
-Protect session-journal files with operating-system permissions and backups;
-offline theft of a ledger containing a digest must still be treated as a
-security exposure. Human operator verification, secret distribution, and
+Session ledger files are created or rewritten with Unix mode `0600`, and
+existing ledger files are tightened on reopen before their contents are read.
+Operators must also protect the containing directory and backups; offline
+theft of a ledger containing a digest must still be treated as a security
+exposure. Human operator verification, secret distribution, and
 the permission to provision/revoke are **outside** this service: it must never
 be exposed directly to untrusted callers.
 
