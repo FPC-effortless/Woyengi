@@ -178,6 +178,69 @@ export class PostgresCanonicalLedger<RecordType extends LedgerRecord = LedgerRec
     }
   }
 
+  /**
+   * Execute a synchronous domain decision against the latest authoritative
+   * scope history while its PostgreSQL counter row is locked. The domain
+   * validator runs *inside* the append transaction, so two independent API
+   * processes cannot both accept a stale optimistic Work version.
+   *
+   * The decision must be deterministic, synchronous and free of effects.
+   * Only one record can be committed by this operation.
+   */
+  async appendValidated<Result>(input: {
+    readonly workspaceId?: string;
+    readonly decide: (history: readonly RecordType[]) => {
+      readonly record: RecordType;
+      readonly result: Result;
+    };
+  }): Promise<Result> {
+    if (input.workspaceId !== undefined) requireId("workspace scope", input.workspaceId);
+    const scope = input.workspaceId ?? GLOBAL_SCOPE;
+    const client = await this.#pool.connect();
+    let inTransaction = false;
+    try {
+      await client.query("BEGIN");
+      inTransaction = true;
+      await client.query(ENSURE_COUNTER, [this.#namespace, scope]);
+      const counter = await client.query(LOCK_COUNTER, [this.#namespace, scope]);
+      if (counter.rows.length !== 1) throw new Error("PostgreSQL scope counter is missing");
+      const sequence = sequenceNumber(counter.rows[0]?.next_sequence);
+      const prior = await client.query(LOAD_SCOPE, [this.#namespace, scope]);
+      const history = Object.freeze(prior.rows.map((row) =>
+        normalizeStoredRecord<RecordType>(row.record)
+      ));
+      const decision = input.decide(history);
+      // Runtime JS guards: a promise would escape the transaction, and a
+      // different scope could violate the authority boundary.
+      if (decision === null || typeof decision !== "object"
+        || "then" in decision) throw new TypeError("ledger decision must be synchronous");
+      const record = decision.record;
+      validateRecord(record);
+      if ((record.workspaceId ?? GLOBAL_SCOPE) !== scope) {
+        throw new Error("domain decision changed the PostgreSQL ledger scope");
+      }
+      if (!Number.isSafeInteger(sequence + 1)) throw new Error("PostgreSQL causal sequence exhausted");
+      const stored = { ...structuredClone(record), ledgerSequence: sequence };
+      await client.query(STORE_RECORD, [
+        this.#namespace, scope, sequence, record.id, record.kind,
+        new Date(record.transactionTime.from).toISOString(), JSON.stringify(stored),
+      ]);
+      await client.query(ADVANCE_COUNTER, [this.#namespace, scope, sequence + 1]);
+      await client.query("COMMIT");
+      inTransaction = false;
+      return decision.result;
+    } catch (error) {
+      if (inTransaction) {
+        try { await client.query("ROLLBACK"); } catch {
+          // Connection health and cleanup are handled by the pool driver.
+        }
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async load(input: PostgresLedgerLoadInput = {}): Promise<readonly RecordType[]> {
     if (input.workspaceId !== undefined) requireId("workspace scope", input.workspaceId);
     const client = await this.#pool.connect();
