@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { mkdir, open, unlink, type FileHandle } from "node:fs/promises";
+import { chmod, mkdir, open, unlink, type FileHandle } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 import type { LedgerRecord } from "../../../packages/ledger/src/index.ts";
@@ -168,7 +168,16 @@ export class DurablePrincipalSessions {
       throw error;
     }
     try {
-      const ledger = await LocalCanonicalLedger.open<SessionOperation>(ledgerPath);
+      // Existing on-disk session journals are tightened before they can be
+      // read; all subsequent atomic replacements are written with mode 0600.
+      try {
+        await chmod(ledgerPath, 0o600);
+      } catch (error) {
+        if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) {
+          throw error;
+        }
+      }
+      const ledger = await LocalCanonicalLedger.open<SessionOperation>(ledgerPath, { fileMode: 0o600 });
       const sessions = reconstruct(ledger.query());
       // Credential history cannot grant a principal identity absent from the
       // canonical Workspace registry, even if the local session file is modified.
