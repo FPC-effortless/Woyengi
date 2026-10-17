@@ -408,3 +408,12 @@
 - Added ADR 0006 and corrected the status/gap matrices: Waves 0-2 are broadly functional, Wave 3 is partial, and the system is not production-ready.
 - Verification: 88/88 serialized Node tests and the Python SDK test pass; typecheck, package boundaries, and deep-module gates pass. The fast production gate remains the expected `NO-GO` because full-product requirements and human acceptance are open; architecture, deep-module, and security gates pass.
 - Next: finish WYG-019B durable self-hosted multiplayer server composition, then WYG-020 coding-first reference vertical.
+
+## 2026-10-17 — WYG-019 incremental offline CLI entry point (verification pending)
+
+- Outcome: expose the existing `seedPersonalRuntime` / `openPersonalRuntime` behind `woyengi start`, with explicit package seeding and state-only reopen.
+- Public behavior tests: `packages/cli/test/personal-start.test.ts` checks first launch, durable reopen after package-source removal, missing-state refusal, and invalid owner rejection.
+- Implementation: `packages/cli/src/index.ts`; documentation: `README.md`.
+- Changes remain in feature branch `feat/wyg-019-offline-cli-start-20261017`; no canonical semantic effect or deployment/release has occurred.
+- Verification: GitHub Actions CI must complete before this slice is marked verified. Full WYG-019 remains blocked on durable multi-human server, realtime transport, and separate governed compute-node integration. `passes` stays false.
+- Deliberate ceiling: local single-owner bootstrap of exactly one ApplicationPackage, without cryptographic package signature verification, browser-shell integration, session identity, or a live server; upgrade when WYG-019 self-hosted composition is implemented.
