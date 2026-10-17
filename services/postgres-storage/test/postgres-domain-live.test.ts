@@ -9,7 +9,7 @@ import {
   PostgresWorkJournal,
   PostgresWorkspaceJournal,
   type PostgresPool,
-} from "../src/index.ts";
+} from "../index.ts";
 
 const url = process.env.WOYENGI_TEST_DATABASE_URL;
 const moduleRoot = process.env.WOYENGI_PG_MODULE_ROOT;
