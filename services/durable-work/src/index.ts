@@ -143,6 +143,13 @@ export class DurableWorkJournal {
   }
 
   #requireHumanWorkspaceParticipant(participant: Principal, workspaceId: string): void {
+    const registration = this.#workspaces.history().find((operation) =>
+      operation.kind === "principal.registered" && operation.principal.id === participant.id
+    );
+    if (registration === undefined || registration.kind !== "principal.registered"
+      || registration.principal.kind !== participant.kind) {
+      throw new Error(`Work participant principal kind mismatch: ${participant.id}`);
+    }
     if (participant.kind !== "human") {
       throw new Error("non-human Work participation requires explicit delegated capability");
     }
