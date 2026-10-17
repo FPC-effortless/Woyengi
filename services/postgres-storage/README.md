@@ -132,3 +132,65 @@ No realtime cluster coordination, distributed sessions, domain repository
 integration, agent capability grants, network/TLS server hardening,
 independent compute or human QA is supplied by this slice. `passes=false`,
 and release readiness remains `NO-GO`.
+
+## PostgreSQL-backed domain journals (next WYG-019 increment)
+
+`PostgresWorkspaceJournal` and `PostgresWorkJournal` compose the SQL
+provider with the same `WorkspaceRegistry` / `WorkRegistry` replay
+semantics as Woyengi's local journals. Both expose asynchronous, strongly
+typed domain operations.
+
+```ts
+import {
+  PostgresWorkspaceJournal,
+  PostgresWorkJournal,
+} from "./index.ts";
+
+const workspace = PostgresWorkspaceJournal.open({ pool });
+const work = PostgresWorkJournal.open({ pool, workspaces: workspace });
+
+// Trusted operator bootstrap (not public registration/login):
+const owner = await workspace.registerPrincipal({
+  operationId: "workspace-operation:owner",
+  id: "principal:owner",
+  kind: "human",
+  recordedAt: new Date().toISOString(),
+});
+// Workspace creation/membership is validated by the canonical registry.
+// Only registered, active human workspace participants may join Work.
+```
+
+**Concurrency property:** `PostgresCanonicalLedger.appendValidated` takes a
+scope's PostgreSQL counter row lock, retrieves the latest committed canonical
+operations *inside that same transaction*, executes the domain decision
+synchronously under the lock, and atomically appends exactly one validated
+operation. Two independent database clients racing to start episodes from
+`expectedVersion=1` cannot both commit; one must fail validation without
+advancing the ledger sequence. No in-process work cache or filesystem lock
+can substitute for this mechanism.
+
+Workspace principal/organization/membership operations use a single global
+scope. Work operations use workspace-specific causal scopes; reads rehydrate
+authorized Work from PostgreSQL rather than cached projections. A registered
+agent is **not** enrolled into Work without an explicit delegated capability.
+Separate workspaces cannot read one another's participant-scoped Work history.
+
+The GitHub Actions PostgreSQL 16 integration job now exercises both the
+generic SQL adapter and **actual Workspace and Work domain journals**, using
+two independently connected database pools, real organization invitations,
+membership activation, outsider and agent refusals, repeated reads, causal
+history, and an optimistic-version race.
+
+**Not yet included:** the existing loopback `SelfHostWorkApi` and SSE
+handler still call the local synchronous journal interfaces. Binding those
+routes to these new async PostgreSQL journal methods requires an async API
+adapter, authorization/session composition and cross-process notification.
+Domain-level Workspace and Work checks currently read Workspace authority
+from another PostgreSQL namespace *before* opening a Work transaction.
+This is consistent with currently supported append-only invitation and
+activation semantics, but **not** an atomic guarantee for any future
+membership removal or authority revocation. A production version must
+coordinate revocation and Work commits transactionally and address
+cross-process realtime delivery, token session persistence in PostgreSQL,
+trusted migration credentials and network TLS. No full WYG-019 or release
+acceptance is claimed.
