@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -51,16 +51,21 @@ test("durable principal sessions authenticate HTTP across restart, reject duplic
   assert.equal(bytes.includes(token), false);
   assert.match(bytes, /sha256:[a-f0-9]{64}/);
   assert.equal(bytes.includes("token\""), false);
+  assert.equal((await stat(path)).mode & 0o777, 0o600);
 
   server = await new SelfHostWorkApi({ workspaces: workspace, work, sessions }).listen({ hostname: "127.0.0.1", port: 0 });
   assert.equal((await access()).status, 200);
   await server.close();
   server = undefined;
   await sessions.close();
+  // Existing session files with loose mode are tightened on startup.
+  await chmod(path, 0o644);
   sessions = await DurablePrincipalSessions.open({ ledgerPath: path, workspaces: workspace, now: () => clock });
+  assert.equal((await stat(path)).mode & 0o777, 0o600);
   server = await new SelfHostWorkApi({ workspaces: workspace, work, sessions }).listen({ hostname: "127.0.0.1", port: 0 });
   assert.equal((await access()).status, 200);
   await sessions.revoke({ operationId: "session-operation:revoke", sessionId: "session:owner", recordedAt: now });
+  assert.equal((await stat(path)).mode & 0o777, 0o600);
   assert.equal((await access()).status, 401);
   assert.equal(sessions.resolve(`Bearer ${token}`), undefined);
   await assert.rejects(sessions.provision({ operationId: "session-operation:reissue", sessionId: "session:reissued", principalId: owner.id, token, expiresAt, recordedAt: now }), /duplicate/);
