@@ -412,8 +412,8 @@
 ## 2026-10-17 — WYG-019 incremental offline CLI entry point (verification pending)
 
 - Outcome: expose the existing `seedPersonalRuntime` / `openPersonalRuntime` behind `woyengi start`, with explicit package seeding and state-only reopen.
-- Public behavior tests: `packages/cli/test/personal-start.test.ts` checks first launch, durable reopen after package-source removal, missing-state refusal, and invalid owner rejection.
-- Implementation: `packages/cli/src/index.ts`; documentation: `README.md`.
+- Public behavior tests: `services/personal-runtime/test/cli-start.test.ts` checks first launch, durable reopen after package-source removal, missing-state refusal, and invalid owner rejection.
+- Implementation: `services/personal-runtime/src/cli.ts` and `src/bin.ts`; `package.json` routes the public CLI binary through the service composition root; documentation: `README.md`.
 - Changes remain in feature branch `feat/wyg-019-offline-cli-start-20261017`; no canonical semantic effect or deployment/release has occurred.
-- Verification: GitHub Actions CI must complete before this slice is marked verified. Full WYG-019 remains blocked on durable multi-human server, realtime transport, and separate governed compute-node integration. `passes` stays false.
+- Verification: initial PR CI typecheck passed but deep-module gate rejected a package-to-service import; refactored to service composition root. Final-head GitHub Actions CI must complete before this slice is marked verified. Full WYG-019 remains blocked on durable multi-human server, realtime transport, and separate governed compute-node integration. `passes` stays false.
 - Deliberate ceiling: local single-owner bootstrap of exactly one ApplicationPackage, without cryptographic package signature verification, browser-shell integration, session identity, or a live server; upgrade when WYG-019 self-hosted composition is implemented.
