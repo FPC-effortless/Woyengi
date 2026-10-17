@@ -56,11 +56,15 @@ function createInput(owner: ReturnType<typeof membership>["owner"], reviewer: Re
 
 test("durably records shared Work with causal episode order and restores it after restart", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "woyengi-durable-work-"));
-  t.after(async () => rm(root, { recursive: true, force: true }));
+  const journals: DurableWorkJournal[] = [];
+  t.after(async () => {
+    for (const journal of journals.toReversed()) await journal.close();
+    await rm(root, { recursive: true, force: true });
+  });
   const { registry, owner, reviewer } = membership();
   const ledgerPath = join(root, "work-ledger.json");
   const journal = await DurableWorkJournal.open({ ledgerPath, workspaces: registry });
-  t.after(async () => journal.close());
+  journals.push(journal);
 
   const instance = await journal.createWorkInstance(createInput(owner, reviewer));
   assert.equal(instance.version, 1);
@@ -76,7 +80,7 @@ test("durably records shared Work with causal episode order and restores it afte
   const reloaded = await DurableWorkJournal.open({
     ledgerPath, workspaces: WorkspaceRegistry.replay(registry.history().toReversed()),
   });
-  t.after(async () => reloaded.close());
+  journals.push(reloaded);
   assert.deepEqual(reloaded.workInstance({ principalId: reviewer.id, workspaceId: instance.workspaceId, id: instance.id }).episodeIds, ["work-episode:review"]);
   assert.deepEqual(reloaded.history({ principalId: owner.id, workspaceId: instance.workspaceId }).map((op) => op.kind), ["work-instance.created", "work-episode.started"]);
   assert.deepEqual(reloaded.history({ principalId: owner.id, workspaceId: instance.workspaceId }).map((op) => op.ledgerSequence), [1, 2]);
@@ -84,11 +88,15 @@ test("durably records shared Work with causal episode order and restores it afte
 
 test("rejects unauthorized access, agent auto-grants, stale versions and concurrent writers without partial commits", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "woyengi-durable-work-gates-"));
-  t.after(async () => rm(root, { recursive: true, force: true }));
+  const journals: DurableWorkJournal[] = [];
+  t.after(async () => {
+    for (const journal of journals.toReversed()) await journal.close();
+    await rm(root, { recursive: true, force: true });
+  });
   const { registry, owner, reviewer, outsider, agent } = membership();
   const ledgerPath = join(root, "work-ledger.json");
   const journal = await DurableWorkJournal.open({ ledgerPath, workspaces: registry });
-  t.after(async () => journal.close());
+  journals.push(journal);
 
   await assert.rejects(DurableWorkJournal.open({ ledgerPath, workspaces: registry }), /writer lock/);
   await assert.rejects(
@@ -127,11 +135,15 @@ test("rejects unauthorized access, agent auto-grants, stale versions and concurr
 
 test("serializes parallel starts, preserving optimistic version rejection and allowing recovery", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "woyengi-durable-work-queue-"));
-  t.after(async () => rm(root, { recursive: true, force: true }));
+  const journals: DurableWorkJournal[] = [];
+  t.after(async () => {
+    for (const journal of journals.toReversed()) await journal.close();
+    await rm(root, { recursive: true, force: true });
+  });
   const { registry, owner, reviewer } = membership();
   const ledgerPath = join(root, "work-ledger.json");
   const journal = await DurableWorkJournal.open({ ledgerPath, workspaces: registry });
-  t.after(async () => journal.close());
+  journals.push(journal);
   const work = await journal.createWorkInstance(createInput(owner, reviewer));
 
   const attempt = (operationId: string, id: string) => journal.startEpisode({
