@@ -104,13 +104,29 @@ pnpm test:all
 pnpm benchmark
 ```
 
-The unit/regression suite tests SQL ordering, transaction rollback,
+The Node regression suite tests SQL ordering, transaction rollback,
 multi-scope causality, duplicate operation constraints, separation between
 journal namespaces and competing writer behavior using a deterministic
-PostgreSQL-port test double. **It does not establish successful execution
-against a live PostgreSQL server.** A real PostgreSQL integration gate
-(including multiple independent clients/processes and failover) is still
-required before accepting PostgreSQL-backed WYG-019.
+PostgreSQL-port test double.
+
+A **separate GitHub Actions PostgreSQL integration job** also starts
+PostgreSQL 16, installs `pg@8.16.3` in an isolated temporary prefix (not
+in the core/offline lockfile), and runs
+`services/postgres-storage/test/postgres-live.test.ts` against that real
+server using **two independent database pools**. The live test verifies
+migration, append/reload, identical-timestamp parent/child ordering,
+simultaneous writer commits, duplicate rollback, causal sequence reuse
+prevention, and independent namespaces. CI run
+[#39063160754](https://github.com/FPC-effortless/Woyengi/actions/runs/39063160754)
+passed all three jobs. The live test is skipped by default during
+`pnpm test:all` unless both `WOYENGI_TEST_DATABASE_URL` and
+`WOYENGI_PG_MODULE_ROOT` are set; CI's third job sets both.
+
+**This is live evidence for the SQL adapter only**, not a test of
+PostgreSQL-backed Work, Workspace, or sessions in a running server.
+Multi-process domain-level authorization, cross-ledger transactional
+coordination, failover and migration/recovery tests remain required before
+accepting WYG-019.
 
 No realtime cluster coordination, distributed sessions, domain repository
 integration, agent capability grants, network/TLS server hardening,
