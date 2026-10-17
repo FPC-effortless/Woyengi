@@ -408,3 +408,12 @@
 - Added ADR 0006 and corrected the status/gap matrices: Waves 0-2 are broadly functional, Wave 3 is partial, and the system is not production-ready.
 - Verification: 88/88 serialized Node tests and the Python SDK test pass; typecheck, package boundaries, and deep-module gates pass. The fast production gate remains the expected `NO-GO` because full-product requirements and human acceptance are open; architecture, deep-module, and security gates pass.
 - Next: finish WYG-019B durable self-hosted multiplayer server composition, then WYG-020 coding-first reference vertical.
+
+## 2026-10-17 — WYG-019 incremental offline CLI entry point (verification pending)
+
+- Outcome: expose the existing `seedPersonalRuntime` / `openPersonalRuntime` behind `woyengi start`, with explicit package seeding and state-only reopen.
+- Public behavior tests: `services/personal-runtime/test/cli-start.test.ts` checks first launch, durable reopen after package-source removal, missing-state refusal, and invalid owner rejection.
+- Implementation: `services/personal-runtime/src/cli.ts` and `src/bin.ts`; `package.json` routes the public CLI binary through the service composition root; documentation: `README.md`.
+- Changes remain in feature branch `feat/wyg-019-offline-cli-start-20261017`; no canonical semantic effect or deployment/release has occurred.
+- Verification: initial PR CI typecheck passed but the deep-module gate rejected a package-to-service import; refactored to the service composition root. After adding duplicate-seed regression coverage, GitHub Actions run 39010445290 on commit c6a361f1e149398f25418b2805be73215e01f565 passed typecheck, package/deep-module boundaries, Node/Python tests, adversarial benchmark, architecture gate, security gate, and container API smoke test. Full WYG-019 acceptance and human QA remain open. Full WYG-019 remains blocked on durable multi-human server, realtime transport, and separate governed compute-node integration. `passes` stays false.
+- Deliberate ceiling: local single-owner bootstrap of exactly one ApplicationPackage, without cryptographic package signature verification, browser-shell integration, session identity, or a live server; upgrade when WYG-019 self-hosted composition is implemented.
