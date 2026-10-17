@@ -48,8 +48,13 @@ test("serves scoped Work HTTP for two verified humans and rejects spoofing, stal
   ]);
   const api = new SelfHostWorkApi({ workspaces: workspace, work, sessions });
   const server = await api.listen({ hostname: "127.0.0.1", port: 0 });
+  let serverClosed = false;
+  let reloadedWorkspace: DurableWorkspaceJournal | undefined;
+  let reloadedWork: DurableWorkJournal | undefined;
   t.after(async () => {
-    await server.close();
+    await reloadedWork?.close();
+    await reloadedWorkspace?.close();
+    if (!serverClosed) await server.close();
     await work.close();
     await workspace.close();
     await rm(root, { recursive: true, force: true });
@@ -131,14 +136,14 @@ test("serves scoped Work HTTP for two verified humans and rejects spoofing, stal
     "work-instance.created", "work-episode.started",
   ]);
   await server.close();
+  serverClosed = true;
   await work.close();
   await workspace.close();
 
-  const reloadedWorkspace = await DurableWorkspaceJournal.open({ ledgerPath: workspacePath });
-  const reloadedWork = await DurableWorkJournal.open({
-    ledgerPath: workPath, workspaces: () => reloadedWorkspace.snapshot(),
+  reloadedWorkspace = await DurableWorkspaceJournal.open({ ledgerPath: workspacePath });
+  reloadedWork = await DurableWorkJournal.open({
+    ledgerPath: workPath, workspaces: () => reloadedWorkspace!.snapshot(),
   });
-  t.after(async () => { await reloadedWork.close(); await reloadedWorkspace.close(); });
   assert.equal(reloadedWork.workInstance({
     principalId: reviewer.id, workspaceId: organization.workspace.id, id: created.id,
   }).version, 2);
