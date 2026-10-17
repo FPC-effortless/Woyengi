@@ -68,8 +68,16 @@ const LOAD_ID = `SELECT record FROM woyengi_ledger_records
 export async function migratePostgresCanonicalLedger(pool: PostgresPool): Promise<void> {
   const client = await pool.connect();
   try {
-    await client.query(CREATE_COUNTERS);
-    await client.query(CREATE_RECORDS);
+    // PostgreSQL CREATE TABLE IF NOT EXISTS can race on pg_type metadata
+    // across independent connections. Serialize migrations through a
+    // session advisory lock; always unlock before releasing pooled client.
+    await client.query("SELECT pg_advisory_lock(82719, 1)");
+    try {
+      await client.query(CREATE_COUNTERS);
+      await client.query(CREATE_RECORDS);
+    } finally {
+      await client.query("SELECT pg_advisory_unlock(82719, 1)");
+    }
   } finally {
     client.release();
   }
