@@ -36,6 +36,7 @@ export class DurableWorkJournal {
   readonly #lockPath: string;
   #registry: WorkRegistry;
   #writeQueue: Promise<void> = Promise.resolve();
+  readonly #changeListeners = new Set<() => void>();
   #closing = false;
   #closed = false;
 
@@ -126,10 +127,22 @@ export class DurableWorkJournal {
     ));
   }
 
+  /**
+   * Non-authoritative, in-process change hint. Consumers must reconstruct
+   * authorized operations from history() after each notification. The hint is
+   * never used as event evidence or persisted in place of the Work journal.
+   */
+  subscribeChanges(listener: () => void): () => void {
+    if (this.#closed || this.#closing) throw new Error("durable Work journal is closed");
+    this.#changeListeners.add(listener);
+    return () => { this.#changeListeners.delete(listener); };
+  }
+
   async close(): Promise<void> {
     if (this.#closed || this.#closing) return;
     this.#closing = true;
     await this.#writeQueue;
+    this.#changeListeners.clear();
     try {
       await this.#writer.close();
     } finally {
@@ -181,6 +194,11 @@ export class DurableWorkJournal {
       const { ledgerSequence: _unpersistedSequence, ...record } = operation;
       await this.#ledger.append(record);
       this.#registry = WorkRegistry.replay(this.#ledger.query() as readonly WorkOperation[]);
+      // Publish only an ephemeral wake-up after the canonical append commits.
+      // A subscriber exception must never roll back or reinterpret a commit.
+      for (const notify of this.#changeListeners) {
+        try { notify(); } catch { /* delivery is advisory; durable replay is authoritative */ }
+      }
       return result;
     };
     const attempt = this.#writeQueue.then(perform);
