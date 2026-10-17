@@ -166,3 +166,75 @@ delivery, distributed lock, WebSocket, cross-process subscriber registry,
 production TLS, or PostgreSQL-backed transport is implied.
 
 Regression tests: `node --test services/selfhost-api/test/work-events-sse.test.ts`.
+
+## Persistent local bearer sessions (next WYG-019 slice)
+
+`DurablePrincipalSessions` is an optional **single-writer, local JSON**
+credential journal. It is a compatible `SessionAuthenticator` for
+`SelfHostWorkApi` and the SSE stream. Its immutable `session.issued` and
+`session.revoked` records use storage-assigned causal ledger sequences.
+Replaying the journal after restart reconstructs active and revoked sessions;
+revocation cannot be undone by reusing the same bearer secret.
+
+Trusted operator bootstrap can provision and revoke credentials, for example:
+
+```ts
+import { DurablePrincipalSessions } from "./index.ts";
+
+// Open the canonical Workspace journal first. Use its already verified
+// registered human principals; no agent capability is granted by a bearer.
+const sessions = await DurablePrincipalSessions.open({
+  ledgerPath: "./data/principal-sessions.json",
+  workspaces,
+});
+try {
+  await sessions.provision({
+    operationId: "session-operation:issue-owner-1",
+    sessionId: "session:owner-1",
+    principalId: "principal:owner",
+    token: process.env.WOYENGI_OWNER_TOKEN ?? "",
+    expiresAt: "2026-10-18T20:00:00Z",
+    recordedAt: "2026-10-17T20:00:00Z",
+  });
+  // Pass sessions into SelfHostWorkApi. These operator actions are NOT routes.
+  // Later: await sessions.revoke({ operationId: ..., sessionId: ..., recordedAt: ... });
+} finally {
+  await sessions.close();
+}
+```
+
+The dates above illustrate the API contract, **not a production deployment
+configuration**. Generate fresh unpredictable secrets for every session and
+choose current issuance/expiry times; expiry must be after issuance and within
+30 days. Identical tokens and session IDs are never accepted twice, including
+when the previous session is revoked. Only principals registered as humans
+may be provisioned. The existing workspace membership and Work participant
+checks remain mandatory for every request.
+
+The session ledger persists **SHA-256 token digests**, principal references,
+expiry, issuance and revocation history; it does not persist plaintext bearer
+tokens. Bearer secrets should have at least 32 characters of high-quality
+unpredictable randomness, despite minimum length alone not proving entropy.
+Session ledger files are created or rewritten with Unix mode `0600`, and
+existing ledger files are tightened on reopen before their contents are read.
+Operators must also protect the containing directory and backups; offline
+theft of a ledger containing a digest must still be treated as a security
+exposure. Human operator verification, secret distribution, and
+the permission to provision/revoke are **outside** this service: it must never
+be exposed directly to untrusted callers.
+
+Reopening a malformed or unknown-operation ledger fails closed instead of
+resetting a session; the `.writer.lock` refuses a second concurrent writer.
+After a crash, do not remove a stale writer lock until the original process
+is confirmed stopped. `history()` exposes sensitive digests for **trusted
+audit tooling only**, never through HTTP. Current HTTP and SSE authorization
+uses the active session journal, so durable revocations apply immediately to
+new requests and before subsequent streamed Work events.
+
+This is **not PostgreSQL**, multi-server session coordination, an OIDC/login
+provider, credential refresh, interactive user enrollment, multi-factor auth,
+TLS, or release-ready self-hosting. A real multi-process deployment needs
+Postgres-compatible transactional session storage and online credential and
+revocation propagation. Full WYG-019 remains unaccepted.
+
+Additional falsifiers: `node --test services/selfhost-api/test/durable-sessions.test.ts`.
