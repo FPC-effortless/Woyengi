@@ -8,6 +8,7 @@ import {
 } from "../../durable-work/index.ts";
 import type { Principal } from "../../../packages/workspace/src/index.ts";
 import type { WorkValue } from "../../../packages/work/src/index.ts";
+import { openWorkEventStream } from "./events.ts";
 
 interface Credential {
   readonly principalId: string;
@@ -173,6 +174,23 @@ export class SelfHostWorkApi {
         reply(response, 200, { work: this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId }) });
         return;
       }
+      if (method === "GET" && path.length === 6 && path[5] === "events") {
+        const after = streamCursor(request);
+        // Reject an unauthorized stream before committing HTTP 200 headers.
+        this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
+        openWorkEventStream({
+          request,
+          response,
+          work: this.#work,
+          sessions: this.#sessions,
+          authorization,
+          principalId: principal.id,
+          workspaceId,
+          workInstanceId: instanceId,
+          after,
+        });
+        return;
+      }
       if (method === "GET" && path.length === 6 && path[5] === "history") {
         // Require specific Work participation, not workspace membership alone.
         this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
@@ -261,6 +279,27 @@ function operationId(request: IncomingMessage, principalId: string): string {
   }
   // Duplicates conflict rather than re-execute. Response replay is not yet supported.
   return `work-operation:${principalId}:${key}`;
+}
+
+function streamCursor(request: IncomingMessage): number {
+  const params = new URL(request.url ?? "/", "http://localhost").searchParams;
+  if ([...params.keys()].some((key) => key !== "after") || params.getAll("after").length > 1) {
+    throw new ApiError(400, "INVALID_CURSOR");
+  }
+  const eventIdCount = request.rawHeaders.filter((value, index) =>
+    index % 2 === 0 && value.toLowerCase() === "last-event-id"
+  ).length;
+  if (eventIdCount > 1) throw new ApiError(400, "INVALID_CURSOR");
+  const headerCursor = singleHeader(request, "last-event-id");
+  const queryCursor = params.get("after");
+  if (headerCursor !== undefined && queryCursor !== null && headerCursor !== queryCursor) {
+    throw new ApiError(400, "INVALID_CURSOR");
+  }
+  const cursor = queryCursor ?? headerCursor ?? "0";
+  if (!/^(0|[1-9][0-9]*)$/.test(cursor)) throw new ApiError(400, "INVALID_CURSOR");
+  const parsed = Number(cursor);
+  if (!Number.isSafeInteger(parsed)) throw new ApiError(400, "INVALID_CURSOR");
+  return parsed;
 }
 
 async function readJson(request: IncomingMessage): Promise<unknown> {
