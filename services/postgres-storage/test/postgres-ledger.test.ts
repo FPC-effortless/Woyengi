@@ -79,7 +79,7 @@ class FakePostgres implements PostgresPool {
         return { rows: [] };
       }
       if (sql.startsWith("SELECT record FROM")) {
-        const wanted = rows.filter((row) => row.namespace === params[0])
+        const wanted = (inTransaction ? rows : this.rows).filter((row) => row.namespace === params[0])
           .filter((row) => params.length < 2
             || (sql.includes("AND scope = $2") ? row.scope === params[1] : row.record_id === params[1]))
           .sort((a, b) => a.scope.localeCompare(b.scope) || a.ledger_sequence - b.ledger_sequence);
