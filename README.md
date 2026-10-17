@@ -33,6 +33,24 @@ pnpm prod:check
 
 `pnpm prod:release` is the fail-closed release gate. It is expected to remain blocked until all prerequisite tickets and human QA are complete.
 
+## Start a single-user offline Personal Workspace
+
+A first WYG-019 CLI slice now connects the durable Personal Runtime to `woyengi start`. Prepare a directory containing a valid `application-package.json` manifest, then seed a new local workspace once:
+
+```powershell
+pnpm woyengi start --workspace ./local-personal-state --package ./my-application --owner local --platform-version 1.0.0
+```
+
+To reopen its persisted workspace and application, including after the original package directory is removed:
+
+```powershell
+pnpm woyengi start --workspace ./local-personal-state
+```
+
+Both commands return JSON startup evidence, including the workspace/application identities and canonical state hash. `--package` **explicitly seeds** a new local workspace; it refuses to overwrite an existing one. Omitting `--package` **only reopens** existing state and fails closed if it is missing or corrupt. The `--owner` value is a local identifier slug, not an authentication identity. The selected Platform API version must be compatible with the package manifest.
+
+This command initializes or reopens the offline data runtime; it does **not** yet launch the browser shell, a multiplayer server, executable agents, or production authentication. Package signatures are descriptive in the current installer, not cryptographically verified. See `docs/implementation-status.md` and WYG-019 for the remaining self-hosted production work.
+
 ## Run the local API without containers
 
 Set a private token of at least 16 characters and choose a durable data directory:
