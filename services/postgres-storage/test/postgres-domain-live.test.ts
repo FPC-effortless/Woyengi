@@ -42,7 +42,7 @@ test("PostgreSQL Work and Workspace journals enforce causal ACL and replay acros
     const outsider = await workspaceA.registerPrincipal({
       operationId: "workspace-operation:outsider", id: "principal:outsider", kind: "human", recordedAt: at,
     });
-    await workspaceB.registerPrincipal({
+    const agent = await workspaceB.registerPrincipal({
       operationId: "workspace-operation:agent", id: "principal:agent", kind: "agent", recordedAt: at,
     });
     assert.deepEqual((await workspaceA.history()).map((op) => op.ledgerSequence), [1, 2, 3, 4]);
@@ -80,7 +80,7 @@ test("PostgreSQL Work and Workspace journals enforce causal ACL and replay acros
     await assert.rejects(workA.createWorkInstance({
       operationId: "work-operation:agent", id: "work-instance:agent",
       workspaceId: "workspace:team", intent: "agent enrollment", createdByPrincipalId: owner.id,
-      participants: [owner, { id: "principal:agent", kind: "agent" }],
+      participants: [owner, agent],
       roles: { workOwners: [owner.id], decisionAuthorities: [owner.id],
         reviewers: [], approvers: [owner.id] },
       context: {}, recordedAt: at,
