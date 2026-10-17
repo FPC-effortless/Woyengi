@@ -1,9 +1,7 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
-import { readApplicationPackage } from "../../apps/src/index.ts";
 import type { LedgerRecord } from "../../ledger/src/index.ts";
-import { openPersonalRuntime, seedPersonalRuntime } from "../../../services/personal-runtime/src/index.ts";
 import { LocalCanonicalLedger, sha256 } from "../../storage/src/index.ts";
 
 export interface CliIo {
@@ -37,9 +35,6 @@ export async function runCli(args: readonly string[], io: CliIo = processIo): Pr
     if (command === undefined) throw new Error(usage());
     const options = parseOptions(tail);
     switch (command) {
-      case "start":
-        await start(options, io);
-        break;
       case "replay":
         await replay(options, io);
         break;
@@ -65,65 +60,6 @@ export async function runCli(args: readonly string[], io: CliIo = processIo): Pr
     io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
-}
-
-async function start(options: ReadonlyMap<string, string>, io: CliIo): Promise<void> {
-  const localStateDirectory = absoluteOption(options, "workspace");
-  const startedAt = new Date().toISOString();
-
-  // Without --package this operation only reopens previously seeded durable state.
-  // Never implicitly initialize or overwrite a missing/corrupt Personal Workspace.
-  if (!options.has("package")) {
-    if (options.has("owner") || options.has("platform-version")) {
-      throw new Error("--owner and --platform-version require --package when seeding a Personal Workspace");
-    }
-    const reopened = await openPersonalRuntime({ localStateDirectory, startedAt });
-    emit(io, {
-      command: "start",
-      mode: reopened.evidence.mode,
-      workspaceId: reopened.workspace.id,
-      applicationId: reopened.application.id,
-      packageId: reopened.application.packageId,
-      evidence: reopened.evidence,
-    });
-    return;
-  }
-
-  const owner = options.get("owner") ?? "local";
-  if (!/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/i.test(owner)) {
-    throw new Error("owner must be a 1-64 character alphanumeric/hyphen slug");
-  }
-  const applicationPackageDirectory = absoluteOption(options, "package");
-  const applicationPackage = await readApplicationPackage(join(applicationPackageDirectory, "application-package.json"));
-  const principalId = `principal:${owner}`;
-  const seeded = await seedPersonalRuntime({
-    localStateDirectory,
-    applicationPackageDirectory,
-    platformApiVersion: options.get("platform-version") ?? "1.0.0",
-    startedAt,
-    owner: {
-      principalId,
-      accountId: `account:${owner}`,
-      workspaceId: `workspace:${owner}`,
-    },
-    installation: {
-      instanceId: `application-instance:${applicationPackage.id.slice("application-package:".length)}`,
-      semanticObjectBindings: {},
-      roleBindings: { owner: principalId },
-      participantBindings: { owner: principalId },
-      integrationBindings: {},
-      surfaceConfiguration: {},
-      configuration: {},
-    },
-  });
-  emit(io, {
-    command: "start",
-    mode: seeded.evidence.mode,
-    workspaceId: seeded.workspace.id,
-    applicationId: seeded.application.id,
-    packageId: seeded.application.packageId,
-    evidence: seeded.evidence,
-  });
 }
 
 async function replay(options: ReadonlyMap<string, string>, io: CliIo): Promise<void> {
@@ -319,7 +255,7 @@ function isMissing(error: unknown): boolean {
 }
 
 function usage(): string {
-  return "usage: woyengi <start|replay|inspect|migrate|backup|restore|integrity> [options]";
+  return "usage: woyengi <replay|inspect|migrate|backup|restore|integrity> [options]";
 }
 
 const processIo: CliIo = {
