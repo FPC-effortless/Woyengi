@@ -7,6 +7,7 @@ import {
   DurableWorkspaceJournal,
 } from "../../durable-work/index.ts";
 import type { Principal } from "../../../packages/workspace/src/index.ts";
+import type { WorkValue } from "../../../packages/work/src/index.ts";
 
 interface Credential {
   readonly principalId: string;
@@ -322,9 +323,9 @@ function rolesField(value: unknown): {
   };
 }
 
-function contextField(value: unknown): Record<string, null | boolean | number | string | readonly unknown[] | object> {
+function contextField(value: unknown): Record<string, WorkValue> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) throw new ApiError(400, "INVALID_CONTEXT");
-  return value as Record<string, null | boolean | number | string | readonly unknown[] | object>;
+  return value as Record<string, WorkValue>;
 }
 
 function reply(response: ServerResponse, status: number, data?: unknown, code?: string): void {
