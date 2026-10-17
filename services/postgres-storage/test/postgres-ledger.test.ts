@@ -31,6 +31,7 @@ class FakePostgres implements PostgresPool {
     let rows: Row[] = [];
     const query = async (sql: string, params: readonly unknown[] = []): Promise<{ rows: Record<string, unknown>[] }> => {
       this.statements.push({ sql, params });
+      if (sql.startsWith("SELECT pg_advisory_")) return { rows: [] };
       if (sql.startsWith("CREATE TABLE")) { this.migrations++; return { rows: [] }; }
       if (sql === "BEGIN") {
         if (this.#active) await new Promise<void>((resolve) => this.#waiting.push(resolve));
