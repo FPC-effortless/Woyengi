@@ -101,12 +101,17 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   // A second distinct lease, claimed only by the child process's HTTP call.
   const second = {
     ...lease, id: "compute-lease:child",
-    envelope: { ...lease.envelope, executionId: "compute-execution:child" },
+    envelope: {
+      ...lease.envelope, executionId: "compute-execution:child",
+      idempotencyKey: "compute:child",
+      workload: { ...lease.envelope.workload, id: "workload:child",
+        idempotencyKey: "compute:child" },
+    },
   };
-  // The fixture expects compute-execution:repair-19c, so use a fresh isolated
-  // state namespace for its already-approved envelope. Instead make the
-  // original lease available by refusing this second work entry.
-  // The child may reconnect but must not re-execute an already claimed lease.
+  await a.queueLease(second);
+  // A different OS process claims the second lease while the first remains
+  // exclusively claimed by the competing database client.
+  clock = Date.parse("2026-08-22T13:02:00Z");
   const output: Buffer[] = [];
   const errors: Buffer[] = [];
   const child = spawn(process.execPath, [
@@ -114,6 +119,7 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   ], { shell: false, stdio: ["ignore", "pipe", "pipe"], env: {
     ...process.env, WOYENGI_TEST_REMOTE_COMPUTE_URL: server.url,
     WOYENGI_TEST_REMOTE_NODE_TOKEN: token,
+    WOYENGI_TEST_REMOTE_WORKLOAD_ID: "workload:child",
   } });
   child.stdout.on("data", (x: Buffer) => output.push(x));
   child.stderr.on("data", (x: Buffer) => errors.push(x));
@@ -124,13 +130,13 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   });
   assert.equal(exit, 0, Buffer.concat(errors).toString("utf8"));
   const observation = (JSON.parse(Buffer.concat(output).toString("utf8")) as { observation: unknown }).observation;
-  // An already claimed lease cannot be executed twice by a reconnecting
-  // worker. The child's output is undefined; the stored lease remains
-  // pending reconciliation until a matching observation arrives.
-  assert.equal(observation, undefined);
-  assert.deepEqual(await observedB.history({ workspaceId: "workspace:one" }), []);
-  assert.equal((await b.history()).filter(x => x.kind === "compute.lease.issued").length, 1);
-  assert.equal(second.id, "compute-lease:child");
+  const childReceipt = observation as { readonly leaseId: string; readonly acceptedTruth: boolean;
+    readonly usage: { readonly cost: { readonly amount: number } } };
+  assert.equal(childReceipt.leaseId, "compute-lease:child");
+  assert.equal(childReceipt.acceptedTruth, false);
+  assert.equal(childReceipt.usage.cost.amount, 2);
+  assert.equal((await observedB.history({ workspaceId: "workspace:one" })).length, 1);
+  assert.equal((await b.history()).filter(x => x.kind === "compute.lease.issued").length, 2);
 
   await assert.rejects(a.publishObservation({
     ...observationFixture(), leaseId: "compute-lease:unknown",
@@ -139,11 +145,11 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   await b.publishObservation(published);
   await a.publishObservation(published);
   const saved = await observedB.history({ workspaceId: "workspace:one" });
-  assert.equal(saved.length, 1);
-  assert.equal(saved[0]?.usage.cost.amount, 2);
-  assert.equal(saved[0]?.reconciliation.status, "PENDING");
-  assert.equal(saved[0]?.acceptedTruth, false);
-  assert.equal(saved[0]?.authorityReference, "decision:authority-repair-19c");
+  assert.equal(saved.length, 2);
+  assert.equal(saved.every(item => item.usage.cost.amount === 2), true);
+  assert.equal(saved.every(item => item.reconciliation.status === "PENDING"), true);
+  assert.equal(saved.every(item => item.acceptedTruth === false), true);
+  assert.equal(saved.every(item => item.authorityReference === "decision:authority-repair-19c"), true);
   permit = false;
   const rejected = await b.authorize({
     operation: "EXECUTE_HOSTED_WORKLOAD", nodeId: "compute-node:one",
