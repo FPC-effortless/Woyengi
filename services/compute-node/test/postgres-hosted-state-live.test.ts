@@ -142,6 +142,9 @@ test("real PostgreSQL state server safely grants one lease to independent comput
     ...observationFixture(), leaseId: "compute-lease:unknown",
   }), /unknown|issued|mismatch/);
   const published = observationFixture();
+  await assert.rejects(b.publishObservation({
+    ...published, id: "compute-node-observation:second-alias",
+  }), /observation id does not match issued execution/);
   await b.publishObservation(published);
   await a.publishObservation(published);
   const saved = await observedB.history({ workspaceId: "workspace:one" });
