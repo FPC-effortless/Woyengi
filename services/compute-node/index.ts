@@ -556,3 +556,4 @@ function deepFreeze<Value>(value: Value): Value {
 }
 
 export { HostedComputeStateHttpApi, HttpComputeNodeStatePort } from "./http.ts";
+export { PostgresHostedObservationJournal } from "./postgres-observations.ts";
