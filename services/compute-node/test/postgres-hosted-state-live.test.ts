@@ -67,7 +67,7 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   assert.equal((await a.history()).length, 1);
 
   const lease = hostedLease();
-  await assert.rejects(a.queueLease({ ...lease, nodeId: "compute-node:forged" }), /node|scope|mismatch/);
+  await assert.rejects(a.queueLease({ ...lease, nodeId: "compute-node:forged" }), /authority denied/);
   permit = false;
   await assert.rejects(a.queueLease(lease), /authority denied/);
   permit = true;
