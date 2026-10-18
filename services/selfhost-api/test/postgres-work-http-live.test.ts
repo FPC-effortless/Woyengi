@@ -120,7 +120,9 @@ test("authenticated Work HTTP on two independently connected PostgreSQL-backed s
   assert.equal((await fetch(`${serverB.url}${workPath}`, { headers: headers(outsiderToken) })).status, 403);
   assert.equal((await fetch(`${serverA.url}${workPath}`, { headers: headers(agentToken) })).status, 403);
   assert.equal((await fetch(`${serverA.url}${workPath}`)).status, 401);
-  assert.equal((await fetch(`${serverB.url}${workPath}/events`, { headers: headers(reviewerToken) })).status, 501);
+  const streamPreview = await fetch(`${serverB.url}${workPath}/events`, { headers: headers(reviewerToken) });
+  assert.equal(streamPreview.status, 200);
+  await streamPreview.body?.cancel();
 
   const forgeActor = await fetch(`${serverA.url}${workPath}/episodes`, {
     method: "POST", headers: { ...headers(reviewerToken), "idempotency-key": "pg-forgery" },
