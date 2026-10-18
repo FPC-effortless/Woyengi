@@ -173,6 +173,32 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   assert.equal(saved.every(item => item.reconciliation.status === "PENDING"), true);
   assert.equal(saved.every(item => item.acceptedTruth === false), true);
   assert.equal(saved.every(item => item.authorityReference === "decision:authority-repair-19c"), true);
+
+  // A third lease is claimed, then its worker disappears without publishing
+  // evidence. Expiration MUST NEVER cause automatic replay of the same effect.
+  const abandoned: HostedWorkloadLease = {
+    ...lease, id: "compute-lease:abandoned",
+    envelope: {
+      ...lease.envelope, executionId: "compute-execution:abandoned",
+      idempotencyKey: "compute:abandoned",
+      workload: { ...lease.envelope.workload,
+        id: "workload:abandoned", idempotencyKey: "compute:abandoned" },
+    },
+  };
+  await a.queueLease(abandoned);
+  const claim = await b.nextLease({
+    nodeId: "compute-node:one", sessionId: initial.sessionId,
+    workspaceIds: ["workspace:one"], capabilities: ["compute:typescript"],
+    requestedAt: "2026-08-22T13:02:00Z",
+  });
+  assert.equal(claim?.id, abandoned.id);
+  await assert.rejects(a.quarantineExpiredLease({
+    leaseId: abandoned.id, recordedAt: "2026-08-22T13:03:00Z",
+  }), /not expired/);
+  await assert.rejects(b.quarantineExpiredLease({
+    leaseId: "compute-lease:unissued", recordedAt: "2026-08-22T13:06:01Z",
+  }), /not issued/);
+
   permit = false;
   const rejected = await b.authorize({
     operation: "EXECUTE_HOSTED_WORKLOAD", nodeId: "compute-node:one",
@@ -186,6 +212,43 @@ test("real PostgreSQL state server safely grants one lease to independent comput
     workspaceIds: ["workspace:one"], capabilities: ["compute:typescript"],
     requestedAt: "2026-08-22T13:06:01Z",
   })), undefined);
+
+  const results = await Promise.allSettled([
+    a.quarantineExpiredLease({
+      leaseId: abandoned.id, recordedAt: "2026-08-22T13:06:01Z",
+    }),
+    b.quarantineExpiredLease({
+      leaseId: abandoned.id, recordedAt: "2026-08-22T13:06:01Z",
+    }),
+  ]);
+  assert.deepEqual(results.map(result => result.status).sort(), ["fulfilled", "rejected"]);
+  assert.equal((await b.history()).filter(op => op.kind === "compute.lease.quarantined").length, 1);
+  const quarantine = (await a.history()).find(op => op.kind === "compute.lease.quarantined");
+  assert.equal(quarantine?.kind, "compute.lease.quarantined");
+  if (quarantine?.kind === "compute.lease.quarantined") {
+    assert.equal(quarantine.leaseId, abandoned.id);
+    assert.equal(quarantine.reason, "OUTCOME_UNVERIFIED");
+  }
+  await assert.rejects(b.quarantineExpiredLease({
+    leaseId: abandoned.id, recordedAt: "2026-08-22T13:06:02Z",
+  }), /already quarantined/);
+  permit = true;
+  await assert.rejects(b.authorize({
+    operation: "EXECUTE_HOSTED_WORKLOAD", nodeId: "compute-node:one",
+    providerId: "provider:hosted-compute", envelope: abandoned.envelope,
+  }), /expired|quarantined/);
+  // A late observation is still retained as evidence for independent
+  // reconciliation, not treated as permission to retry the external action.
+  await a.publishObservation({
+    ...published,
+    id: "compute-node-observation:abandoned",
+    executionId: abandoned.envelope.executionId,
+    leaseId: abandoned.id,
+    workloadId: abandoned.envelope.workload.id,
+    idempotencyKey: abandoned.envelope.idempotencyKey,
+  });
+  assert.equal((await observedB.history({ workspaceId: "workspace:one" })).length, 3);
+  assert.equal((await a.history()).filter(op => op.kind === "compute.lease.quarantined").length, 1);
 });
 
 function registration() {
