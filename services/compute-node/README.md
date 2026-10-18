@@ -108,6 +108,8 @@ const statePort = PostgresHostedComputeStatePort.open({
   receipts,
   providerId: "provider:hosted-compute",
   authorize: async (request) => independentAuthorityEvaluator(request),
+  authorizeRegistration: async (registration) =>
+    trustedFleetEnrollment.allowsExactRegistration(registration),
 });
 const api = new HostedComputeStateHttpApi({
   statePort,
@@ -119,9 +121,13 @@ const api = new HostedComputeStateHttpApi({
 await statePort.queueLease(approvedHostedLease);
 ```
 
-The callback **must actually check governing authority** for the
+The execution callback **must actually check governing authority** for the
 requested principal (including AgentPrincipal delegation), workspace,
-provider, operation and budget. It is required both at queue admission
+provider, operation and budget. The separate mandatory **enrollment callback**
+must verify a node's exact operator-approved workspaces, capabilities,
+version and budget on every registration or reconnect; a compute-node bearer
+token does not authorize self-asserted scope. The execution policy is required
+both at queue admission
 and again before execution authorization. An opaque
 `authorityReference` from the worker alone does not authorize anything.
 There is **no public queue or policy-grant HTTP route**.
