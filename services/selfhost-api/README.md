@@ -238,3 +238,69 @@ Postgres-compatible transactional session storage and online credential and
 revocation propagation. Full WYG-019 remains unaccepted.
 
 Additional falsifiers: `node --test services/selfhost-api/test/durable-sessions.test.ts`.
+
+## PostgreSQL-backed authenticated Work HTTP (WYG-019 incremental slice)
+
+The existing `SelfHostWorkApi` now accepts **asynchronous** Workspace and
+Work repository ports. Both the single-writer local journals and the
+PostgreSQL-backed `PostgresWorkspaceJournal` and `PostgresWorkJournal`
+implement these ports. HTTP routes, strict body validation, bearer-derived
+actor identity, idempotency key conflict behavior, participation checks, and
+response formats remain the same.
+
+A trusted bootstrap may supply PostgreSQL journals **after** privileged
+schema migration and independently provisioned bearer credentials:
+
+```ts
+import {
+  PostgresWorkspaceJournal,
+  PostgresWorkJournal,
+} from "../postgres-storage/index.ts";
+import { SelfHostWorkApi, BoundPrincipalSessions } from "./index.ts";
+
+// `pool` is a trusted, separately configured PostgreSQL driver pool.
+// `migratePostgresCanonicalLedger(pool)` must already have run.
+const workspaces = PostgresWorkspaceJournal.open({ pool });
+const work = PostgresWorkJournal.open({ pool, workspaces });
+const sessions = new BoundPrincipalSessions([
+  { principalId: "principal:owner", token: process.env.WOYENGI_OWNER_TOKEN ?? "" },
+]);
+const api = new SelfHostWorkApi({ workspaces, work, sessions });
+const server = await api.listen({ hostname: "127.0.0.1", port: 8181 });
+// The trusted process must close `server` and its owned `pool` on shutdown.
+```
+
+The driver remains deployment-managed rather than bundled into the offline
+CLI. No HTTP route provisions principals, sessions, memberships or tokens.
+**This is a loopback-only integration slice**, not a public HTTPS deployment.
+Bearer credentials in the example are unverified operator bootstrap inputs;
+their issuance/revocation is not currently coordinated through PostgreSQL.
+
+### PostgreSQL stream boundary
+
+The JSON Work routes use PostgreSQL and are readable by another server
+instance using an independent database connection. The existing
+`GET .../events` SSE endpoint deliberately returns HTTP
+`501 STREAM_UNAVAILABLE` for PostgreSQL-backed Work, **after** checking
+Work authorization. The prior local SSE implementation observes only its
+own process's journal notifications. Pretending it works cross-process would
+lose events silently. PostgreSQL clients can use the authorized
+`GET .../history` route to recover durable changes until a separate,
+authenticated, cross-process event transport is added.
+
+### Verification
+
+The live PostgreSQL GitHub Actions job now also runs
+`services/selfhost-api/test/postgres-work-http-live.test.ts`. It creates
+two separately connected loopback API servers sharing one PostgreSQL database,
+verifies two-human Work creation/replay, outsider and nonparticipant read
+denial, forged actor rejection, optimistic-version conflict across two HTTP
+process-side adapters, duplicate idempotency rejection, restart/recovery,
+and explicit SSE unavailability. This tests independent server instances
+in one Node test process, **not** separate operating-system processes or
+full distributed deployment.
+
+Remaining work includes PostgreSQL-backed session issuance and revocation,
+cross-process subscription/presence transport, DB authorization/Work atomicity
+for future membership removals, real proxy/TLS/abuse controls, independently
+hosted compute and human acceptance. WYG-019 stays `passes=false`.
