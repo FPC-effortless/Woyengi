@@ -73,7 +73,7 @@ export class BoundPrincipalSessions {
 export { DurablePrincipalSessions } from "./durable-sessions.ts";
 
 export interface SessionAuthenticator {
-  resolve(authorization: string | undefined): { readonly id: string } | undefined;
+  resolve(authorization: string | undefined): MaybePromise<{ readonly id: string } | undefined>;
 }
 
 type MaybePromise<T> = T | Promise<T>;
@@ -151,7 +151,7 @@ export class SelfHostWorkApi {
   async #handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     try {
       const authorization = singleHeader(request, "authorization");
-      const principal = this.#sessions.resolve(authorization);
+      const principal = await this.#sessions.resolve(authorization);
       if (principal === undefined) throw new ApiError(401, "UNAUTHENTICATED");
       const path = new URL(request.url ?? "/", "http://localhost").pathname.split("/").slice(1).map(segment);
       if (path.length < 3 || path[0] !== "v1" || path[1] !== "workspaces") {
@@ -209,11 +209,21 @@ export class SelfHostWorkApi {
         if (!(this.#work instanceof DurableWorkJournal)) {
           throw new ApiError(501, "STREAM_UNAVAILABLE");
         }
+        // The local-only SSE callback is synchronous. An async session
+        // authority requires a distributed stream with async revalidation.
+        // Never send a 200 stream if revocations cannot be rechecked.
+        const streamAuth = this.#sessions.resolve(authorization);
+        if (streamAuth instanceof Promise) throw new ApiError(501, "STREAM_UNAVAILABLE");
         openWorkEventStream({
           request,
           response,
           work: this.#work,
-          sessions: this.#sessions,
+          sessions: {
+            resolve: (header) => {
+              const current = this.#sessions.resolve(header);
+              return current instanceof Promise ? undefined : current;
+            },
+          },
           authorization,
           principalId: principal.id,
           workspaceId,
