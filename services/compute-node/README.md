@@ -87,3 +87,86 @@ The journal's `history` method is trusted-operator only and must not be
 exposed as an unscoped public read endpoint. Production PostgreSQL role
 isolation, scoped authorization, durable lease queue and independent
 effect verification remain required.
+
+## PostgreSQL-authoritative hosted compute state port (WYG-019 increment)
+
+`PostgresHostedComputeStatePort` now implements the full
+`ComputeNodeStatePort` over canonical PostgreSQL state records for a
+*single global, SQL-serialized compute control scope*. It accepts an
+**explicit trusted policy callback** and the PostgreSQL observation journal:
+
+```ts
+import {
+  PostgresHostedComputeStatePort,
+  PostgresHostedObservationJournal,
+  HostedComputeStateHttpApi,
+} from "./index.ts";
+
+const receipts = PostgresHostedObservationJournal.open({ pool });
+const statePort = PostgresHostedComputeStatePort.open({
+  pool,
+  receipts,
+  providerId: "provider:hosted-compute",
+  authorize: async (request) => independentAuthorityEvaluator(request),
+  authorizeRegistration: async (registration) =>
+    trustedFleetEnrollment.allowsExactRegistration(registration),
+});
+const api = new HostedComputeStateHttpApi({
+  statePort,
+  credentials: [{ nodeId: "compute-node:one", token: trustedNodeCredential }],
+});
+
+// A trusted state-side operator, never the node's HTTP API, queues
+// a fully scoped, independently authorized Work lease:
+await statePort.queueLease(approvedHostedLease);
+```
+
+The execution callback **must actually check governing authority** for the
+requested principal (including AgentPrincipal delegation), workspace,
+provider, operation and budget. The separate mandatory **enrollment callback**
+must verify a node's exact operator-approved workspaces, capabilities,
+version and budget on every registration or reconnect; a compute-node bearer
+token does not authorize self-asserted scope. The execution policy is required
+both at queue admission
+and again before execution authorization. An opaque
+`authorityReference` from the worker alone does not authorize anything.
+There is **no public queue or policy-grant HTTP route**.
+
+`register` and `heartbeat` establish immutable node/session history.
+`queueLease` admits only a workload whose node, session, workspace,
+capabilities and budget match the authoritative registration.
+`nextLease` replays the canonical global history **inside the same SQL
+transaction and counter-row lock** used for the `compute.lease.issued`
+operation. Two independently connected state-server processes cannot
+claim the same queued lease. `authorize` requires an issued,
+envelope-identical lease, the expected provider, an active node session
+and a fresh allow decision from the trusted policy.
+
+`publishObservation` requires a previously issued lease and verifies
+the observation's node, principal, workload, execution, budget, authority
+reference, expected effect and reconciliation fields. It then delegates
+the observation-only receipt to the existing PostgreSQL
+`PostgresHostedObservationJournal` (durable and idempotent).
+The trusted-policy result cannot be copied from an untrusted provider
+observation, and these receipts **never apply semantic state changes**.
+
+**Proof:** `services/compute-node/test/postgres-hosted-state-live.test.ts`
+runs a real PostgreSQL 16 server with independent database pools, a
+remote state HTTP API and a separate OS worker. It tests explicit policy
+denial, forged node/session rejection, exclusive concurrent lease claims,
+authorized child execution and PostgreSQL observation replay. Earlier
+regression tests continue checking safe receipt retries and corrupted
+privileged history.
+
+**Outstanding production boundaries:** the state control journal is
+globally serialized rather than sharded; the queue is *at-most-once
+claimed*, with no lost-worker lease recovery or fencing tokens. Node
+registration is not a fully renewable fleet enrollment protocol.
+The lease record and observation receipt live in separate SQL
+namespaces/transactions, so their correlation is checked but their
+writes are not one atomic commit. The policy callback has no built-in
+AgentPrincipal capability issuance or revocation mechanism.
+The source of independent effect verification and reconciliation has not
+yet been implemented. TLS proxy, credential rotation, multi-host
+deployment/HA and human QA are not production-validated. These must be
+closed before ticket WYG-019 can be accepted.
