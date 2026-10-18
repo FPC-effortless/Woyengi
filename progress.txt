@@ -538,4 +538,4 @@
 - Still open: durable human review queue, explicit externally enforceable
   fencing/cancel semantics, verifier-backed clearance, delegation revocation,
   production deployment and WYG-019 human acceptance. Ticket remains
-  `passes=false`. GitHub CI verification pending.
+  `passes=false`. Verified [GitHub Actions run #39171189725](https://github.com/FPC-effortless/Woyengi/actions/runs/39171189725) at implementation commit `d6a7e49ab88d7ed7a280d8ee52e9a65628ecc381`: **133 Node tests / 0 failures, 10 live PostgreSQL integration tests / 0 failures**, Python SDK, TypeScript, package boundaries, adversarial benchmark, architecture/security checks, and container smoke (3 jobs green). The initial live run exposed an incorrect test error regex for the explicit "unissued" rejection; it was fixed without weakening the validator, and the final source tests were rerun. This documentation-only evidence commit still requires final-head CI.
