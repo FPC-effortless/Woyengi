@@ -554,3 +554,5 @@ function deepFreeze<Value>(value: Value): Value {
   }
   return value;
 }
+
+export { HostedComputeStateHttpApi, HttpComputeNodeStatePort } from "./http.ts";
