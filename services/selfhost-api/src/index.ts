@@ -6,6 +6,7 @@ import { DurableWorkJournal } from "../../durable-work/index.ts";
 import type { Principal, Workspace, WorkspaceRegistry } from "../../../packages/workspace/src/index.ts";
 import type { WorkInstance, WorkOperation, WorkRegistry, WorkValue } from "../../../packages/work/src/index.ts";
 import { openWorkEventStream } from "./events.ts";
+import { openRemoteWorkEventStream } from "./remote-events.ts";
 
 interface Credential {
   readonly principalId: string;
@@ -103,25 +104,33 @@ export interface SelfHostWorkApiInput {
   readonly work: WorkHttpJournalPort;
   readonly sessions: SessionAuthenticator;
   readonly now?: () => Date;
+  /** Bounded cross-process history polling; default 250ms, minimum 50ms. */
+  readonly streamPollIntervalMs?: number;
 }
 
 /**
  * Loopback-only HTTP adapter for either local or PostgreSQL-backed Work.
- * Sessions remain trusted-operator provisioned, not public login. The local
- * SSE route cannot be used with PostgreSQL until a distributed stream source
- * provides verified cross-process delivery and authorization.
+ * Sessions remain trusted-operator provisioned, not public login. For SQL
+ * journals SSE replays canonical history by bounded polling across API
+ * instances; there is no durable cross-process notification cache.
  */
 export class SelfHostWorkApi {
   readonly #workspaces: WorkHttpWorkspacePort;
   readonly #work: WorkHttpJournalPort;
   readonly #sessions: SessionAuthenticator;
   readonly #now: () => Date;
+  readonly #streamPollIntervalMs: number;
 
   constructor(input: SelfHostWorkApiInput) {
     this.#workspaces = input.workspaces;
     this.#work = input.work;
     this.#sessions = input.sessions;
     this.#now = input.now ?? (() => new Date());
+    const pollMs = input.streamPollIntervalMs ?? 250;
+    if (!Number.isSafeInteger(pollMs) || pollMs < 50 || pollMs > 60_000) {
+      throw new RangeError("Work SSE poll interval must be 50 to 60000 milliseconds");
+    }
+    this.#streamPollIntervalMs = pollMs;
   }
 
   async listen(input: { readonly hostname: "127.0.0.1" | "::1"; readonly port: number }): Promise<{
@@ -202,33 +211,36 @@ export class SelfHostWorkApi {
       }
       if (method === "GET" && path.length === 6 && path[5] === "events") {
         const after = streamCursor(request);
-        // Fail closed: the local journal's in-process SSE notifications do
-        // not observe writes from other PostgreSQL-backed server processes.
-        // Never imply that the database-backed transport is realtime.
+        // Authorize before writing SSE 200 headers. The stream then
+        // revalidates session, membership and explicit Work participation
+        // before delivering every new batch of canonical operations.
         await this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
-        if (!(this.#work instanceof DurableWorkJournal)) {
-          throw new ApiError(501, "STREAM_UNAVAILABLE");
+        if (this.#work instanceof DurableWorkJournal) {
+          const localAuth = this.#sessions.resolve(authorization);
+          if (!(localAuth instanceof Promise)) {
+            // Preserve low-latency in-process local journal delivery.
+            openWorkEventStream({
+              request, response, work: this.#work,
+              sessions: {
+                resolve: (header) => {
+                  const current = this.#sessions.resolve(header);
+                  return current instanceof Promise ? undefined : current;
+                },
+              },
+              authorization, principalId: principal.id,
+              workspaceId, workInstanceId: instanceId, after,
+            });
+            return;
+          }
         }
-        // The local-only SSE callback is synchronous. An async session
-        // authority requires a distributed stream with async revalidation.
-        // Never send a 200 stream if revocations cannot be rechecked.
-        const streamAuth = this.#sessions.resolve(authorization);
-        if (streamAuth instanceof Promise) throw new ApiError(501, "STREAM_UNAVAILABLE");
-        openWorkEventStream({
-          request,
-          response,
-          work: this.#work,
-          sessions: {
-            resolve: (header) => {
-              const current = this.#sessions.resolve(header);
-              return current instanceof Promise ? undefined : current;
-            },
-          },
-          authorization,
-          principalId: principal.id,
-          workspaceId,
-          workInstanceId: instanceId,
-          after,
+        // SQL journals cannot rely on local change hints. Periodic
+        // authoritative replay is resumable after server disconnect and
+        // detects writes made through independent PostgreSQL pools.
+        openRemoteWorkEventStream({
+          request, response, work: this.#work, sessions: this.#sessions,
+          authorization, principalId: principal.id, workspaceId,
+          workInstanceId: instanceId, after,
+          pollIntervalMs: this.#streamPollIntervalMs,
         });
         return;
       }
