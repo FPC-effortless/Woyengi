@@ -55,6 +55,14 @@ function id(label: string, value: string, prefix: string): void {
   }
 }
 function plain(value: unknown): string {
+  // Node's hosted runtime canonicalizes RFC3339 instants to .000Z. A
+  // registered-at timestamp or lease envelope is semantically unchanged by
+  // that formatting; compare instants canonically instead of byte-for-byte.
+  if (typeof value === "string"
+    && /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value)
+    && Number.isFinite(Date.parse(value))) {
+    return JSON.stringify(new Date(value).toISOString());
+  }
   if (Array.isArray(value)) return "[" + value.map(plain).join(",") + "]";
   if (value && typeof value === "object") {
     return "{" + Object.entries(value).filter(([, item]) => item !== undefined)
