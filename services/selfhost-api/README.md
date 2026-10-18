@@ -304,3 +304,79 @@ Remaining work includes PostgreSQL-backed session issuance and revocation,
 cross-process subscription/presence transport, DB authorization/Work atomicity
 for future membership removals, real proxy/TLS/abuse controls, independently
 hosted compute and human acceptance. WYG-019 stays `passes=false`.
+
+## PostgreSQL-backed principal sessions (WYG-019 incremental slice)
+
+`PostgresPrincipalSessions` (from `services/postgres-storage/index.ts`)
+implements the API's asynchronous `SessionAuthenticator` port. The same
+authenticated Work HTTP routes accept either the original single-writer local
+session providers or this multi-client PostgreSQL session journal.
+
+A trusted operator configures separate, TLS-protected PostgreSQL credentials
+and performs the schema migration, then provisions tokens from a trusted
+administrative channel. **Neither issue nor revoke is exposed by HTTP.**
+For example, after migration:
+
+```ts
+import {
+  PostgresPrincipalSessions,
+  PostgresWorkspaceJournal,
+  PostgresWorkJournal,
+} from "../postgres-storage/index.ts";
+import { SelfHostWorkApi } from "./index.ts";
+
+const workspaces = PostgresWorkspaceJournal.open({ pool });
+const work = PostgresWorkJournal.open({ pool, workspaces });
+const sessions = PostgresPrincipalSessions.open({ pool, workspaces });
+await sessions.provision({
+  operationId: "session-operation:owner-20261018",
+  sessionId: "session:owner-20261018",
+  principalId: "principal:owner", // Already registered human
+  token: process.env.WOYENGI_OWNER_TOKEN ?? "",
+  recordedAt: new Date().toISOString(),
+  expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+});
+const api = new SelfHostWorkApi({ workspaces, work, sessions });
+const server = await api.listen({ hostname: "127.0.0.1", port: 8181 });
+```
+
+`provision` and `revoke` are **trusted operator** methods only, not
+public client API operations. Provisioning enforces registered human
+principals, strong token formatting and up to 30-day expiry. Canonical
+records store **SHA-256 digests, never raw tokens**, with append-only
+`session.issued` and `session.revoked` operations in a global SQL scope.
+The SQL transaction lock serializes competing grants and revocations;
+duplicate/revoked tokens and session identifiers cannot be reused.
+Every authenticated HTTP request rereads committed PostgreSQL history
+and recomputes active sessions. A revocation committed through one database
+pool is denied to subsequent requests through another pool, including after
+new API instances start. An already in-flight request is **not** retroactively
+cancelled by revocation. Missing, malformed or corrupted session history
+fails closed without granting authority.
+
+Protect SQL credentials, connection transport and the session journal
+tables. The database rows include sensitive hashed bearer tokens and
+principal associations. Token-length requirements **do not prove entropy**:
+operators must use a cryptographically secure generator and deliver tokens
+through a trusted channel. SHA-256 digests are not a substitute for
+defensive database roles, network isolation, rate limiting, TLS and audit.
+Do not grant ordinary API clients direct journal mutation privileges.
+
+**Realtime limitation:** the PostgreSQL Work SSE route remains
+`501 STREAM_UNAVAILABLE` until reliable cross-process event delivery and
+async authorization rechecks exist. Local SSE with an asynchronous
+PostgreSQL session backend also returns 501, rather than silently delivering
+a stream that cannot keep credentials revalidated.
+
+The PostgreSQL CI integration test
+`services/selfhost-api/test/postgres-sessions-live.test.ts` verifies
+authentication on independently connected HTTP instances, cross-instance
+revocation, restart recovery, concurrent token collision, expired tokens,
+agent/unknown principal refusal, digest-only persistence and fail-closed
+corrupt history. **Two independent HTTP instances in one test process are
+not proof of an externally deployed multi-process service.**
+
+PostgreSQL session distribution does not provide public login, MFA,
+credential refresh/rotation, cross-ledger revocation transactionality,
+distributed realtime, agent capability grants, internet-facing TLS/proxy
+hardening, or remotely hosted compute. WYG-019 remains unaccepted.
