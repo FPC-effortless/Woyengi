@@ -539,3 +539,30 @@
   fencing/cancel semantics, verifier-backed clearance, delegation revocation,
   production deployment and WYG-019 human acceptance. Ticket remains
   `passes=false`. Verified [GitHub Actions run #39171189725](https://github.com/FPC-effortless/Woyengi/actions/runs/39171189725) at implementation commit `d6a7e49ab88d7ed7a280d8ee52e9a65628ecc381`: **133 Node tests / 0 failures, 10 live PostgreSQL integration tests / 0 failures**, Python SDK, TypeScript, package boundaries, adversarial benchmark, architecture/security checks, and container smoke (3 jobs green). The initial live run exposed an incorrect test error regex for the explicit "unissued" rejection; it was fixed without weakening the validator, and the final source tests were rerun. This documentation-only evidence commit still requires final-head CI.
+
+## 2026-10-18 — WYG-019 durable quarantined compute review (P1 slice)
+
+- Public RED live PostgreSQL test first:
+  `services/compute-node/test/postgres-quarantine-review-live.test.ts`
+  sets up two independently connected DB pools, a canonical claimed and
+  quarantined compute lease, late untrusted worker receipt, trusted
+  independent evidence read, authorized human reviewer, and concurrent
+  review resolution. It rejects worker-as-reviewer, wrong workspace scope,
+  unresolved case without evidence, missing rationale, denied reviewer,
+  double case open and duplicate resolution. It also verifies corrupted
+  privileged events fail replay and that review cannot reenable execution.
+- New `PostgresHostedQuarantineReviewJournal` adds immutable
+  `compute.lease.review.opened` and `compute.lease.review.resolved`
+  records. Opening checks the canonical quarantine. Resolution checks
+  matching independent `compute.effect.reconciled` evidence and requires
+  a fresh trusted human-review policy allow decision. No resolved case may
+  be based on `UNCERTAIN`; only independent CONFIRMED/DIVERGED findings
+  generate observational conclusions.
+- All review events are observation-only; no workload retry, compensation,
+  governing accepted truth, or semantic mutation is produced. Separate
+  PostgreSQL scopes are replay-validated and competing writers serialize.
+- Scope ceiling: production-specific human IAM and evidence provenance,
+  cross-ledger transactional consent, human-facing review UI, real external
+  canonical readers, independently accepted semantic commits, physical
+  worker fencing, full self-hosted deployment and acceptance QA remain
+  incomplete. WYG-019 `passes=false`. Verified [GitHub Actions run #39172854469](https://github.com/FPC-effortless/Woyengi/actions/runs/39172854469) at test/code commit `2c34ee80bb4e5e4ce369e05135b50510aec1db87`: **133 Node tests / 0 failures, 11 real PostgreSQL 16 integration tests / 0 failures**, Python SDK, TypeScript, package/deep-module boundaries, benchmark, architecture/security and container smoke (all three CI jobs passed). The first red run revealed that the independent human reviewer policy refuses wrong-Workspace access before the later state journal scope check; the negative test assertion was corrected without weakening authorization. This documentation-only evidence update needs final-head CI verification.
