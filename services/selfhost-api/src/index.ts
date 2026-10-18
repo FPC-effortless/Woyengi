@@ -6,8 +6,8 @@ import {
   DurableWorkJournal,
   DurableWorkspaceJournal,
 } from "../../durable-work/index.ts";
-import type { Principal } from "../../../packages/workspace/src/index.ts";
-import type { WorkValue } from "../../../packages/work/src/index.ts";
+import type { Principal, Workspace, WorkspaceRegistry } from "../../../packages/workspace/src/index.ts";
+import type { WorkInstance, WorkOperation, WorkRegistry, WorkValue } from "../../../packages/work/src/index.ts";
 import { openWorkEventStream } from "./events.ts";
 
 interface Credential {
@@ -79,21 +79,44 @@ export interface SessionAuthenticator {
   resolve(authorization: string | undefined): { readonly id: string } | undefined;
 }
 
+type MaybePromise<T> = T | Promise<T>;
+
+/** Asynchronous domain boundary shared by local and PostgreSQL journals. */
+export interface WorkHttpWorkspacePort {
+  snapshot(): MaybePromise<WorkspaceRegistry>;
+  workspaceFor(input: { readonly principalId: string; readonly workspaceId: string }): MaybePromise<Workspace>;
+}
+
+export interface WorkHttpJournalPort {
+  createWorkInstance(input: Parameters<WorkRegistry["createWorkInstance"]>[0]): Promise<WorkInstance>;
+  startEpisode(input: Parameters<WorkRegistry["startEpisode"]>[0]): Promise<ReturnType<WorkRegistry["startEpisode"]>>;
+  workInstance(input: {
+    readonly principalId: string;
+    readonly workspaceId: string;
+    readonly id: string;
+  }): MaybePromise<WorkInstance>;
+  history(input: {
+    readonly principalId: string;
+    readonly workspaceId: string;
+  }): MaybePromise<readonly WorkOperation[]>;
+}
+
 export interface SelfHostWorkApiInput {
-  readonly workspaces: DurableWorkspaceJournal;
-  readonly work: DurableWorkJournal;
+  readonly workspaces: WorkHttpWorkspacePort;
+  readonly work: WorkHttpJournalPort;
   readonly sessions: SessionAuthenticator;
   readonly now?: () => Date;
 }
 
 /**
- * Loopback-only HTTP adapter for durable Work. This does not establish a
- * production principal/session provider, Postgres or realtime multiplayer.
- * Tokens must be provisioned by a trusted operator, never over HTTP.
+ * Loopback-only HTTP adapter for either local or PostgreSQL-backed Work.
+ * Sessions remain trusted-operator provisioned, not public login. The local
+ * SSE route cannot be used with PostgreSQL until a distributed stream source
+ * provides verified cross-process delivery and authorization.
  */
 export class SelfHostWorkApi {
-  readonly #workspaces: DurableWorkspaceJournal;
-  readonly #work: DurableWorkJournal;
+  readonly #workspaces: WorkHttpWorkspacePort;
+  readonly #work: WorkHttpJournalPort;
   readonly #sessions: SessionAuthenticator;
   readonly #now: () => Date;
 
@@ -142,7 +165,7 @@ export class SelfHostWorkApi {
       const method = request.method ?? "GET";
 
       if (method === "GET" && path.length === 3) {
-        const workspace = this.#workspaces.workspaceFor({ principalId: principal.id, workspaceId });
+        const workspace = await this.#workspaces.workspaceFor({ principalId: principal.id, workspaceId });
         reply(response, 200, { workspace });
         return;
       }
@@ -154,7 +177,7 @@ export class SelfHostWorkApi {
         const memberIds = stringArray(body.participants, "participants");
         const roles = rolesField(body.roles);
         const context = contextField(body.context);
-        const registry = this.#workspaces.snapshot();
+        const registry = await this.#workspaces.snapshot();
         registry.workspaceFor({ principalId: principal.id, workspaceId });
         const participants = memberIds.map((id): Principal => {
           const registration = registry.history().find((operation) =>
@@ -177,13 +200,18 @@ export class SelfHostWorkApi {
         throw new ApiError(404, "NOT_FOUND");
       }
       if (method === "GET" && path.length === 5) {
-        reply(response, 200, { work: this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId }) });
+        reply(response, 200, { work: await this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId }) });
         return;
       }
       if (method === "GET" && path.length === 6 && path[5] === "events") {
         const after = streamCursor(request);
-        // Reject an unauthorized stream before committing HTTP 200 headers.
-        this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
+        // Fail closed: the local journal's in-process SSE notifications do
+        // not observe writes from other PostgreSQL-backed server processes.
+        // Never imply that the database-backed transport is realtime.
+        await this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
+        if (!(this.#work instanceof DurableWorkJournal)) {
+          throw new ApiError(501, "STREAM_UNAVAILABLE");
+        }
         openWorkEventStream({
           request,
           response,
@@ -199,15 +227,15 @@ export class SelfHostWorkApi {
       }
       if (method === "GET" && path.length === 6 && path[5] === "history") {
         // Require specific Work participation, not workspace membership alone.
-        this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
-        const operations = this.#work.history({ principalId: principal.id, workspaceId })
+        await this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
+        const operations = (await this.#work.history({ principalId: principal.id, workspaceId }))
           .filter((operation) => operation.workInstanceId === instanceId);
         reply(response, 200, { operations });
         return;
       }
       if (method === "POST" && path.length === 6 && path[5] === "episodes") {
         // Authenticate and authorize the actor before parsing any mutable input.
-        this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
+        await this.#work.workInstance({ principalId: principal.id, workspaceId, id: instanceId });
         const body = objectBody(await readJson(request), ["id", "objective", "expectedVersion", "context"]);
         const expectedVersion = body.expectedVersion;
         if (!Number.isSafeInteger(expectedVersion) || (expectedVersion as number) < 1) {
