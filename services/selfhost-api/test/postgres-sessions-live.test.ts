@@ -14,9 +14,9 @@ const db = process.env.WOYENGI_TEST_DATABASE_URL;
 const driverRoot = process.env.WOYENGI_PG_MODULE_ROOT;
 const at = "2026-10-18T02:00:00Z";
 const expiry = "2026-10-19T02:00:00Z";
-const ownerToken = "random-test-token-owner-" + "a".repeat(48);
-const secondToken = "random-test-token-other-" + "b".repeat(48);
-const revokedToken = "random-test-token-revoked-" + "c".repeat(48);
+const ownerToken = "owner-" + "a".repeat(48);
+const secondToken = "other-" + "b".repeat(48);
+
 
 test("PostgreSQL principal sessions authorize across API instances and immediately enforce remote revocation", {
   skip: db && driverRoot ? false : "requires isolated pg driver and PostgreSQL service",
