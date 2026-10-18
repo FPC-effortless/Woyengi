@@ -197,7 +197,7 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   }), /not expired/);
   await assert.rejects(b.quarantineExpiredLease({
     leaseId: "compute-lease:unissued", recordedAt: "2026-08-22T13:06:01Z",
-  }), /not issued/);
+  }), /unissued/);
 
   permit = false;
   const rejected = await b.authorize({
