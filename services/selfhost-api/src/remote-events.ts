@@ -48,8 +48,8 @@ export function openRemoteWorkEventStream(input: RemoteWorkEventStreamInput): vo
     "referrer-policy": "no-referrer",
     "x-accel-buffering": "no",
   });
-  send(": connected\n\n");
   const interval = setInterval(() => { void pump(); }, input.pollIntervalMs);
+  send(": connected\n\n");
   interval.unref();
   void pump();
 
