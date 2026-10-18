@@ -49,9 +49,10 @@ export function createEpisodeKnowledgeGateway(input: {
         });
       },
     },
-    evaluateApplicability: input.evaluateApplicability,
-    evaluateRead: input.evaluateRead,
-    evaluateWrite: input.evaluateWrite,
+    ...(input.evaluateApplicability === undefined ? {}
+      : { evaluateApplicability: input.evaluateApplicability }),
+    ...(input.evaluateRead === undefined ? {} : { evaluateRead: input.evaluateRead }),
+    ...(input.evaluateWrite === undefined ? {} : { evaluateWrite: input.evaluateWrite }),
   });
   return {
     buildEpisodeCapabilityContext: async request => {
