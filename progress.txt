@@ -565,4 +565,4 @@
   cross-ledger transactional consent, human-facing review UI, real external
   canonical readers, independently accepted semantic commits, physical
   worker fencing, full self-hosted deployment and acceptance QA remain
-  incomplete. WYG-019 `passes=false`. CI verification pending.
+  incomplete. WYG-019 `passes=false`. Verified [GitHub Actions run #39172854469](https://github.com/FPC-effortless/Woyengi/actions/runs/39172854469) at test/code commit `2c34ee80bb4e5e4ce369e05135b50510aec1db87`: **133 Node tests / 0 failures, 11 real PostgreSQL 16 integration tests / 0 failures**, Python SDK, TypeScript, package/deep-module boundaries, benchmark, architecture/security and container smoke (all three CI jobs passed). The first red run revealed that the independent human reviewer policy refuses wrong-Workspace access before the later state journal scope check; the negative test assertion was corrected without weakening authorization. This documentation-only evidence update needs final-head CI verification.
