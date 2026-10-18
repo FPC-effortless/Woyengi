@@ -2,10 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import {
-  DurableWorkJournal,
-  DurableWorkspaceJournal,
-} from "../../durable-work/index.ts";
+import { DurableWorkJournal } from "../../durable-work/index.ts";
 import type { Principal, Workspace, WorkspaceRegistry } from "../../../packages/workspace/src/index.ts";
 import type { WorkInstance, WorkOperation, WorkRegistry, WorkValue } from "../../../packages/work/src/index.ts";
 import { openWorkEventStream } from "./events.ts";
