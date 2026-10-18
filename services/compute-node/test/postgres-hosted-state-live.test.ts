@@ -49,7 +49,21 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   const makeState = (pool: PostgresPool, receipt: PostgresHostedObservationJournal) =>
     PostgresHostedComputeStatePort.open({
       pool, namespace: journal, receipts: receipt, providerId: "provider:hosted-compute",
-      authorize, now: () => clock,
+      authorize,
+      authorizeRegistration: async candidate =>
+        candidate.nodeId === "compute-node:one"
+        && candidate.version === "1.0.0"
+        && candidate.workspaceIds.length === 1
+        && candidate.workspaceIds[0] === "workspace:one"
+        && candidate.capabilities.length === 1
+        && candidate.capabilities[0] === "compute:typescript"
+        && candidate.budgetLimit.maxCost.amount === 10
+        && candidate.budgetLimit.maxCost.currency === "USD"
+        && candidate.budgetLimit.maxDurationMs === 10_000
+        && candidate.budgetLimit.maxOutputBytes === 1024
+        && candidate.heartbeatTtlMs === 300_000
+        && Date.parse(candidate.registeredAt) === Date.parse(issued),
+      now: () => clock,
     });
   const a = makeState(poolA, observedA);
   const b = makeState(poolB, observedB);
@@ -63,6 +77,12 @@ test("real PostgreSQL state server safely grants one lease to independent comput
   const node = registration();
   const initial = await a.register(node);
   assert.equal(initial.sessionId, "compute-node-session:one");
+  await assert.rejects(a.register({
+    ...node, workspaceIds: ["workspace:unapproved"],
+  }), /registration denied/);
+  await assert.rejects(b.register({
+    ...node, capabilities: ["compute:typescript", "compute:admin"],
+  }), /registration denied/);
   assert.equal((await b.register(node)).sessionId, initial.sessionId);
   assert.equal((await a.history()).length, 1);
 
