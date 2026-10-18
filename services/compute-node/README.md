@@ -265,3 +265,69 @@ reassignment, fencing tokens for already-running external workers, backend
 cancel/kill guarantees, signed evidence, or a production recovery queue.
 An already executing external call cannot be retroactively undone by a
 quarantine. Review outcome remains observational until governed acceptance.
+
+## Durable human review of quarantined compute leases
+
+`PostgresHostedQuarantineReviewJournal` adds a trusted-operator workflow
+for reviewing quarantined, already-claimed compute leases. It **does not**
+release the lease or resume the worker. It records two workspace-scoped
+append-only operations: `compute.lease.review.opened` and
+`compute.lease.review.resolved`. Both operations preserve
+`observationOnly=true`, `acceptedTruth=false`, and
+`semanticMutation=false`.
+
+```ts
+const cases = PostgresHostedQuarantineReviewJournal.open({
+  pool,
+  computeState: postgresHostedComputeStatePort,
+  verifications: independentVerificationJournal,
+  authorizeReviewer: async ({ reviewerPrincipalId, workspaceId, action, leaseId }) =>
+    trustedHumanReviewPolicy({ reviewerPrincipalId, workspaceId, action, leaseId }),
+});
+
+await cases.openCase({
+  workspaceId: "workspace:one", leaseId: "compute-lease:review",
+  reviewerPrincipalId: "principal:human-reviewer", recordedAt: now,
+});
+await cases.resolveCase({
+  workspaceId: "workspace:one", leaseId: "compute-lease:review",
+  reviewerPrincipalId: "principal:human-reviewer",
+  rationale: "The independently observed external state confirms the effect",
+  recordedAt: now,
+});
+```
+
+Only a case linked to a **canonical quarantined lease**, with matching
+Workspace scope, may be opened. Each open and resolution requires an
+independent **trusted human-review policy** decision. The operator must
+implement this policy using an authoritative human identity, membership,
+separation-of-duties and approval source; there is no public compute-node
+HTTP endpoint for opening, resolving or authorizing reviews. Worker
+credentials and worker-reported output are never sufficient.
+
+Resolution requires a prior immutable, independently sourced
+`compute.effect.reconciled` event from the effect verifier, with matching
+receipt, execution, expected effect, and Workspace. `CONFIRMED` and
+`DIVERGED` produce `EFFECT_CONFIRMED` and `EFFECT_DIVERGED` review
+conclusions, respectively. `UNCERTAIN` or missing independent evidence
+leaves the case open. A bounded reviewer rationale, verifier ID and
+independent evidence references are retained in canonical SQL. Separate
+server instances cannot open or resolve a case twice because writes are
+validated under PostgreSQL scope transaction locks. Unauthorized
+reviewers, mismatched Workspaces and unknown historical operation kinds
+fail closed.
+
+The real PostgreSQL test uses independent database pools, a quarantined
+lease, a late worker observation, an independent canonical verification
+reader, reviewer authorization denials, and concurrent resolution attempts.
+Only one immutable resolution succeeds; the compute lease **remains
+quarantined and cannot be reexecuted** afterward.
+
+**Limitations:** The reviewer authorization callback is a required
+integration port, not a built-in audited human approval application.
+The state, verification and review journals use separate namespaces and
+transactions; source events are immutable but there is no atomic
+cross-ledger transaction. A verified review conclusion is *not* a semantic
+acceptance, a compensation plan, evidence provenance certification, or
+authorization to perform another external action. These need separate
+governed flows and production tests.
