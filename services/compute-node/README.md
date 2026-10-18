@@ -225,3 +225,43 @@ missing external state becomes `DIVERGED`, unobservable state becomes
 `UNCERTAIN`, and only independently observed state is `CONFIRMED`.
 It also exercises cross-pool replay, competing verification races,
 self-attestation rejection and corrupt operation kinds.
+
+## Expired lease quarantine (WYG-019 incremental recovery safety)
+
+An issued hosted-compute lease can expire while the worker is offline or
+while the external system has completed an effect but the worker has not yet
+published its observation. **Automatic retry would risk duplicating a real
+consequential action.**
+
+The trusted state server can now record `compute.lease.quarantined` using
+`PostgresHostedComputeStatePort.quarantineExpiredLease({ leaseId, recordedAt })`
+**after the issued lease expires**. It is an operator-only action, not a
+node-authenticated HTTP command. The record is append-only, explicitly says
+`OUTCOME_UNVERIFIED`, and is serialized across independent PostgreSQL
+pools using the canonical global counter row lock. Exactly one competing
+quarantine succeeds. A queued lease that was never issued, an unexpired
+lease, a future-dated detection, and a duplicate quarantine are refused.
+Corrupt or unknown recovery operations poison replay rather than silently
+changing the outstanding-work projection.
+
+New execution authorization now rejects expired or quarantined leases,
+even if the node session is otherwise alive and the policy callback would
+allow the operation. A quarantined lease is **never automatically unclaimed,
+reissued, retried or marked failed**. The claim remains unique. Late
+observations may still be appended to the separate immutable receipt
+journal as untrusted evidence, then handled by the independent effect
+verifier; they cannot authorize another provider execution.
+
+The live PostgreSQL test exercises a claimed-but-unreported lease, denial
+before expiration, simultaneous quarantine attempts from two database
+connections, irreversibility and later receipt preservation. It also
+retains the independently spawned remote compute worker and all earlier
+authorization checks.
+
+This increment **does not solve lost-work recovery**: a human or separate
+governed reconciliation procedure must establish what actually happened
+before authorizing any new compensating operation. It does not add lease
+reassignment, fencing tokens for already-running external workers, backend
+cancel/kill guarantees, signed evidence, or a production recovery queue.
+An already executing external call cannot be retroactively undone by a
+quarantine. Review outcome remains observational until governed acceptance.

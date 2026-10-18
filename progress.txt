@@ -513,3 +513,29 @@
 - `PostgresHostedEffectVerificationJournal` records immutable `compute.effect.reconciled` operations in a dedicated workspace-scoped PostgreSQL namespace. References Work, execution, original observation receipt, expected effect/reconciliation, independent verifier/source/evidence and observed time.
 - No worker/provider-supplied status can itself mark an effect verified; only a trusted state-side independent read callback can produce the result. Verification remains observational, without semantic acceptance or mutation, and never triggers external re-execution.
 - Scope ceiling: provider-specific real canonical readers, signature/evidence provenance validation, full governed execution acceptance/semantic commit integration, abandoned-lease recovery, principal capability delegation, production TLS/HA and human acceptance are not implemented by this slice. WYG-019 passes=false. Verified [GitHub Actions #39138658800](https://github.com/FPC-effortless/Woyengi/actions/runs/39138658800) at implementation commit `036d2480d76ada313af8c013ba4a45c4dfdaf780`: **133 Node tests / 0 failures; 10 live PostgreSQL 16 integration tests / 0 failures**, Python SDK, TypeScript, package/deep-module boundaries, adversarial benchmark, architecture/security checks and container smoke passed (all 3 jobs). The independent reader is simulated in CI: live PostgreSQL durability/concurrency is verified, but a real provider-specific external canonical reader and WYG-019 human acceptance are not. This progress-only evidence commit requires final-head CI.
+
+## 2026-10-18 — WYG-019 expired-lease quarantine and no-retry safety
+
+- Added a public behavioral falsifier to the real PostgreSQL state-server
+  integration test: a third lease is issued to a worker that never publishes
+  an observation. Before expiration, quarantine is denied. After expiration,
+  two independently connected state clients compete to quarantine the same
+  lease; precisely one canonical `compute.lease.quarantined` operation can
+  commit. Neither client may reclaim/reissue the lease. Explicit fresh
+  execution authorization is refused after expiry/quarantine, while a late
+  observation remains permitted as evidence for independent review.
+- `PostgresHostedComputeStatePort.quarantineExpiredLease` uses the global
+  SQL-serialized causal history inside `appendValidated`, validates the
+  issued/expired lease and immutable `OUTCOME_UNVERIFIED` reason, and fails
+  closed on malformed/duplicate recovery events. It is **trusted operator
+  only**: the compute node transport has no queue/recovery/grant route.
+- `authorize` now rejects execution after lease expiry as well as after
+  quarantine, even if a long-lived node session and the trusted policy
+  would otherwise allow execution. No automatic retry, compensation or
+  accepted-truth update is performed. A worker may already have caused an
+  external effect before this restriction; independent reconciliation
+  remains mandatory before any subsequent consequential action.
+- Still open: durable human review queue, explicit externally enforceable
+  fencing/cancel semantics, verifier-backed clearance, delegation revocation,
+  production deployment and WYG-019 human acceptance. Ticket remains
+  `passes=false`. Verified [GitHub Actions run #39171189725](https://github.com/FPC-effortless/Woyengi/actions/runs/39171189725) at implementation commit `d6a7e49ab88d7ed7a280d8ee52e9a65628ecc381`: **133 Node tests / 0 failures, 10 live PostgreSQL integration tests / 0 failures**, Python SDK, TypeScript, package boundaries, adversarial benchmark, architecture/security checks, and container smoke (3 jobs green). The initial live run exposed an incorrect test error regex for the explicit "unissued" rejection; it was fixed without weakening the validator, and the final source tests were rerun. This documentation-only evidence commit still requires final-head CI.

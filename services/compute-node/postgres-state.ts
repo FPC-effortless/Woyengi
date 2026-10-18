@@ -29,7 +29,17 @@ interface Issued extends StateBase {
   readonly leaseId: string;
   readonly nodeId: string;
 }
-export type HostedComputeStateOperation = Registered | Heartbeat | Queued | Issued;
+/**
+ * Administrative detection of an expired, claimed lease with an unresolved
+ * outcome. This is NOT a retry grant, proof of failure, or effect acceptance.
+ */
+interface Quarantined extends StateBase {
+  readonly kind: "compute.lease.quarantined";
+  readonly leaseId: string;
+  readonly nodeId: string;
+  readonly reason: "OUTCOME_UNVERIFIED";
+}
+export type HostedComputeStateOperation = Registered | Heartbeat | Queued | Issued | Quarantined;
 interface NodeState {
   readonly registration: HostedComputeNodeRegistration;
   session: HostedComputeNodeSession;
@@ -38,6 +48,7 @@ interface State {
   readonly nodes: Map<string, NodeState>;
   readonly queued: Map<string, HostedWorkloadLease>;
   readonly issued: Set<string>;
+  readonly quarantined: Set<string>;
 }
 class NoLeaseAvailable extends Error {}
 
@@ -141,12 +152,14 @@ function replay(history: readonly HostedComputeStateOperation[]): State {
   const nodes = new Map<string, NodeState>();
   const queued = new Map<string, HostedWorkloadLease>();
   const issued = new Set<string>();
+  const quarantined = new Set<string>();
   const operations = new Set<string>();
   let sequence = 0;
   for (const record of history) {
     if (!record || ![
       "compute.node.registered", "compute.node.heartbeat",
       "compute.lease.queued", "compute.lease.issued",
+      "compute.lease.quarantined",
     ].includes(record.kind)) throw new Error("unsupported canonical hosted compute state operation");
     if (record.ledgerSequence !== sequence + 1) throw new Error("invalid hosted compute causal sequence");
     sequence = record.ledgerSequence;
@@ -158,6 +171,7 @@ function replay(history: readonly HostedComputeStateOperation[]): State {
     if (record.kind === "compute.node.heartbeat") fields.push("session");
     if (record.kind === "compute.lease.queued") fields.push("lease");
     if (record.kind === "compute.lease.issued") fields.push("leaseId", "nodeId");
+    if (record.kind === "compute.lease.quarantined") fields.push("leaseId", "nodeId", "reason");
     if (Object.keys(record).some(k => !fields.includes(k))) throw new Error("unexpected compute state fields");
     switch (record.kind) {
       case "compute.node.registered":
@@ -198,9 +212,22 @@ function replay(history: readonly HostedComputeStateOperation[]): State {
         }
         issued.add(record.leaseId);
         break;
+      case "compute.lease.quarantined": {
+        const lease = queued.get(record.leaseId);
+        if (!lease || !issued.has(record.leaseId)
+          || lease.nodeId !== record.nodeId
+          || quarantined.has(record.leaseId)
+          || record.reason !== "OUTCOME_UNVERIFIED"
+          || date("quarantine recordedAt", record.transactionTime.from)
+            < date("lease expiration", lease.expiresAt)) {
+          throw new Error("invalid or duplicate compute lease quarantine");
+        }
+        quarantined.add(record.leaseId);
+        break;
+      }
     }
   }
-  return { nodes, queued, issued };
+  return { nodes, queued, issued, quarantined };
 }
 function active(state: State, nodeId: string, sessionId: string, at: number): NodeState | undefined {
   const node = state.nodes.get(nodeId);
@@ -428,6 +455,51 @@ export class PostgresHostedComputeStatePort implements ComputeNodeStatePort {
     }
   }
 
+  /**
+   * Trusted operator recovery boundary: permanently quarantine an issued
+   * expired lease when its outcome has not been independently accepted.
+   *
+   * Quarantine never reissues, resets or retries an execution. A late
+   * observation may still be recorded for later independent reconciliation.
+   * No compute-node HTTP route exposes this method.
+   */
+  async quarantineExpiredLease(input: {
+    readonly leaseId: string;
+    readonly recordedAt: string;
+  }): Promise<void> {
+    id("lease", input.leaseId, "compute-lease:");
+    const detectedAt = date("quarantine recordedAt", input.recordedAt);
+    await this.#ledger.appendValidated({
+      decide: history => {
+        const state = replay(history);
+        const lease = state.queued.get(input.leaseId);
+        if (!lease || !state.issued.has(input.leaseId)) {
+          throw new Error("cannot quarantine unissued compute lease");
+        }
+        if (state.quarantined.has(input.leaseId)) {
+          throw new Error("compute lease already quarantined");
+        }
+        if (detectedAt < date("lease expiry", lease.expiresAt)) {
+          throw new Error("compute lease not expired");
+        }
+        // The operator may record an earlier incident discovered later, but
+        // must not create a future-dated recovery fact.
+        if (detectedAt > this.#now()) {
+          throw new Error("quarantine cannot use a future timestamp");
+        }
+        const record: Quarantined = {
+          id: "compute-state:quarantined:" + input.leaseId,
+          kind: "compute.lease.quarantined",
+          leaseId: lease.id,
+          nodeId: lease.nodeId,
+          reason: "OUTCOME_UNVERIFIED",
+          transactionTime: { from: input.recordedAt },
+        };
+        return { record, result: undefined };
+      },
+    });
+  }
+
   async authorize(input: HostedAuthorityRequest): Promise<HostedAuthorityDecision> {
     const state = replay(await this.history());
     const lease = [...state.queued.values()].find(value =>
@@ -435,6 +507,12 @@ export class PostgresHostedComputeStatePort implements ComputeNodeStatePort {
       && value.envelope.executionId === input.envelope.executionId);
     if (!lease || !state.issued.has(lease.id) || !same(lease.envelope, input.envelope)) {
       throw new Error("compute execution not issued or authoritative envelope mismatch");
+    }
+    if (state.quarantined.has(lease.id)) {
+      throw new Error("compute execution quarantined: independent review required");
+    }
+    if (this.#now() >= date("lease expiry", lease.expiresAt)) {
+      throw new Error("compute execution expired: no new provider effects permitted");
     }
     if (input.providerId !== this.#providerId
       || !active(state, lease.nodeId, lease.sessionId, this.#now())) {
