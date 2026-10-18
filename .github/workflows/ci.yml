@@ -135,4 +135,4 @@ jobs:
         env:
           WOYENGI_PG_MODULE_ROOT: ${{ runner.temp }}/woyengi-pg
           WOYENGI_TEST_DATABASE_URL: postgresql://woyengi_ci:integration-only-ci-password@127.0.0.1:5432/woyengi_ci
-        run: node --test services/postgres-storage/test/postgres-live.test.ts services/postgres-storage/test/postgres-domain-live.test.ts services/selfhost-api/test/postgres-work-http-live.test.ts services/selfhost-api/test/postgres-sessions-live.test.ts
+        run: node --test services/postgres-storage/test/postgres-live.test.ts services/postgres-storage/test/postgres-domain-live.test.ts services/selfhost-api/test/postgres-work-http-live.test.ts services/selfhost-api/test/postgres-sessions-live.test.ts services/selfhost-api/test/postgres-work-stream-live.test.ts
