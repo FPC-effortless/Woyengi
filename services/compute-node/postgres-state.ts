@@ -432,6 +432,14 @@ export class PostgresHostedComputeStatePort implements ComputeNodeStatePort {
     const lease = state.queued.get(observation.leaseId);
     if (!lease || !state.issued.has(lease.id)) throw new Error("unknown or unissued compute lease");
     const e = lease.envelope;
+    // One execution must have one canonical receipt ID. Without this check,
+    // a compromised node could publish multiple observations for one lease
+    // under different IDs while bypassing receipt journal idempotency.
+    const expectedObservationId = "compute-node-observation:"
+      + e.executionId.slice("compute-execution:".length);
+    if (observation.id !== expectedObservationId) {
+      throw new Error("compute observation id does not match issued execution");
+    }
     if (observation.nodeId !== lease.nodeId || observation.sessionId !== lease.sessionId
       || observation.executionId !== e.executionId
       || observation.providerId !== this.#providerId
