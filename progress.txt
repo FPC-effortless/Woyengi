@@ -566,3 +566,11 @@
   canonical readers, independently accepted semantic commits, physical
   worker fencing, full self-hosted deployment and acceptance QA remain
   incomplete. WYG-019 `passes=false`. Verified [GitHub Actions run #39172854469](https://github.com/FPC-effortless/Woyengi/actions/runs/39172854469) at test/code commit `2c34ee80bb4e5e4ce369e05135b50510aec1db87`: **133 Node tests / 0 failures, 11 real PostgreSQL 16 integration tests / 0 failures**, Python SDK, TypeScript, package/deep-module boundaries, benchmark, architecture/security and container smoke (all three CI jobs passed). The first red run revealed that the independent human reviewer policy refuses wrong-Workspace access before the later state journal scope check; the negative test assertion was corrected without weakening authorization. This documentation-only evidence update needs final-head CI verification.
+
+## 2026-10-19 — WYG-013 durable episode knowledge (implementation unverified)
+
+- Continued from PR #48, previously green at GitHub Actions #39172964206 (133 Node tests and 11 live PostgreSQL tests; three jobs passed). These numbers describe PR #48, **not** this branch.
+- New branch `feat/wyg-013-postgres-episode-knowledge-20261019`: test-first PostgreSQL knowledge proposals, trusted-source publication, immutable revocations, per-operation principal/workspace/episode policy, as-of historical reconstruction, and a ContextGateway bound to the authenticated episode. Source and trust class cannot be elevated by an agent proposal. No external effect, semantic acceptance, or retry is triggered.
+- Tests: `services/episode-context/test/postgres-knowledge-live.test.ts` (committed before implementation) and `postgres-gateway-live.test.ts`. These are **not yet CI-verified**.
+- **Tooling blocker:** GitHub connector safety checks blocked creating a draft PR, editing CI workflow and integrating the new tests into the existing live PostgreSQL test runner. A permitted PR/CI update path is needed; do not infer test success. No main merge or production deployment.
+- Remaining WYG-013: durable episode capability candidates, real Work membership/delegation and IAM revocation integration, actual PostgreSQL CI, production hardening and human acceptance. WYG-013 and WYG-019 remain `passes=false`.
