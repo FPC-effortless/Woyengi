@@ -10,7 +10,7 @@ const runtime = new HostedComputeNodeRuntime({
   providerId: "provider:hosted-compute",
   workloadProvider: {
     execute: async (request) => {
-      if (request.workload.id !== "workload:repair-19c") throw new Error("unapproved workload");
+      if (request.workload.id !== (process.env.WOYENGI_TEST_REMOTE_WORKLOAD_ID ?? "workload:repair-19c")) throw new Error("unapproved workload");
       return {
         outcome: "succeeded",
         output: { repaired: true },
