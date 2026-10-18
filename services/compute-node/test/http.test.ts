@@ -70,7 +70,7 @@ test("runs authorized hosted compute in an independent OS process over authentic
   assert.equal((await fetch(url)).status, 401);
 
   const child = spawn(process.execPath, [
-    fileURLToPath(new URL("./remote-compute-child.ts", import.meta.url)),
+    fileURLToPath(new URL("../fixtures/remote-compute-child.ts", import.meta.url)),
   ], {
     shell: false,
     env: { ...process.env, WOYENGI_TEST_REMOTE_COMPUTE_URL: server.url,
