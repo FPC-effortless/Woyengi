@@ -10,7 +10,7 @@ interface ComputeObservationRecord {
   readonly observation: HostedComputeObservation;
 }
 
-function namespaced(name: string, value: string, prefix: string): void {
+function namespaced(name: string, value: unknown, prefix: string): void {
   if (typeof value !== "string" || !value.startsWith(prefix) || value.length > 512
     || !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(value.slice(prefix.length))) {
     throw new TypeError(`${name} must be a valid ${prefix} identifier`);
@@ -66,7 +66,7 @@ function fingerprint(value: unknown): string {
       JSON.stringify(key) + ":" + fingerprint(item)
     ).join(",") + "}";
   }
-  return JSON.stringify(value);
+  return JSON.stringify(value) ?? "null";
 }
 
 function verifyRecord(record: ComputeObservationRecord, workspaceId: string): void {
