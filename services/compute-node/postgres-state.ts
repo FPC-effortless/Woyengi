@@ -59,7 +59,7 @@ function plain(value: unknown): string {
   // registered-at timestamp or lease envelope is semantically unchanged by
   // that formatting; compare instants canonically instead of byte-for-byte.
   if (typeof value === "string"
-    && /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value)
+    && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
     && Number.isFinite(Date.parse(value))) {
     return JSON.stringify(new Date(value).toISOString());
   }
