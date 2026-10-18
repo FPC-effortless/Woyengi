@@ -225,6 +225,11 @@ export interface HostedComputeStatePolicy {
   (request: HostedAuthorityRequest): Promise<HostedAuthorityDecision>;
 }
 
+/** Trusted fleet enrollment policy independent of self-declared node claims. */
+export interface HostedNodeEnrollmentPolicy {
+  (registration: HostedComputeNodeRegistration): Promise<boolean>;
+}
+
 /**
  * One SQL-serialized state authority for node registrations, heartbeats,
  * trusted operator queueing and exclusive leases. No cached queue controls
@@ -239,6 +244,7 @@ export class PostgresHostedComputeStatePort implements ComputeNodeStatePort {
   readonly #receipts: PostgresHostedObservationJournal;
   readonly #providerId: string;
   readonly #policy: HostedComputeStatePolicy;
+  readonly #enroll: HostedNodeEnrollmentPolicy;
   readonly #now: () => number;
 
   private constructor(input: {
@@ -246,12 +252,14 @@ export class PostgresHostedComputeStatePort implements ComputeNodeStatePort {
     readonly receipts: PostgresHostedObservationJournal;
     readonly providerId: string;
     readonly authorize: HostedComputeStatePolicy;
+    readonly authorizeRegistration: HostedNodeEnrollmentPolicy;
     readonly now: () => number;
   }) {
     this.#ledger = input.ledger;
     this.#receipts = input.receipts;
     this.#providerId = input.providerId;
     this.#policy = input.authorize;
+    this.#enroll = input.authorizeRegistration;
     this.#now = input.now;
   }
 
@@ -261,16 +269,21 @@ export class PostgresHostedComputeStatePort implements ComputeNodeStatePort {
     readonly receipts: PostgresHostedObservationJournal;
     readonly providerId: string;
     readonly authorize: HostedComputeStatePolicy;
+    readonly authorizeRegistration: HostedNodeEnrollmentPolicy;
     readonly now?: () => number;
   }): PostgresHostedComputeStatePort {
     id("provider", input.providerId, "provider:");
     if (typeof input.authorize !== "function") throw new TypeError("trusted compute policy required");
+    if (typeof input.authorizeRegistration !== "function") {
+      throw new TypeError("trusted compute enrollment policy required");
+    }
     return new PostgresHostedComputeStatePort({
       ledger: PostgresCanonicalLedger.open({
         pool: input.pool, namespace: input.namespace ?? "hosted-compute-state",
       }),
       receipts: input.receipts, providerId: input.providerId,
-      authorize: input.authorize, now: input.now ?? Date.now,
+      authorize: input.authorize, authorizeRegistration: input.authorizeRegistration,
+      now: input.now ?? Date.now,
     });
   }
 
@@ -283,6 +296,13 @@ export class PostgresHostedComputeStatePort implements ComputeNodeStatePort {
 
   async register(registration: HostedComputeNodeRegistration): Promise<HostedComputeNodeSession> {
     validateRegistration(registration);
+    // HTTP authenticates the node ID, but a bearer alone must not grant the
+    // right to self-assert new workspaces, capabilities, version or budget.
+    // Revalidate against an independently trusted operator enrollment source
+    // even for previously registered nodes.
+    if (await this.#enroll(registration) !== true) {
+      throw new Error("compute node registration denied by trusted enrollment policy");
+    }
     const history = await this.history();
     const existing = replay(history).nodes.get(registration.nodeId);
     if (existing) {
