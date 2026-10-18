@@ -152,7 +152,14 @@ export class PostgresPrincipalSessions {
       return undefined;
     }
     const supplied = createHash("sha256").update(authorization.slice(7), "utf8").digest();
-    const sessions = replay(await this.#ledger.load());
+    let sessions: Map<string, SessionProjection>;
+    try {
+      sessions = replay(await this.#ledger.load());
+    } catch (cause) {
+      // Do not misclassify corrupted canonical credentials as a bad client
+      // request. Never fall back to empty or cached grants.
+      throw new Error("canonical credential history failed to replay", { cause });
+    }
     let principal: string | undefined;
     for (const state of sessions.values()) {
       const reference = Buffer.from(state.tokenDigest.slice(7), "hex");
