@@ -278,15 +278,12 @@ their issuance/revocation is not currently coordinated through PostgreSQL.
 
 ### PostgreSQL stream boundary
 
-The JSON Work routes use PostgreSQL and are readable by another server
-instance using an independent database connection. The existing
-`GET .../events` SSE endpoint deliberately returns HTTP
-`501 STREAM_UNAVAILABLE` for PostgreSQL-backed Work, **after** checking
-Work authorization. The prior local SSE implementation observes only its
-own process's journal notifications. Pretending it works cross-process would
-lose events silently. PostgreSQL clients can use the authorized
-`GET .../history` route to recover durable changes until a separate,
-authenticated, cross-process event transport is added.
+The JSON Work routes and the `GET .../events` SSE endpoint use the
+PostgreSQL-backed Work journal, including on independently connected API
+instances. The earlier local-only notification path is retained only for
+synchronous local journals. PostgreSQL SSE polls the canonical journal,
+replays ordered operations and checks current credentials at every poll.
+`GET .../history` remains available for authorized durable recovery.
 
 ### Verification
 
@@ -296,9 +293,9 @@ two separately connected loopback API servers sharing one PostgreSQL database,
 verifies two-human Work creation/replay, outsider and nonparticipant read
 denial, forged actor rejection, optimistic-version conflict across two HTTP
 process-side adapters, duplicate idempotency rejection, restart/recovery,
-and explicit SSE unavailability. This tests independent server instances
+and authenticated SSE read. This tests independent server instances
 in one Node test process, **not** separate operating-system processes or
-full distributed deployment.
+a fully deployed distributed environment.
 
 Remaining work includes PostgreSQL-backed session issuance and revocation,
 cross-process subscription/presence transport, DB authorization/Work atomicity
@@ -362,11 +359,11 @@ through a trusted channel. SHA-256 digests are not a substitute for
 defensive database roles, network isolation, rate limiting, TLS and audit.
 Do not grant ordinary API clients direct journal mutation privileges.
 
-**Realtime limitation:** the PostgreSQL Work SSE route remains
-`501 STREAM_UNAVAILABLE` until reliable cross-process event delivery and
-async authorization rechecks exist. Local SSE with an asynchronous
-PostgreSQL session backend also returns 501, rather than silently delivering
-a stream that cannot keep credentials revalidated.
+**Realtime boundary:** SQL-backed SSE now uses authoritative historical
+polling with asynchronous credential rechecks across API instances, including
+when one API has revoked the credential held by a client connected elsewhere.
+It is durable and resumable, but polling latency and races between validation
+and delivery remain; it is not instantaneous cross-process push.
 
 The PostgreSQL CI integration test
 `services/selfhost-api/test/postgres-sessions-live.test.ts` verifies
