@@ -53,3 +53,37 @@ of the injected state port. Production work still requires durable
 at-least-once publication handling, state-side idempotency, TLS/proxy
 hardening, node credential rotation, trusted authorization policy and
 proof of effect reconciliation. This is not full WYG-019 acceptance.
+
+## PostgreSQL-backed hosted compute observation receipts
+
+`PostgresHostedObservationJournal` adds **canonical, append-only**
+PostgreSQL persistence for hosted compute observations. The trusted
+state-side `ComputeNodeStatePort.publishObservation` implementation may
+delegate to this journal after its own node/workspace/lease checks.
+It stores the observation, originating Workspace scope, transaction
+timestamp and SQL-assigned causal sequence. Separate API instances can
+replay the same workspace-specific receipt history.
+
+All persisted records must declare `observationOnly=true`,
+`acceptedTruth=false`, `semanticMutation=false`, and
+`reconciliation.status="PENDING"`. The receipt also includes the actual
+usage/cost, the governed authority reference, a correlation, expected-effect
+ID/class and the reconciliation plan ID. A duplicate publication of the
+**same observation** (including concurrent retries through independent
+PostgreSQL pools) converges to one immutable record; conflicting payloads
+are rejected and never overwrite prior history.
+
+The live PostgreSQL CI test launches the compute runtime in **another OS
+process**, receives its observation via HTTP on the state-side port and
+persists it to PostgreSQL. A second pool replays and verifies the receipt,
+its expected-effect/reconciliation references, idempotent retries and
+corrupted privileged history rejection.
+
+This is still **observation storage**, not semantic effect acceptance.
+State-side issuance and proof of the original authority/lease must come
+from the injected state port, and a separate verifier must perform
+reconciliation of external effects before recording an accepted result.
+The journal's `history` method is trusted-operator only and must not be
+exposed as an unscoped public read endpoint. Production PostgreSQL role
+isolation, scoped authorization, durable lease queue and independent
+effect verification remain required.
