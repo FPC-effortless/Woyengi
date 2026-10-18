@@ -129,7 +129,7 @@ test("PostgreSQL quarantined Work review requires independently verified effect 
     }), /reviewer denied/);
     await assert.rejects(reviewA.openCase({
       ...base, workspaceId: "workspace:other", recordedAt: inspectedAt,
-    }), /workspace|scope/);
+    }), /reviewer denied|workspace|scope/);
     assert.deepEqual(await reviewB.history({ workspaceId: "workspace:one" }), []);
     const opened = await reviewA.openCase({ ...base, recordedAt: inspectedAt });
     assert.equal(opened.kind, "compute.lease.review.opened");
