@@ -170,3 +170,58 @@ The source of independent effect verification and reconciliation has not
 yet been implemented. TLS proxy, credential rotation, multi-host
 deployment/HA and human QA are not production-validated. These must be
 closed before ticket WYG-019 can be accepted.
+
+## Independent effect verification over PostgreSQL (WYG-019)
+
+The **trusted state-side operator**, not the hosted compute worker, can now
+open `PostgresHostedEffectVerificationJournal` to reconcile a persisted
+compute observation against an **independent** read of canonical external
+state. The required `readEffect` callback must be implemented by a trusted
+read-only verifier with its own credentials, independent of the executing
+provider.
+
+```ts
+import { PostgresHostedEffectVerificationJournal } from "./index.ts";
+
+const verification = PostgresHostedEffectVerificationJournal.open({
+  pool,
+  observations: receiptJournal,
+  verifierId: "verifier:external-read",
+  readEffect: async request => independentlyReadCanonicalState(request),
+});
+const result = await verification.verifyReceipt({
+  workspaceId: "workspace:one",
+  receiptId: "compute-node-observation:repair-19c",
+  recordedAt: new Date().toISOString(),
+});
+```
+
+The result records `CONFIRMED`, `DIVERGED` or `UNCERTAIN`, the
+independent evidence source and evidence reference, verifier identity,
+original receipt/Work correlation, expected effect, reconciliation strategy
+and timestamp. It requires a known canonical receipt, prohibits evidence
+from the same provider as the worker, disallows verification predating the
+receipt, and serializes one immutable result per execution and workspace.
+Concurrent attempts on two independent PostgreSQL pools cannot override
+or erase prior verification. Unknown privileged operation kinds fail closed
+during replay. Worker HTTP routes do **not** expose reconciliation writes.
+
+**Critical distinction:** Even `CONFIRMED` is an observation that an
+independent read corroborated the effect, **not** an approval, accepted
+semantic truth or mutation. All verification records remain
+`observationOnly=true`, `acceptedTruth=false`,
+`semanticMutation=false`. Any later semantic acceptance must separately
+pass the governing `GovernedExecutionEngine` authority and verification
+contract. An independent callback configured by an operator is not itself
+a general-purpose verification backend: production installations must
+provide verifiable provider-specific evidence, an authenticated independent
+reader, witness/audit provenance, and effect-specific matching logic.
+No external effects are performed or retried by this journal.
+
+The real PostgreSQL integration test uses independent database pools,
+one untrusted compute receipt provider and a separate simulated canonical
+reader. It verifies that a worker claiming success is not sufficient:
+missing external state becomes `DIVERGED`, unobservable state becomes
+`UNCERTAIN`, and only independently observed state is `CONFIRMED`.
+It also exercises cross-pool replay, competing verification races,
+self-attestation rejection and corrupt operation kinds.
