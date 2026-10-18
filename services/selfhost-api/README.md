@@ -380,3 +380,38 @@ PostgreSQL session distribution does not provide public login, MFA,
 credential refresh/rotation, cross-ledger revocation transactionality,
 distributed realtime, agent capability grants, internet-facing TLS/proxy
 hardening, or remotely hosted compute. WYG-019 remains unaccepted.
+
+## PostgreSQL Work realtime: resumable cross-instance SSE
+
+`GET /v1/workspaces/{workspaceId}/work/{workInstanceId}/events`
+now supports PostgreSQL-backed Work (including async PostgreSQL credential
+sessions). Every event uses the **canonical Work ledger sequence** as its
+SSE `id`. Clients can resume with `Last-Event-ID` or `?after=`; malformed
+or conflicting cursors are rejected before streaming starts.
+
+The server periodically reloads the SQL-backed session, Work and Workspace
+authority and replays only Work operations visible to the participant.
+Polling finds commits made by **other API instances using independent DB
+pools**, even when this server missed their commit notification or restarted.
+A committed session revocation terminates an existing stream on a subsequent
+poll. Errors, database outages and backpressure fail closed; they do not
+silently grant continued access. An operation committed during a poll can
+be seen on the next poll. The reconnect cursor is authoritative, not the
+current TCP connection. Local JSON journals retain their existing
+in-process wake-up SSE for synchronous session providers.
+
+`SelfHostWorkApi` accepts `streamPollIntervalMs` (integer from 50 to
+60,000, default 250). A smaller interval increases SQL reads; a larger one
+raises delivery and revocation-detection latency. Heartbeats are checked
+after authorization rather than sent from a separate privileged timer.
+Revocations are **not instantaneous**: an event can be sent in the small
+window between the last authorization read and the next poll. The source
+journal remains the durable recovery path and clients should reconnect
+with their last successful sequence. No LISTEN/NOTIFY infrastructure,
+separate real-time broker or presence semantics are claimed.
+
+Live GitHub Actions tests use two separate API instances, DB pools and
+SQL-backed sessions, verifying a commit on instance A is delivered to a
+subscriber on instance B, ordered cursor replay and session revocation
+shutdown. Production-scale throughput, adversarial flooding, sharding and
+cross-region latency remain open engineering work.
