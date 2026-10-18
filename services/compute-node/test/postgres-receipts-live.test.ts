@@ -96,9 +96,11 @@ test("independent compute process delivers an append-only PostgreSQL usage/effec
     ...published, usage: { ...published.usage,
       cost: { ...published.usage.cost, amount: 3 } },
   }), /conflict/);
+  // Deliberately bypass TypeScript's literal-false contract to exercise
+  // runtime rejection of a forged, untrusted network payload.
   await assert.rejects(b.publishObservation({
     ...published, id: "compute-node-observation:untrusted", acceptedTruth: true,
-  }), /observation-only/);
+  } as unknown as HostedComputeObservation), /observation-only/);
   assert.equal((await a.history({ workspaceId: "workspace:one" })).length, 1);
 
   // Unknown privileged writes cannot become a projection of valid receipt.
