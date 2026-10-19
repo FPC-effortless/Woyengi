@@ -10,6 +10,8 @@ import { instant, rationale, requireId } from "./validate.ts";
 
 export type { EpisodeKnowledgeOperation, KnowledgePublished, KnowledgeRevoked } from "./model.ts";
 export { createEpisodeKnowledgeGateway } from "./gateway.ts";
+export { PostgresEpisodeCapabilityJournal } from "./capabilities.ts";
+export type { EpisodeCapabilityOperation, TrustedEpisodeCapabilityPolicy, EpisodeCapabilityAuthorityRequest, CapabilityPublished, CapabilityRevoked } from "./capabilities.ts";
 
 export interface EpisodeKnowledgeAuthorityRequest {
   readonly operation: "READ" | "PROPOSE" | "PUBLISH" | "REVOKE";
