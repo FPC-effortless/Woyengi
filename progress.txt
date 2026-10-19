@@ -602,4 +602,4 @@
   including the previously unexecuted PR #49 tests. No user-facing grants,
   external provider execution, production IAM, or acceptance criteria were
   asserted by this change; WYG-013 and WYG-019 `passes=false`.
-- GitHub Actions verification pending.
+- Verified [GitHub Actions #39214791243](https://github.com/FPC-effortless/Woyengi/actions/runs/39214791243) at implementation commit `f1ef87f50e6a1bcae59347e730a8109c1d65b38a`: **133 Node tests / 0 failed; 14 real PostgreSQL 16 tests / 0 failed**, Python SDK, TypeScript, architecture/security, package boundaries, benchmark and container smoke (all 3 jobs passed). The newly enabled PostgreSQL tests confirmed PR #49's knowledge/gateway behavior plus this PR's capability authority/revocation. Initial CI uncovered PR #49's inherited test using unbranded Workspace/Work IDs; corrected fixture to the domain's branded context type without weakening runtime validation. This documentation-only evidence commit requires final-head CI.
