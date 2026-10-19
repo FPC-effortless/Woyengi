@@ -19,6 +19,9 @@ export function createEpisodeKnowledgeGateway(input: {
   readonly evaluateWrite?: ContextGatewayPorts["evaluateWrite"];
 }): Pick<ContextGateway, "buildEpisodeCapabilityContext"
   | "reconstructAgentKnowledgeWorkspace" | "writeContextSegment"> {
+  if (input.capabilities !== undefined && input.capabilitySource !== undefined) {
+    throw new TypeError("choose one trusted episode capability source");
+  }
   const bound = input.request;
   const assertBound = (request: EpisodeContextRequest): void => {
     if (request.principalId !== bound.principalId
