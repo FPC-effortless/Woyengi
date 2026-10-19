@@ -603,3 +603,29 @@
   external provider execution, production IAM, or acceptance criteria were
   asserted by this change; WYG-013 and WYG-019 `passes=false`.
 - Verified [GitHub Actions #39214791243](https://github.com/FPC-effortless/Woyengi/actions/runs/39214791243) at implementation commit `f1ef87f50e6a1bcae59347e730a8109c1d65b38a`: **133 Node tests / 0 failed; 14 real PostgreSQL 16 tests / 0 failed**, Python SDK, TypeScript, architecture/security, package boundaries, benchmark and container smoke (all 3 jobs passed). The newly enabled PostgreSQL tests confirmed PR #49's knowledge/gateway behavior plus this PR's capability authority/revocation. Initial CI uncovered PR #49's inherited test using unbranded Workspace/Work IDs; corrected fixture to the domain's branded context type without weakening runtime validation. This documentation-only evidence commit requires final-head CI.
+
+## 2026-10-19 — WYG-013 live Work-bound episode context authority
+
+- Chose to bind the recently verified PR #50 episode knowledge/capability
+  journals to canonical PostgreSQL Workspace membership, Work participants,
+  human owner/decision roles, and WorkEpisode existence instead of continuing
+  with invented in-memory agent rights.
+- Test-first added `services/episode-context/test/postgres-work-bound-policy-live.test.ts`
+  with independent PostgreSQL pools, registered agent and two humans,
+  real organization membership, actual WorkInstance/Episode, a Work
+  capability publication, an agent knowledge proposal, denial of role
+  elevation, false episode/outsider refusal, and revocation-aware reads
+  and proposals. Test uses a trusted delegated-authorization stub;
+  it does not pretend the stub is a production IAM or persistent grant.
+- Implemented `createWorkBoundEpisodePolicies`: rechecks real Work and
+  Workspace history for every request; independently sourced current
+  AgentPrincipal delegation must name a human participant/sponsor with
+  governing Work owner/decision role. Agents can only READ or PROPOSE.
+  If no trusted delegation source exists, agent access is denied.
+  Human capability PUBLISH/REVOKE requires governing Work role, not just
+  membership. Missing/out-of-scope episode and data-source failure deny.
+- Added the new PostgreSQL integration test to GitHub CI. WYG-013 and
+  WYG-019 remain `passes=false`. Unfinished: true durable grant
+  issuance/revocation and session authentication, agent Work participation,
+  cross-ledger atomicity, authorized provider execution, real deployment,
+  human QA. Verified [GitHub Actions run #39217438948](https://github.com/FPC-effortless/Woyengi/actions/runs/39217438948) at implementation commit `2d60327668ba457a1035107e1a9ac90fe52b4823`: **133 Node tests / 0 failures, 15 PostgreSQL 16 integration tests / 0 failures** (including current Work episode and agent delegation revocation behavior), Python SDK, TypeScript, package/deep-module boundaries, adversarial benchmark, architecture/security, and container smoke all passed across three CI jobs. Final progress-only commit requires separate head verification.
