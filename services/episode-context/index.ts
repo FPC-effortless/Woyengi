@@ -12,6 +12,8 @@ export type { EpisodeKnowledgeOperation, KnowledgePublished, KnowledgeRevoked } 
 export { createEpisodeKnowledgeGateway } from "./gateway.ts";
 export { PostgresEpisodeCapabilityJournal } from "./capabilities.ts";
 export { createWorkBoundEpisodePolicies } from "./work-authority.ts";
+export { PostgresEpisodeDelegationJournal } from "./delegations.ts";
+export type { AgentDelegationIssued, AgentDelegationRevoked, AgentDelegationOperation } from "./delegations.ts";
 export type { EpisodeAgentDelegationDecision, EpisodeAgentDelegationRequest, TrustedEpisodeAgentDelegation, WorkBoundEpisodePolicies } from "./work-authority.ts";
 export type { EpisodeCapabilityOperation, TrustedEpisodeCapabilityPolicy, EpisodeCapabilityAuthorityRequest, CapabilityPublished, CapabilityRevoked } from "./capabilities.ts";
 
