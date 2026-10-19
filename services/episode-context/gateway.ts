@@ -2,6 +2,7 @@ import {
   ContextGateway, type ContextGatewayPorts, type EpisodeContextRequest,
 } from "../../packages/context-gateway/src/index.ts";
 import type { PostgresEpisodeKnowledgeJournal } from "./index.ts";
+import type { PostgresEpisodeCapabilityJournal } from "./capabilities.ts";
 
 /**
  * Bind a ContextGateway to a single authenticated episode request.
