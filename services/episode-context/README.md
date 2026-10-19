@@ -106,3 +106,65 @@ knowledge publication/revocation, bound ContextGateway as-of reads, and
 trusted capability publishing plus scope/revocation/applicability. These
 tests were missing from PR #49's earlier CI and must pass before claiming
 verified functionality.
+
+## Work-bound, sponsor-scoped AgentPrincipal context authority
+
+`createWorkBoundEpisodePolicies({ workspaces, work,
+authorizeAgentDelegation })` provides **real** PostgreSQL Workspace
+membership, human Work role, and existing WorkEpisode checks to the
+episode knowledge and capability journals. Both policy ports are returned
+(`knowledge` and `capability`) and can be used in the respective journal
+`authorize` constructor fields. The authenticated state server must bind
+`actorPrincipalId` to the actual authenticated human or agent identity:
+this is an authorization adapter, not a login/token verifier.
+
+Every READ/PROPOSE/PUBLISH/REVOKE request replays the current principal
+registry and Work instance. A human participant may read or propose.
+Capability and trusted knowledge publication/revocation require a
+currently participating Work owner or decision authority. Denied Workspace,
+unregistered principal, wrong Work instance/episode, suspended instance,
+or SQL/provider failure deny access rather than silently trusting the
+provided episode string.
+
+Agent principals are **not silently enrolled as Work participants**. The
+optional `authorizeAgentDelegation` callback must independently verify
+the agent's actual delegated rights, current revocation state, operation,
+Work scope and human sponsor. Even a delegated agent is limited to READ
+and PROPOSE; PUBLISH and REVOKE always deny. The returned sponsor must
+be a registered human, currently a Workspace member and Work participant,
+with Work-owner or decision-authority role. That sponsor's Work history
+must contain the specified active episode. A missing callback denies all
+agent context access. Its decision is rechecked on **every** context
+operation, including after revocation by another service process.
+
+```ts
+const policies = createWorkBoundEpisodePolicies({
+  workspaces: postgresWorkspaceJournal,
+  work: postgresWorkJournal,
+  authorizeAgentDelegation: async request =>
+    independentlyTrustedDelegationStore.resolveActiveSponsor(request),
+});
+const knowledge = PostgresEpisodeKnowledgeJournal.open({
+  pool, authorize: policies.knowledge,
+});
+const capabilities = PostgresEpisodeCapabilityJournal.open({
+  pool, authorize: policies.capability,
+});
+```
+
+The live SQL integration test creates a real organization, human Work
+owner/reviewer, registered agent, and a started WorkEpisode across two
+PostgreSQL pools. It proves owners can publish while reviewers and
+agents cannot, verifies a scoped agent READ/PROPOSE when the independent
+delegation source allows it, and denies both immediately after that
+source revokes access. Agent elevation to a verified knowledge source
+also fails.
+
+**Remaining boundary:** `authorizeAgentDelegation` is a trusted current
+authorization port, not itself a durable grant issuer. This slice does
+not issue, revoke or encrypt credentials, persist delegation grant
+events, enroll agents as first-class Work participants, execute provider
+actions, or atomically coordinate Work membership and delegation events.
+The test uses a controllable independent policy stub for the grant
+source; live PostgreSQL validates Work authority and context journals.
+Full multi-principal execution and WYG-013 remain unaccepted.
