@@ -168,3 +168,69 @@ actions, or atomically coordinate Work membership and delegation events.
 The test uses a controllable independent policy stub for the grant
 source; live PostgreSQL validates Work authority and context journals.
 Full multi-principal execution and WYG-013 remain unaccepted.
+
+## Durable AgentPrincipal WorkEpisode delegation (WYG-013)
+
+`PostgresEpisodeDelegationJournal` replaces the earlier test-controlled
+authorization flag with a **PostgreSQL-backed immutable grant journal**.
+Its `issue` method is trusted-operator-only, limited to a registered
+human Work owner or decision authority sponsoring an existing registered
+AgentPrincipal for one active Workspace, WorkInstance and WorkEpisode.
+The human sponsor must be the issuer; an agent, non-owner reviewer or
+unregistered target cannot mint a grant. The grant contains **only** READ
+and/or PROPOSE rights, never provider execution, trusted publication,
+approval, capability creation, or an external effect permission.
+
+```ts
+const grants = PostgresEpisodeDelegationJournal.open({
+  pool, workspaces: postgresWorkspaceJournal, work: postgresWorkJournal,
+});
+await grants.issue({
+  grantId: "agent-delegation:inspection", workspaceId: "workspace:one",
+  workInstanceId: "work-instance:one", workEpisodeId: "work-episode:one",
+  agentPrincipalId: "principal:agent", sponsorPrincipalId: "principal:owner",
+  issuerPrincipalId: "principal:owner", operations: ["READ", "PROPOSE"],
+  issuedAt: new Date().toISOString(),
+  expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+  authorityReference: "decision:approved-by-owner",
+  rationale: "Bounded human-sponsored inspection",
+});
+const policies = createWorkBoundEpisodePolicies({
+  workspaces: postgresWorkspaceJournal, work: postgresWorkJournal,
+  authorizeAgentDelegation: request => grants.resolve(request),
+});
+```
+
+Grants expire after at most **seven days**, and cannot be issued in the
+future or already expired. Overlapping active grants for the same agent,
+WorkEpisode, and operation are refused transactionally, so two sponsors
+cannot silently race to grant ambiguous rights. An original human sponsor
+may append an immutable revocation with rationale; duplicate, unknown,
+backdated or unauthorized revocations are rejected. Prior issuance remains
+auditable. Every `resolve` reloads the canonical PostgreSQL event history
+and revalidates the human sponsor's current Work participation and governing
+role. A committed revocation or expiry is visible to another DB-connected
+API instance without restarting it. Unexpected privileged event kinds or
+tampered history fail closed.
+
+`history` and grant issuance/revocation are **trusted server operations**,
+not agent-facing HTTP routes. Upstream must authenticate the issuing
+human principal; ID strings alone are never proof of identity. The
+existing Work-bound policies still independently check the actual active
+episode and membership for every downstream READ or PROPOSE.
+
+The real PostgreSQL integration test exercises two independent SQL pools,
+an organization and live Work episode, human owner/reviewer and registered
+agents, issuer and scope refusal, concurrent duplicate issuance, expiry,
+revocation, read/propose scoping, reissuance after revocation, and
+corruption refusal.
+
+**Still not production completeness:** the grant journal is for
+**episode context** only, not execute/provider action delegation. Its
+revocation and downstream context write are on separate SQL namespaces:
+an authorization decision immediately preceding a concurrent revocation
+cannot be made atomic with that context write by this mechanism alone.
+External caller authentication, token-bound identities, atomic
+cross-ledger revocation fencing, active worker termination, provider
+gatekeeping and complete human acceptance remain open. WYG-013
+`passes=false`.
