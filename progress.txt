@@ -629,3 +629,11 @@
   issuance/revocation and session authentication, agent Work participation,
   cross-ledger atomicity, authorized provider execution, real deployment,
   human QA. Verified [GitHub Actions run #39217438948](https://github.com/FPC-effortless/Woyengi/actions/runs/39217438948) at implementation commit `2d60327668ba457a1035107e1a9ac90fe52b4823`: **133 Node tests / 0 failures, 15 PostgreSQL 16 integration tests / 0 failures** (including current Work episode and agent delegation revocation behavior), Python SDK, TypeScript, package/deep-module boundaries, adversarial benchmark, architecture/security, and container smoke all passed across three CI jobs. Final progress-only commit requires separate head verification.
+
+## 2026-10-19 — WYG-025 strict ingestion review; source writes blocked
+
+- Inspected draft PRs #49–#51, accepted ADR 0006, the constitutional and agent contracts, active PRD and deployment tests. PR #51 final-head CI is green at 195c4df0ef6e15793bb4047716aed708cd605c3d.
+- Identified that the HTTP ingestion rebuild in services/platform-api/src/main.ts ignores unknown record and nested fields and replaces a conflicting record workspaceId with the envelope workspaceId. A supplied ledgerSequence is also discarded instead of rejected.
+- Created branch feat/wyg-025-strict-record-input-20261019 from PR #51 to preserve the draft stack.
+- Attempted a regression-test change to deploy/test/main-process.test.ts and a separate test file; both GitHub content writes were rejected by OpenAI safety checks. No application or test change committed, no new CI run, and no PR created. Do not claim WYG-025 acceptance.
+- Next: restore an explicitly permitted source-write capability, add negative HTTP tests for scope mismatch and unexpected fields, validate allowed nested fields before constructor rebuild, and verify the final branch through CI. No merge or deploy.
