@@ -35,7 +35,12 @@ export function createEpisodeKnowledgeGateway(input: {
     }
   };
   const inner = new ContextGateway({
-    capabilitySource: input.capabilitySource ?? { query: async () => [] },
+    capabilitySource: input.capabilities === undefined
+      ? (input.capabilitySource ?? { query: async () => [] })
+      : { query: async request => {
+        assertBound(request);
+        return input.capabilities!.query({ actorPrincipalId: bound.principalId, request });
+      } },
     knowledgeSource: {
       query: async request => {
         assertBound(request);
