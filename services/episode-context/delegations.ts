@@ -251,7 +251,9 @@ export class PostgresEpisodeDelegationJournal {
     readonly authorityReference: string;
     readonly rationale: string;
   }): Promise<void> {
-    validateGrant(input);
+    const { issuerPrincipalId: _issuer, authorityReference: _authority,
+      rationale: _reason, ...grantOnly } = input;
+    validateGrant(grantOnly);
     id("issuer", input.issuerPrincipalId, "principal:");
     id("authority reference", input.authorityReference, "decision:");
     note("issuance rationale", input.rationale);
