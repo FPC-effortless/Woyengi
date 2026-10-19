@@ -574,3 +574,32 @@
 - Tests: `services/episode-context/test/postgres-knowledge-live.test.ts` (committed before implementation) and `postgres-gateway-live.test.ts`. These are **not yet CI-verified**.
 - Draft [PR #49](https://github.com/FPC-effortless/Woyengi/pull/49) was subsequently created and stacked on PR #48. GitHub connector safety checks continue to block CI workflow updates and retargeting to main to trigger the configured PR CI; the two live PostgreSQL tests have not been executed. No test success, merge or deployment is claimed.
 - Remaining WYG-013: durable episode capability candidates, real Work membership/delegation and IAM revocation integration, actual PostgreSQL CI, production hardening and human acceptance. WYG-013 and WYG-019 remain `passes=false`.
+
+## 2026-10-19 — WYG-013 scoped PostgreSQL episode capabilities and live CI
+
+- Reviewed the newer draft PR #49, which added PostgreSQL episode knowledge
+  but explicitly recorded **unverified** live SQL tests because they were
+  not included in the CI workflow. Continued from its head rather than
+  replacing or falsely claiming its tests had passed.
+- Test-first added `services/episode-context/test/postgres-capability-live.test.ts`
+  to verify that an AgentPrincipal cannot self-publish a provider; a trusted
+  operator publishes one Workspace/WorkInstance/WorkEpisode candidate; another
+  PostgreSQL pool reconstructs the bound capability context with documented
+  applicability rationale; malformed bound scope and raw privilege attempts
+  fail closed; historical as-of queries preserve pre-revocation context;
+  post-revocation queries exclude the candidate; concurrent duplicate
+  publications, repeat revocation, and corrupted privileged event kinds
+  cannot overwrite canonical history.
+- Implemented `PostgresEpisodeCapabilityJournal` (immutable
+  `episode.capability.published` and `episode.capability.revoked` records,
+  trusted per-operation policy, causal replay, scope/interval validation,
+  raw secret/grant rejection, and time-aware authorized query).
+  `createEpisodeKnowledgeGateway` accepts a trusted `capabilities`
+  journal, rejects ambiguous competing candidate sources, and binds
+  capability as well as knowledge access to the same principal, episode,
+  purpose and times.
+- Extended PostgreSQL CI to **run all three episode-context live tests**,
+  including the previously unexecuted PR #49 tests. No user-facing grants,
+  external provider execution, production IAM, or acceptance criteria were
+  asserted by this change; WYG-013 and WYG-019 `passes=false`.
+- Verified [GitHub Actions #39214791243](https://github.com/FPC-effortless/Woyengi/actions/runs/39214791243) at implementation commit `f1ef87f50e6a1bcae59347e730a8109c1d65b38a`: **133 Node tests / 0 failed; 14 real PostgreSQL 16 tests / 0 failed**, Python SDK, TypeScript, architecture/security, package boundaries, benchmark and container smoke (all 3 jobs passed). The newly enabled PostgreSQL tests confirmed PR #49's knowledge/gateway behavior plus this PR's capability authority/revocation. Initial CI uncovered PR #49's inherited test using unbranded Workspace/Work IDs; corrected fixture to the domain's branded context type without weakening runtime validation. This documentation-only evidence commit requires final-head CI.

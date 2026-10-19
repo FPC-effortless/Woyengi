@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { join } from "node:path";
 import { test } from "node:test";
 import { PostgresEpisodeKnowledgeJournal } from "../index.ts";
+import type { ContextSegmentRecord } from "../../../packages/context-gateway/src/index.ts";
 import { migratePostgresCanonicalLedger, type PostgresPool } from "../../postgres-storage/index.ts";
 
 const url = process.env.WOYENGI_TEST_DATABASE_URL;
@@ -35,7 +36,7 @@ test("WYG-013 PostgreSQL episode knowledge records proposals and revocations dur
       validTime: { from: "2026-10-19T00:00:00Z" },
       transactionTime: { from: "2026-10-19T00:01:00Z" },
       provenance: ["work-episode:one"],
-    };
+    } as unknown as ContextSegmentRecord;
     await a.propose({ actorPrincipalId: "principal:agent", segment, rationale: "approved proposal" });
     assert.equal((await b.history({ workspaceId: "workspace:one" })).length, 1);
     await b.revoke({ actorPrincipalId: "principal:human", workspaceId: "workspace:one",

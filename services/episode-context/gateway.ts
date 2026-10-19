@@ -2,6 +2,7 @@ import {
   ContextGateway, type ContextGatewayPorts, type EpisodeContextRequest,
 } from "../../packages/context-gateway/src/index.ts";
 import type { PostgresEpisodeKnowledgeJournal } from "./index.ts";
+import type { PostgresEpisodeCapabilityJournal } from "./capabilities.ts";
 
 /**
  * Bind a ContextGateway to a single authenticated episode request.
@@ -10,6 +11,7 @@ import type { PostgresEpisodeKnowledgeJournal } from "./index.ts";
  */
 export function createEpisodeKnowledgeGateway(input: {
   readonly journal: PostgresEpisodeKnowledgeJournal;
+  readonly capabilities?: PostgresEpisodeCapabilityJournal;
   readonly request: EpisodeContextRequest;
   readonly capabilitySource?: ContextGatewayPorts["capabilitySource"];
   readonly evaluateApplicability?: ContextGatewayPorts["evaluateApplicability"];
@@ -17,6 +19,9 @@ export function createEpisodeKnowledgeGateway(input: {
   readonly evaluateWrite?: ContextGatewayPorts["evaluateWrite"];
 }): Pick<ContextGateway, "buildEpisodeCapabilityContext"
   | "reconstructAgentKnowledgeWorkspace" | "writeContextSegment"> {
+  if (input.capabilities !== undefined && input.capabilitySource !== undefined) {
+    throw new TypeError("choose one trusted episode capability source");
+  }
   const bound = input.request;
   const assertBound = (request: EpisodeContextRequest): void => {
     if (request.principalId !== bound.principalId
@@ -30,7 +35,12 @@ export function createEpisodeKnowledgeGateway(input: {
     }
   };
   const inner = new ContextGateway({
-    capabilitySource: input.capabilitySource ?? { query: async () => [] },
+    capabilitySource: input.capabilities === undefined
+      ? (input.capabilitySource ?? { query: async () => [] })
+      : { query: async request => {
+        assertBound(request);
+        return input.capabilities!.query({ actorPrincipalId: bound.principalId, request });
+      } },
     knowledgeSource: {
       query: async request => {
         assertBound(request);
