@@ -11,6 +11,8 @@ import { instant, rationale, requireId } from "./validate.ts";
 export type { EpisodeKnowledgeOperation, KnowledgePublished, KnowledgeRevoked } from "./model.ts";
 export { createEpisodeKnowledgeGateway } from "./gateway.ts";
 export { PostgresEpisodeCapabilityJournal } from "./capabilities.ts";
+export { createWorkBoundEpisodePolicies } from "./work-authority.ts";
+export type { EpisodeAgentDelegationDecision, EpisodeAgentDelegationRequest, TrustedEpisodeAgentDelegation, WorkBoundEpisodePolicies } from "./work-authority.ts";
 export type { EpisodeCapabilityOperation, TrustedEpisodeCapabilityPolicy, EpisodeCapabilityAuthorityRequest, CapabilityPublished, CapabilityRevoked } from "./capabilities.ts";
 
 export interface EpisodeKnowledgeAuthorityRequest {
