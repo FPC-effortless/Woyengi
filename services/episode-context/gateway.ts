@@ -11,6 +11,7 @@ import type { PostgresEpisodeCapabilityJournal } from "./capabilities.ts";
  */
 export function createEpisodeKnowledgeGateway(input: {
   readonly journal: PostgresEpisodeKnowledgeJournal;
+  readonly capabilities?: PostgresEpisodeCapabilityJournal;
   readonly request: EpisodeContextRequest;
   readonly capabilitySource?: ContextGatewayPorts["capabilitySource"];
   readonly evaluateApplicability?: ContextGatewayPorts["evaluateApplicability"];
