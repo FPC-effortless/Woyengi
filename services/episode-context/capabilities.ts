@@ -1,4 +1,4 @@
-import { ContextGateway, type EpisodeCapabilityCandidate, type EpisodeContextRequest } from "../../packages/context-gateway/src/index.ts";
+import type { EpisodeCapabilityCandidate, EpisodeContextRequest } from "../../packages/context-gateway/src/index.ts";
 import { PostgresCanonicalLedger, type PostgresPool } from "../postgres-storage/index.ts";
 import { instant, rationale, requireId } from "./validate.ts";
 
