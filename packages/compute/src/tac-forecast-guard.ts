@@ -8,6 +8,7 @@
  */
 export type TacForecastGateReason =
   | "ADVISORY_REVIEW_REQUIRED"
+  | "UNQUALIFIED_REVIEW_ONLY"
   | "AUTHORIZATION_NOT_VERIFIED"
   | "STALE_OR_EXPIRED_SNAPSHOT"
   | "UNQUALIFIED_OR_UNKNOWN_CHECKPOINT"
@@ -86,7 +87,7 @@ export function evaluateTacForecastForReview(
     trusted.currentStateRevision !== trusted.snapshotStateRevision) {
     return blocked("STALE_OR_EXPIRED_SNAPSHOT");
   }
-  if (trusted.checkpointQualification !== "qualified" ||
+  if (trusted.checkpointQualification === "unknown" ||
     !validHexSha(trusted.pinnedCheckpointSha256)) {
     return blocked("UNQUALIFIED_OR_UNKNOWN_CHECKPOINT");
   }
@@ -137,7 +138,8 @@ export function evaluateTacForecastForReview(
   }
   return Object.freeze({
     outcome: "ADVISORY_REVIEW_REQUIRED",
-    reason: "ADVISORY_REVIEW_REQUIRED",
+    reason: trusted.checkpointQualification === "unqualified"
+      ? "UNQUALIFIED_REVIEW_ONLY" : "ADVISORY_REVIEW_REQUIRED",
     executionPermitted: false,
     semanticMutationPermitted: false,
     independentApprovalRequired: true,
