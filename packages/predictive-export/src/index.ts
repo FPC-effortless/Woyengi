@@ -18,6 +18,10 @@ export interface PredictiveReadHost {
   readonly workspaceId: string;
   readonly purpose: string;
   readonly graphType: string;
+  /** Trusted wall-clock access time: revocations cannot be bypassed with historical queries. */
+  readonly accessAt: string;
+  /** Trusted actual egress path, NOT an untrusted request field. */
+  readonly destination: "local-model" | "external-model";
   readonly context: Readonly<Record<string, string>>;
   readonly projectionResource: (subject: string, predicate: string) => string;
   readonly sourcePolicy: (claim: ClaimRecord) => {
@@ -37,7 +41,6 @@ export interface PredictiveReadRequest {
   readonly recordedAt: string;
   readonly predictionCutoff: string;
   readonly allowedFeatureNames: readonly string[];
-  readonly destination: "local-model" | "external-model";
 }
 
 export interface PredictiveReadExport {
@@ -140,6 +143,10 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
       typeof host.featureProjection !== "function") {
     throw new Error("trusted Woyengi host ports required");
   }
+  const accessAt = instant(host.accessAt, "trusted host access time");
+  if (host.destination !== "local-model" && host.destination !== "external-model") {
+    throw new Error("trusted host model destination required");
+  }
   const cutoff = instant(request.predictionCutoff, "predictionCutoff");
   const valid = instant(request.validAt, "validAt");
   const known = instant(request.recordedAt, "recordedAt");
@@ -154,14 +161,11 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
       request.allowedFeatureNames.some((key) => !key || blocked.test(key))) {
     throw new Error("invalid allowlisted feature set");
   }
-  if (request.destination !== "local-model" && request.destination !== "external-model") {
-    throw new Error("unrecognized model destination");
-  }
   const resourceId = host.projectionResource(request.subject, request.predicate);
   // Crucial: check both reconstruction and data export permission BEFORE touching source ledger.
   for (const operation of ["RECONSTRUCT", "EXPORT"] as const) {
     assertGranted(host, { resourceId, entityId: request.subject, operation,
-                          sensitivity: "internal", at: request.recordedAt });
+                          sensitivity: "internal", at: host.accessAt });
   }
   const view = host.ledger.projectAt({
     subject: request.subject, predicate: request.predicate,
@@ -180,8 +184,8 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
       throw new Error("source was not available at prediction cutoff");
     }
     if (source.verifiedAiUse !== true || source.locality === "ephemeral" ||
-        (request.destination === "external-model" && source.locality !== "cloud-allowed") ||
-        (request.destination === "local-model" && source.locality === "cloud-required")) {
+        (host.destination === "external-model" && source.locality !== "cloud-allowed") ||
+        (host.destination === "local-model" && source.locality === "cloud-required")) {
       throw new Error("source rights or locality do not permit model export");
     }
     // A grant on selected is insufficient: every opposing claim must separately pass.
@@ -191,7 +195,7 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
         entityId: claim.subject,
         operation,
         sensitivity: source.sensitivity,
-        at: request.recordedAt,
+        at: host.accessAt,
       });
     }
     const fromTrustedHost = host.featureProjection(claim);
