@@ -150,7 +150,9 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
   const cutoff = instant(request.predictionCutoff, "predictionCutoff");
   const valid = instant(request.validAt, "validAt");
   const known = instant(request.recordedAt, "recordedAt");
-  if (valid > cutoff || known > cutoff) throw new Error("future projection cutoff denied");
+  if (valid > cutoff || known > cutoff || cutoff > accessAt) {
+    throw new Error("future projection cutoff denied");
+  }
   if (!request.subject.startsWith("entity:") || !request.predicate.includes(":") ||
       !host.principal.startsWith("principal:") || !host.workspaceId.startsWith("workspace:") ||
       !host.purpose.trim() || !host.graphType.startsWith("graph:")) {
