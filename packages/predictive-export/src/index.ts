@@ -194,7 +194,9 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
         at: request.recordedAt,
       });
     }
-    const projected = detachedFeatures(host.featureProjection(claim));
+    const fromTrustedHost = host.featureProjection(claim);
+    assertFeature(fromTrustedHost, "features");  // reject NaN before JSON serializes it to null
+    const projected = detachedFeatures(fromTrustedHost);
     if (Object.keys(projected).length === 0 ||
         Object.keys(projected).some((key) => !request.allowedFeatureNames.includes(key))) {
       throw new Error("exported features outside explicit allowlist");
