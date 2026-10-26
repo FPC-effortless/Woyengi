@@ -195,6 +195,16 @@ test("NaN and infinity are rejected at model boundary", () => {
 });
 
 
+
+test("cannot advance model data cutoff beyond the actual trusted read time", () => {
+  const { host, query } = setup();
+  assert.throws(() => exportPredictiveState(host, {
+    ...query, validAt: "2026-02-20T00:00:00Z",
+    recordedAt: "2026-02-21T00:00:00Z",
+    predictionCutoff: "2026-02-21T00:00:00Z",
+  }), /future projection cutoff/);
+});
+
 test("a historical source projection cannot resurrect a permission revoked before present access", () => {
   const { host, query, engine } = setup();
   engine.revoke({ capabilityId: "capability:read-source", revokedAt: "2026-02-17T00:00:00Z" });
