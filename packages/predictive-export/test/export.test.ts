@@ -46,6 +46,7 @@ function setup(options: {
     principal: options.principal ?? "principal:scientist",
     workspaceId: "workspace:lab", purpose: options.purpose ?? "predictive-research",
     graphType: "graph:projects", context: { deviceTrust: "managed" },
+    accessAt: "2026-02-20T00:00:00Z", destination: "local-model",
     projectionResource() { return "workspace:lab/project-alpha"; },
     sourcePolicy(claim) {
       return {
@@ -63,7 +64,6 @@ function setup(options: {
     subject: "entity:project-alpha", predicate: "project:lead",
     validAt: "2026-02-05T00:00:00Z", recordedAt: baseTime,
     predictionCutoff: baseTime, allowedFeatureNames: ["leader"],
-    destination: "local-model",
   };
   return { ledger, engine, host, query };
 }
@@ -151,7 +151,7 @@ test("AI-use rights must be affirmed by source steward", () => {
 
 test("local-only data cannot leave through external model", () => {
   const { host, query } = setup({ locality: "local-only" });
-  assert.throws(() => exportPredictiveState(host, { ...query, destination: "external-model" }), /rights|locality/);
+  assert.throws(() => exportPredictiveState({ ...host, destination: "external-model" }, query), /rights|locality/);
 });
 
 test("ephemeral data cannot be exported", () => {
@@ -166,7 +166,7 @@ test("cloud-required data cannot enter local model", () => {
 
 test("cloud-allowed data plus EXPORT capability permits external advisory, not effects", () => {
   const { host, query } = setup({ locality: "cloud-allowed" });
-  const result = exportPredictiveState(host, { ...query, destination: "external-model" });
+  const result = exportPredictiveState({ ...host, destination: "external-model" }, query);
   assert.equal(result.actionAuthority, "NOT_GRANTED");
 });
 
@@ -192,6 +192,28 @@ test("NaN and infinity are rejected at model boundary", () => {
   const { host, query } = setup();
   const altered: PredictiveReadHost = { ...host, featureProjection() { return { leader: Number.NaN }; } };
   assert.throws(() => exportPredictiveState(altered, query), /nonfinite|invalid/);
+});
+
+
+test("a historical source projection cannot resurrect a permission revoked before present access", () => {
+  const { host, query, engine } = setup();
+  engine.revoke({ capabilityId: "capability:read-source", revokedAt: "2026-02-17T00:00:00Z" });
+  // The data cutoff precedes revocation, but Woyengi checks the trusted access time (Feb 20).
+  assert.throws(() => exportPredictiveState(host, query), /denied/);
+});
+
+test("expired capability cannot authorize an older as-of projection", () => {
+  const { host, query } = setup();
+  assert.throws(() => exportPredictiveState({
+    ...host, accessAt: "2027-02-01T00:00:00Z",
+  }, query), /denied/);
+});
+
+test("caller-provided egress destination cannot override trusted host", () => {
+  const { host, query } = setup({ locality: "local-only" });
+  assert.throws(() => exportPredictiveState({
+    ...host, destination: "external-model",
+  }, { ...query, destination: "local-model" } as PredictiveReadRequest), /rights|locality/);
 });
 
 test("a crossed workspace scope cannot export", () => {
