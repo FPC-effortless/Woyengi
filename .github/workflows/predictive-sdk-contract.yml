@@ -17,12 +17,15 @@ permissions:
 jobs:
   local-sdk:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24.12.0'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Run constructed local prediction and source-export tests
         run: |
           node --test packages/predictive-export/test/export.test.ts
@@ -33,3 +36,5 @@ jobs:
           corepack pnpm install --frozen-lockfile
           corepack pnpm typecheck
           corepack pnpm boundaries
+      - name: Full Node and Python regression suite
+        run: corepack pnpm test:all
