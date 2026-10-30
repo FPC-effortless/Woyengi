@@ -151,7 +151,7 @@ test("AI-use rights must be affirmed by source steward", () => {
 
 test("local-only data cannot leave through external model", () => {
   const { host, query } = setup({ locality: "local-only" });
-  assert.throws(() => exportPredictiveState({ ...host, destination: "external-model" }, query), /rights|locality/);
+  assert.throws(() => exportPredictiveState({ ...host, destination: "external-model" }, query), /offline customer inference|remote model export denied/);
 });
 
 test("ephemeral data cannot be exported", () => {
@@ -248,7 +248,7 @@ test("caller-provided egress destination cannot override trusted host", () => {
   const { host, query } = setup({ locality: "local-only" });
   assert.throws(() => exportPredictiveState({
     ...host, destination: "external-model",
-  }, { ...query, destination: "local-model" } as PredictiveReadRequest), /rights|locality/);
+  }, { ...query, destination: "local-model" } as PredictiveReadRequest), /offline customer inference|remote model export denied/);
 });
 
 test("a crossed workspace scope cannot export", () => {
