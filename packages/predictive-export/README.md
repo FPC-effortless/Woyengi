@@ -4,6 +4,27 @@
 
 It is a proposed source-side counterpart to [TAC-OSM ecosystem PR #435](https://github.com/FPC-effortless/TAC-OSM/pull/435). Woyengi's existing [constitutional state and effects rules](../../CONSTITUTION.md) govern the implementation.
 
+## Binding offline-only customer-model boundary (2026-10-30)
+
+**All customer inference must run entirely on the user-controlled device.** The trusted host must set `destination: "local-model"`; `"external-model"` now fails **before** any ledger or source-policy read, even for sources marked `cloud-allowed`. `cloud-required` and `ephemeral` sources are not eligible for this local model export. The legacy `external-model` type remains temporarily as an explicitly rejected input so callers fail closed rather than silently changing routing. No hidden network fallback is allowed.
+
+This source-export module **does not execute a model** and cannot certify the locality of a downstream runner merely because its host declares `"local-model"`. An approved consumer must perform preprocessing, embeddings, inference, persistent-state reads/writes and optional speech processing locally, without remote calls or fallback. Signed model download, training, CI and dataset tooling may use cloud services outside customer inference. The output is advisory and cannot authorize effects.
+
+**First product target:** Samsung Galaxy A07 SM-A075F, Android 16. Planned secondary targets: iPhone 13 and Raspberry Pi 5 (8 GB); neither is qualified. The intended boundary is `authorized on-device observations → local feature projection → local model operators → local persistent state → typed forecast / uncertainty / abstain`. Network communication must be absent from this boundary, including embeddings and state synchronization during inference.
+
+| Qualification gate | Status at this PR |
+| --- | --- |
+| Source export's remote-destination rejection | Implemented; new adversarial tests require CI verification |
+| Android model export format and operator coverage | NOT RUN for this Woyengi integration |
+| Original-checkpoint numerical agreement | NOT RUN |
+| Physical Android p50/p95 latency | NOT RUN |
+| Physical Android peak RAM and energy | NOT RUN |
+| Physical Android airplane-mode inference, reboot and state replay | NOT RUN |
+| iOS/embedded device parity, latency, RAM, energy and airplane mode | NOT RUN |
+| Independent publisher rights, real outcome evaluation and Veritas qualification | BLOCKED |
+
+**Fresh-checkout source-contract check** (constructed records only; Node >=24.12, pnpm 11): `node --test packages/predictive-export/test/export.test.ts`. Full approval still requires `pnpm typecheck && pnpm boundaries && pnpm test:all`, exact-head CI, independent security/architecture review, an approved product ticket and a physical-device qualification report. Neither a passing source-contract test nor an APK hash establishes offline hardware behavior or model quality.
+
 ## Trusted host contract
 
 Only a trusted Woyengi server/process constructs `PredictiveReadHost`: its **authenticated** principal, workspace, purpose, graph, context, current `accessAt`, actual `destination`, capability engine, projection resource map, source metadata/rights and strict feature projection must not be accepted from a model, browser or untrusted JSON.

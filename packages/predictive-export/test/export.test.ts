@@ -151,7 +151,7 @@ test("AI-use rights must be affirmed by source steward", () => {
 
 test("local-only data cannot leave through external model", () => {
   const { host, query } = setup({ locality: "local-only" });
-  assert.throws(() => exportPredictiveState({ ...host, destination: "external-model" }, query), /rights|locality/);
+  assert.throws(() => exportPredictiveState({ ...host, destination: "external-model" }, query), /offline-only predictive export/);
 });
 
 test("ephemeral data cannot be exported", () => {
@@ -164,10 +164,26 @@ test("cloud-required data cannot enter local model", () => {
   assert.throws(() => exportPredictiveState(host, query), /rights|locality/);
 });
 
-test("cloud-allowed data plus EXPORT capability permits external advisory, not effects", () => {
+test("cloud-allowed source rights never authorize remote model inference", () => {
   const { host, query } = setup({ locality: "cloud-allowed" });
-  const result = exportPredictiveState({ ...host, destination: "external-model" }, query);
-  assert.equal(result.actionAuthority, "NOT_GRANTED");
+  const local = exportPredictiveState(host, query);
+  assert.equal(local.actionAuthority, "NOT_GRANTED");
+  assert.equal(local.status, "ADVISORY_ONLY");
+  assert.throws(() => exportPredictiveState({ ...host, destination: "external-model" }, query),
+    /offline-only predictive export/);
+});
+
+test("external-model fails before any source-policy or feature read", () => {
+  const { host, query } = setup({ locality: "cloud-allowed" });
+  let touchedSource = false;
+  const altered: PredictiveReadHost = {
+    ...host,
+    destination: "external-model",
+    sourcePolicy(claim) { touchedSource = true; return host.sourcePolicy(claim); },
+    featureProjection(claim) { touchedSource = true; return host.featureProjection(claim); },
+  };
+  assert.throws(() => exportPredictiveState(altered, query), /offline-only predictive export/);
+  assert.equal(touchedSource, false);
 });
 
 test("feature projection cannot expose hidden outcome or reward", () => {
@@ -223,7 +239,7 @@ test("caller-provided egress destination cannot override trusted host", () => {
   const { host, query } = setup({ locality: "local-only" });
   assert.throws(() => exportPredictiveState({
     ...host, destination: "external-model",
-  }, { ...query, destination: "local-model" } as PredictiveReadRequest), /rights|locality/);
+  }, { ...query, destination: "local-model" } as PredictiveReadRequest), /offline-only predictive export/);
 });
 
 test("a crossed workspace scope cannot export", () => {

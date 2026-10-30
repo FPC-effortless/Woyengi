@@ -144,8 +144,10 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
     throw new Error("trusted Woyengi host ports required");
   }
   const accessAt = instant(host.accessAt, "trusted host access time");
-  if (host.destination !== "local-model" && host.destination !== "external-model") {
-    throw new Error("trusted host model destination required");
+  if (host.destination !== "local-model") {
+    // This product export may never route observations to hosted inference.
+    // The trusted host must additionally prove its runtime stays on device.
+    throw new Error("offline-only predictive export: external model destination prohibited");
   }
   const cutoff = instant(request.predictionCutoff, "predictionCutoff");
   const valid = instant(request.validAt, "validAt");
@@ -186,8 +188,7 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
       throw new Error("source was not available at prediction cutoff");
     }
     if (source.verifiedAiUse !== true || source.locality === "ephemeral" ||
-        (host.destination === "external-model" && source.locality !== "cloud-allowed") ||
-        (host.destination === "local-model" && source.locality === "cloud-required")) {
+        source.locality === "cloud-required") {
       throw new Error("source rights or locality do not permit model export");
     }
     // A grant on selected is insufficient: every opposing claim must separately pass.
