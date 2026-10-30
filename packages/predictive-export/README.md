@@ -4,6 +4,12 @@
 
 It is a proposed source-side counterpart to [TAC-OSM ecosystem PR #435](https://github.com/FPC-effortless/TAC-OSM/pull/435). Woyengi's existing [constitutional state and effects rules](../../CONSTITUTION.md) govern the implementation.
 
+## Binding offline customer-inference policy (2026-10-30)
+
+Customer inference is **local-only on the user's controlled device** for all six TAC-OSM families. This exporter rejects any `destination: "external-model"` request **even if** the trusted source policy says `cloud-allowed`; the legacy discriminant remains in the TypeScript interface solely so old integrations fail explicitly instead of silently using a remote path. Unrecognized locality metadata fails closed. Cloud training, CI and signed artifact delivery remain permitted, but inference-time embeddings, preprocessing, model calls, state updates, speech and fallbacks may not use remote services.
+
+This is a **source-export guard**, not a mobile SDK or proof of complete offline operation. It does not by itself establish Android/iOS/embedded export, operator coverage, numerical agreement, physical-device p50/p95 latency, peak RAM, energy use or airplane-mode behavior. Each remains **NOT RUN/BLOCKED** until evidence from an actual named device exists. The caller's authenticated host must also enforce that the `local-model` destination is genuinely local, and the model runtime must have no hidden network fallback.
+
 ## Trusted host contract
 
 Only a trusted Woyengi server/process constructs `PredictiveReadHost`: its **authenticated** principal, workspace, purpose, graph, context, current `accessAt`, actual `destination`, capability engine, projection resource map, source metadata/rights and strict feature projection must not be accepted from a model, browser or untrusted JSON.
