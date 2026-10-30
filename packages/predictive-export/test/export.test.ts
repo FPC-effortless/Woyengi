@@ -164,10 +164,26 @@ test("cloud-required data cannot enter local model", () => {
   assert.throws(() => exportPredictiveState(host, query), /rights|locality/);
 });
 
-test("cloud-allowed data plus EXPORT capability permits external advisory, not effects", () => {
+test("cloud-allowed source rights never authorize remote model inference", () => {
   const { host, query } = setup({ locality: "cloud-allowed" });
-  const result = exportPredictiveState({ ...host, destination: "external-model" }, query);
-  assert.equal(result.actionAuthority, "NOT_GRANTED");
+  const local = exportPredictiveState(host, query);
+  assert.equal(local.actionAuthority, "NOT_GRANTED");
+  assert.equal(local.status, "ADVISORY_ONLY");
+  assert.throws(() => exportPredictiveState({ ...host, destination: "external-model" }, query),
+    /offline-only predictive export/);
+});
+
+test("external-model fails before any source-policy or feature read", () => {
+  const { host, query } = setup({ locality: "cloud-allowed" });
+  let touchedSource = false;
+  const altered: PredictiveReadHost = {
+    ...host,
+    destination: "external-model",
+    sourcePolicy(claim) { touchedSource = true; return host.sourcePolicy(claim); },
+    featureProjection(claim) { touchedSource = true; return host.featureProjection(claim); },
+  };
+  assert.throws(() => exportPredictiveState(altered, query), /offline-only predictive export/);
+  assert.equal(touchedSource, false);
 });
 
 test("feature projection cannot expose hidden outcome or reward", () => {
