@@ -21,6 +21,7 @@ export interface PredictiveReadHost {
   /** Trusted wall-clock access time: revocations cannot be bypassed with historical queries. */
   readonly accessAt: string;
   /** Trusted actual egress path, NOT an untrusted request field. */
+  /** Legacy external-model discriminant is retained for API compatibility but always denied. */
   readonly destination: "local-model" | "external-model";
   readonly context: Readonly<Record<string, string>>;
   readonly projectionResource: (subject: string, predicate: string) => string;
@@ -144,8 +145,8 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
     throw new Error("trusted Woyengi host ports required");
   }
   const accessAt = instant(host.accessAt, "trusted host access time");
-  if (host.destination !== "local-model" && host.destination !== "external-model") {
-    throw new Error("trusted host model destination required");
+  if (host.destination !== "local-model") {
+    throw new Error("offline customer inference requires local-model destination; remote model export denied");
   }
   const cutoff = instant(request.predictionCutoff, "predictionCutoff");
   const valid = instant(request.validAt, "validAt");
@@ -185,9 +186,8 @@ export function exportPredictiveState(host: PredictiveReadHost, request: Predict
     if (available > cutoff || instant(claim.transactionTime.from, "claim transactionTime") > known) {
       throw new Error("source was not available at prediction cutoff");
     }
-    if (source.verifiedAiUse !== true || source.locality === "ephemeral" ||
-        (host.destination === "external-model" && source.locality !== "cloud-allowed") ||
-        (host.destination === "local-model" && source.locality === "cloud-required")) {
+    if (source.verifiedAiUse !== true ||
+        (source.locality !== "local-only" && source.locality !== "cloud-allowed")) {
       throw new Error("source rights or locality do not permit model export");
     }
     // A grant on selected is insufficient: every opposing claim must separately pass.
