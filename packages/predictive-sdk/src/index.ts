@@ -67,6 +67,18 @@ function exactKeys(
 }
 
 /**
+ * The source exporter detaches feature data but shallow-freezes nested objects.
+ * Freeze its bounded, acyclic JSON feature tree before any pluggable runtime
+ * sees it: runtime code must not rewrite features after featureHash is computed.
+ * This is input-integrity defense, NOT proof of physical network isolation.
+ */
+function freezeModelInput(value: unknown): void {
+  if (value === null || typeof value !== "object") return;
+  for (const child of Object.values(value)) freezeModelInput(child);
+  Object.freeze(value);
+}
+
+/**
  * No network abstraction, authority effect, canonical state write, or model
  * artifact import is created here. A real on-device runtime is NOT included.
  *
@@ -95,6 +107,7 @@ export function predictAuthorizedLocal(
   if (source.conflictingClaimIds.length !== 0) {
     return Object.freeze({ ...common, status: "ABSTAIN" as const, reason: "SOURCE_CONFLICT" as const });
   }
+  freezeModelInput(source);
   const output: unknown = runtime.predict(source);
   // Strict synchronous response: an async/cloud fetch cannot be awaited here.
   if (output && typeof (output as { then?: unknown }).then === "function") {
