@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - company/woyengi-local-predictive-sdk-2026-10-30
+      - company/sdk-deepfreeze-source-2026-10-30
   pull_request:
     branches:
       - feature/offline-only-predictive-export-2026-10-30
+      - company/woyengi-local-predictive-sdk-2026-10-30
     paths:
       - 'packages/predictive-sdk/**'
       - '.github/workflows/predictive-sdk-contract.yml'
