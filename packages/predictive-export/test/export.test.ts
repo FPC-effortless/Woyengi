@@ -164,10 +164,35 @@ test("cloud-required data cannot enter local model", () => {
   assert.throws(() => exportPredictiveState(host, query), /rights|locality/);
 });
 
-test("cloud-allowed data plus EXPORT capability permits external advisory, not effects", () => {
+test("cloud-allowed source rights never authorize external customer inference", () => {
   const { host, query } = setup({ locality: "cloud-allowed" });
-  const result = exportPredictiveState({ ...host, destination: "external-model" }, query);
-  assert.equal(result.actionAuthority, "NOT_GRANTED");
+  assert.throws(
+    () => exportPredictiveState({ ...host, destination: "external-model" }, query),
+    /offline customer inference|remote model export denied/,
+  );
+  // Source rights that permit cloud processing are not a requirement to use cloud.
+  const local = exportPredictiveState(host, query);
+  assert.equal(local.status, "ADVISORY_ONLY");
+  assert.equal(local.actionAuthority, "NOT_GRANTED");
+});
+
+test("unknown source locality and remote destination fail closed independently", () => {
+  const { host, query } = setup();
+  const malformed: PredictiveReadHost = {
+    ...host, sourcePolicy(claim) {
+      return {
+        resourceId: "workspace:lab/project-alpha/claims/" + claim.id,
+        sensitivity: "internal" as const, availableAt: claim.transactionTime.from,
+        locality: "some-other-locality" as "local-only",
+        verifiedAiUse: true,
+      };
+    },
+  };
+  assert.throws(() => exportPredictiveState(malformed, query), /rights or locality/);
+  assert.throws(
+    () => exportPredictiveState({ ...malformed, destination: "external-model" }, query),
+    /offline customer inference|remote model export denied/,
+  );
 });
 
 test("feature projection cannot expose hidden outcome or reward", () => {
