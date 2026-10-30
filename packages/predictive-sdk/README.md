@@ -22,6 +22,8 @@ Source authority remains with Woyengi; statistical predictions are never actions
    `STRUCTURAL_EXPORT_ONLY` source qualification, `NOT_QUALIFIED` science
    status and `UNCALIBRATED` uncertainty. No canonical write or effect.
 
+**Input integrity hardening (review candidate):** before calling a pluggable local runtime, the SDK recursively freezes the detached export, including nested feature arrays and objects. This prevents a runtime from silently changing feature values after the source exporter computed `featureHash`. The new constructed regression test attempts nested mutations. This does **not** authenticate the original source, prevent a malicious runtime from opening sockets, or qualify physical offline operation.
+
 **Security limitation:** `execution: DEVICE_LOCAL` is a *host assertion* and
 is not proof that an arbitrary runtime implementation does not open sockets
 or use cloud embeddings. The TypeScript surface alone cannot enforce network

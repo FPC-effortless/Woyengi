@@ -170,6 +170,37 @@ test("asynchronous model promises are rejected, not awaited or treated as local"
   }), /asynchronous/);
 });
 
+test("nested exported features are immutable before untrusted local runtime reads them", () => {
+  const { host, request, runtime } = setup();
+  const nestedHost: PredictiveReadHost = {
+    ...host,
+    featureProjection() {
+      return { signal: { samples: [1, 2, 3], meta: { unit: "constructed" } } };
+    },
+  };
+  let checked = false;
+  const result = predictAuthorizedLocal(nestedHost, request, {
+    ...runtime,
+    predict(source) {
+      const observation = source.observations[0];
+      assert.ok(observation);
+      const features = observation.features as unknown as {
+        signal: { samples: number[]; meta: { unit: string } };
+      };
+      assert.equal(Object.isFrozen(features), true);
+      assert.equal(Object.isFrozen(features.signal), true);
+      assert.equal(Object.isFrozen(features.signal.samples), true);
+      assert.equal(Object.isFrozen(features.signal.meta), true);
+      assert.throws(() => { features.signal.samples[0] = 999; }, TypeError);
+      assert.throws(() => { features.signal.meta.unit = "tampered"; }, TypeError);
+      checked = true;
+      return { kind: "ABSTAIN", reason: "MODEL_UNCERTAIN" };
+    },
+  });
+  assert.equal(checked, true);
+  assert.equal(result.status, "ABSTAIN");
+});
+
 test("source ledger remains unchanged by advisory prediction", () => {
   const { host, request, runtime, ledger } = setup();
   const before = JSON.stringify(ledger.canonicalRecords());
