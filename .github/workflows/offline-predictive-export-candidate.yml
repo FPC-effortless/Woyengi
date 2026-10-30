@@ -1,0 +1,32 @@
+name: Offline predictive export candidate
+
+on:
+  push:
+    branches:
+      - company/offline-predictive-export-2026-10-30
+  pull_request:
+    branches:
+      - feature/predictive-read-source-gate-2026-10-26
+
+permissions:
+  contents: read
+
+jobs:
+  predictive-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.12.0'
+      - name: Test Woyengi-native predictive export adverse paths
+        run: node --test packages/predictive-export/test/export.test.ts
+      - name: Install locked dev dependencies for type and architecture gates
+        run: |
+          corepack enable
+          corepack pnpm install --frozen-lockfile
+      - name: Typecheck and package boundaries
+        run: |
+          corepack pnpm typecheck
+          corepack pnpm boundaries
