@@ -77,3 +77,36 @@ TAC-OSM+PNDS model architecture research remains a separate agent's work.
 Commercial positioning: **open local models and SDKs**, paid device integration,
 optimization, deployment/evidence verification and support. Never hosted
 per-inference customer services or hidden remote fallback.
+
+
+## Fresh-checkout SDK smoke demo (constructed, no install)
+
+With Node.js **24.12+** already installed, from the repository root:
+
+```bash
+node packages/predictive-sdk/examples/constructed_quickstart.ts
+node --test packages/predictive-sdk/test/quickstart.test.ts
+```
+
+These two commands require no package installation, provider account, model download,
+API key, or cloud service. The first prints a deterministic JSON report; the
+second executes the same demo twice in fresh Node subprocesses and checks its
+output. CI also runs the source-export and SDK contract suites.
+
+The demo exercises **real Woyengi software contracts** using **constructed
+claims**, explicit capability grants, a fixed bitemporal cutoff, and a fake
+synchronous arithmetic rule. It demonstrates a typed forecast, a conflict-driven
+abstention **without executing the rule**, a denied unauthorized principal,
+a rejected remote fallback **before source access**, and unchanged canonical
+history. The printed `NODE_HOST_CONTRACT_ONLY` and `NOT_QUALIFIED` statuses
+are deliberate. It is not a trained model, a real-source rights audit, an
+independent Veritas qualification, or a physical airplane-mode test. Running
+Node locally does **not** prove that arbitrary plugins cannot access a network.
+
+**Acceptance evidence still missing:** physical Samsung Galaxy A07
+(SM-A075F, Android 16) APK/operator and original-checkpoint identity, local
+preprocessing/embeddings/inference/state/output/speech boundaries, export
+operator support, numerical parity, p50/p95 latency, peak RAM, energy,
+network/socket tracing in airplane mode, restart/replay, publisher permissions,
+and independent review. All physical metrics remain **NOT RUN/BLOCKED**.
+See issue #60. Do not use the constructed demo as a customer qualification.

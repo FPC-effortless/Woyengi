@@ -5,10 +5,12 @@ on:
     branches:
       - company/woyengi-local-predictive-sdk-2026-10-30
       - company/sdk-deepfreeze-source-2026-10-30
+      - company/sdk-constructed-quickstart-2026-10-31
   pull_request:
     branches:
       - feature/offline-only-predictive-export-2026-10-30
       - company/woyengi-local-predictive-sdk-2026-10-30
+      - company/sdk-deepfreeze-source-2026-10-30
     paths:
       - 'packages/predictive-sdk/**'
       - '.github/workflows/predictive-sdk-contract.yml'
@@ -32,6 +34,8 @@ jobs:
         run: |
           node --test packages/predictive-export/test/export.test.ts
           node --test packages/predictive-sdk/test/local.test.ts
+          node packages/predictive-sdk/examples/constructed_quickstart.ts
+          node --test packages/predictive-sdk/test/quickstart.test.ts
       - name: Full local type and boundary checks
         run: |
           corepack enable
