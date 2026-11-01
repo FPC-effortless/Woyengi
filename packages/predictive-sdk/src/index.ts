@@ -59,10 +59,21 @@ function exactKeys(
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     throw new Error("local model output must be a plain object");
   }
-  const keys = Object.keys(value);
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new Error("local model output must be a plain object");
+  }
+  // Object.keys silently omits symbols and non-enumerable fields.
+  const keys = Reflect.ownKeys(value);
   if (keys.length !== required.length ||
       required.some((key) => !Object.prototype.hasOwnProperty.call(value, key))) {
     throw new Error("local model output contains forbidden/missing fields");
+  }
+  for (const key of required) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !descriptor.enumerable || !("value" in descriptor)) {
+      throw new Error("local model output accessor or hidden field forbidden");
+    }
   }
 }
 
@@ -110,13 +121,21 @@ export function predictAuthorizedLocal(
   freezeModelInput(source);
   const output: unknown = runtime.predict(source);
   // Strict synchronous response: an async/cloud fetch cannot be awaited here.
-  if (output && typeof (output as { then?: unknown }).then === "function") {
+  // Never read a model-controlled 'then' getter merely to reject it.
+  if (output instanceof Promise ||
+      (typeof output === "object" && output !== null &&
+       Object.prototype.hasOwnProperty.call(output, "then"))) {
     throw new Error("asynchronous model results are not accepted");
   }
   if (typeof output !== "object" || output === null || Array.isArray(output)) {
     throw new Error("local model output must be an object");
   }
-  const kind = (output as Record<string, unknown>).kind;
+  // Discriminate without invoking a model-controlled 'kind' getter.
+  const kindDescriptor = Object.getOwnPropertyDescriptor(output, "kind");
+  if (!kindDescriptor || !("value" in kindDescriptor)) {
+    throw new Error("local model output accessor or missing kind forbidden");
+  }
+  const kind = kindDescriptor.value;
   if (kind === "ABSTAIN") {
     exactKeys(output, ["kind", "reason"]);
     if (output.reason !== "INSUFFICIENT_EVIDENCE" && output.reason !== "MODEL_UNCERTAIN") {

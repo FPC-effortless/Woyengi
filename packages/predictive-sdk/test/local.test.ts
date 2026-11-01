@@ -214,3 +214,40 @@ test("runtime cannot label itself local without a valid declaration", () => {
     ...runtime, execution: "cloud" as "DEVICE_LOCAL",
   }), /device-local/);
 });
+
+test("advisory runtime rejects inherited, hidden, symbolic and accessor response fields", () => {
+  const { host, request, runtime } = setup();
+  const base = {
+    kind: "FORECAST", value: 2, horizonSeconds: 60, uncertaintyScore: 0.5,
+  };
+  let getterCalls = 0;
+  const inherited = Object.assign(Object.create({ authorizedEffect: "WRITE" }), base);
+  const hidden = Object.defineProperty({ ...base }, "authorizedEffect", {
+    value: "WRITE", enumerable: false,
+  });
+  const symbolic = { ...base, [Symbol("authorizedEffect")]: "WRITE" };
+  const accessorKind = Object.defineProperty({ ...base }, "kind", {
+    enumerable: true, get() { getterCalls++; return "FORECAST"; },
+  });
+  const accessorValue = Object.defineProperty({ ...base }, "value", {
+    enumerable: true, get() { getterCalls++; return 2; },
+  });
+  for (const unsafe of [inherited, hidden, symbolic, accessorKind, accessorValue]) {
+    assert.throws(() => predictAuthorizedLocal(host, request, {
+      ...runtime, predict() { return unsafe; },
+    }), /plain object|forbidden|accessor/);
+  }
+  assert.equal(getterCalls, 0, "validation must not execute model-provided getters");
+});
+
+test("a local runtime thenable is refused without invoking its then getter", () => {
+  const { host, request, runtime } = setup();
+  let getterCalls = 0;
+  const thenable = Object.defineProperty({ kind: "ABSTAIN", reason: "MODEL_UNCERTAIN" }, "then", {
+    enumerable: false, get() { getterCalls++; throw new Error("then getter executed"); },
+  });
+  assert.throws(() => predictAuthorizedLocal(host, request, {
+    ...runtime, predict() { return thenable; },
+  }), /asynchronous/);
+  assert.equal(getterCalls, 0);
+});
