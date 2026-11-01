@@ -24,6 +24,15 @@ Source authority remains with Woyengi; statistical predictions are never actions
 
 **Input integrity hardening (review candidate):** before calling a pluggable local runtime, the SDK recursively freezes the detached export, including nested feature arrays and objects. This prevents a runtime from silently changing feature values after the source exporter computed `featureHash`. The new constructed regression test attempts nested mutations. This does **not** authenticate the original source, prevent a malicious runtime from opening sockets, or qualify physical offline operation.
 
+**Model-output hardening (review candidate):** forecast/abstention objects must
+have only the exact permitted own, enumerable data properties, with an ordinary
+or null prototype. Inherited fields, symbols, hidden properties and accessors
+are rejected; the SDK does not invoke a model-supplied `kind` or `then` getter
+to validate the response. These checks protect the typed advisory contract,
+not the host process against a malicious JavaScript runtime or Proxy traps.
+Untrusted native/JS inference plugins require a separately enforced process
+and device network boundary. This is not an airplane-mode qualification.
+
 **Security limitation:** `execution: DEVICE_LOCAL` is a *host assertion* and
 is not proof that an arbitrary runtime implementation does not open sockets
 or use cloud embeddings. The TypeScript surface alone cannot enforce network
