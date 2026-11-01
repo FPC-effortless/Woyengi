@@ -33,7 +33,7 @@ function setup(conflict = false) {
   const append = (id: string, level: number) => ledger.append(createClaim({
     id, subject: "entity:CONSTRUCTED-prsa-station",
     predicate: "prsa:hourly-input",
-    object: { encodedEvent: features() },
+    object: { encodedEvent: { ...features(), values: [id === "claim:fixture-two" ? 0.25 : 0.125, ...Array<number>(12).fill(0)] } },
     validTime: { from: START }, recordedAt: KNOW,
     confidence: 0.8, authority: { level, basis: "CONSTRUCTED fixture" },
     lifecycle: "verified",
