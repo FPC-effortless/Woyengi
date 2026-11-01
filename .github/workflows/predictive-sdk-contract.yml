@@ -6,11 +6,13 @@ on:
       - company/woyengi-local-predictive-sdk-2026-10-30
       - company/sdk-deepfreeze-source-2026-10-30
       - company/sdk-constructed-quickstart-2026-10-31
+      - company/sdk-output-descriptor-hardening-2026-11-01
   pull_request:
     branches:
       - feature/offline-only-predictive-export-2026-10-30
       - company/woyengi-local-predictive-sdk-2026-10-30
       - company/sdk-deepfreeze-source-2026-10-30
+      - company/sdk-constructed-quickstart-2026-10-31
     paths:
       - 'packages/predictive-sdk/**'
       - '.github/workflows/predictive-sdk-contract.yml'
