@@ -161,3 +161,7 @@ export function predictAuthorizedLocal(
     uncertaintyQualification: "UNCALIBRATED" as const,
   });
 }
+
+/** Experimental frozen-ME111 adapter, separate from the generic scalar SDK. */
+export { ME111_FROZEN_CONTRACT, predictMe111AuthorizedLocal } from "./me111-bridge.ts";
+export type { Me111Advisory, Me111NativeLocalPort, Me111SourceEvent } from "./me111-bridge.ts";
