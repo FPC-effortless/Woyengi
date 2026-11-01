@@ -11,7 +11,7 @@ import type {
 import {
   ME111_FROZEN_CONTRACT, predictMe111AuthorizedLocal,
   type Me111NativeLocalPort, type Me111SourceEvent,
-} from "../src/me111-bridge.ts";
+} from "../src/index.ts";
 
 const START = "2013-03-01T00:00:00Z";
 const KNOW = "2013-03-01T01:00:00Z";
