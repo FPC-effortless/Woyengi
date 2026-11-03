@@ -104,6 +104,27 @@ def resources(value: Any, path: str) -> None:
             nonempty(flops.get("receipt_ref"), f"{path}.training_flops.receipt_ref")
     if x.get("flop_budget") is not None:
         number(x["flop_budget"], f"{path}.flop_budget", positive=True)
+    if x.get("time_budget_seconds") is not None:
+        number(x["time_budget_seconds"], f"{path}.time_budget_seconds", positive=True)
+    profile = x.get("inference_profile")
+    if profile is not None:
+        profile = obj(profile, f"{path}.inference_profile")
+        for key in ("workload_sha256", "software_sha256"):
+            sha(profile.get(key), f"{path}.inference_profile.{key}", required=True)
+        for key in ("hardware_id", "precision", "unit", "mode"):
+            nonempty(profile.get(key), f"{path}.inference_profile.{key}")
+        number(profile.get("batch_size"), f"{path}.inference_profile.batch_size", integer=True, positive=True)
+        number(profile.get("decode_ms_per_unit"), f"{path}.inference_profile.decode_ms_per_unit")
+        require(type(profile.get("cache_parity_verified")) is bool, f"{path}.inference_profile.cache_parity_verified must be boolean")
+    quality = x.get("quality_target")
+    if quality is not None:
+        quality = obj(quality, f"{path}.quality_target")
+        for key in ("metric", "unit"):
+            nonempty(quality.get(key), f"{path}.quality_target.{key}")
+        require(quality.get("direction") in {"min", "max"}, f"{path}.quality_target.direction invalid")
+        require(not isinstance(quality.get("threshold"), bool) and isinstance(quality.get("threshold"), (int, float)) and math.isfinite(quality["threshold"]), f"{path}.quality_target.threshold must be finite")
+        number(quality.get("time_to_target_seconds"), f"{path}.quality_target.time_to_target_seconds")
+        sha(quality.get("validation_contract_sha256"), f"{path}.quality_target.validation_contract_sha256", required=True)
 
 
 def validate(data: Any) -> dict:
@@ -141,6 +162,14 @@ def validate(data: Any) -> dict:
             for k in ("optimizer_contract_sha256", "tuning_policy_sha256", "selection_policy_sha256"):
                 sha(t.get(k), f"{p}.training.{k}")
             resources(r.get("resources"), f"{p}.resources")
+            runtime = r.get("runtime")
+            if runtime is not None:
+                runtime = obj(runtime, f"{p}.runtime")
+                for key in ("hardware_id", "precision"):
+                    nonempty(runtime.get(key), f"{p}.runtime.{key}")
+                sha(runtime.get("software_sha256"), f"{p}.runtime.software_sha256", required=True)
+                if runtime.get("cpu_threads") is not None:
+                    number(runtime["cpu_threads"], f"{p}.runtime.cpu_threads", integer=True, positive=True)
             if kind == "run":
                 nonempty(r.get("arm_id"), f"{p}.arm_id")
                 number(r.get("seed"), f"{p}.seed", integer=True)
@@ -212,6 +241,19 @@ def compare(data: dict, a_id: str, b_id: str) -> dict:
     selection = _all_present_equal(ta,tb,("optimizer_contract_sha256","tuning_policy_sha256","selection_policy_sha256"))
     independently_declared = (all(rec["evidence"]["level"] == "independently_verified" for rec in (a,b,lookup[a_id],lookup[b_id])) and
                    lookup[a_id]["kind"] == lookup[b_id]["kind"] == "evaluation")
+    ar, br = a["resources"], b["resources"]
+    same_machine = _all_present_equal(a.get("runtime") or {}, b.get("runtime") or {}, ("hardware_id", "software_sha256", "precision"))
+    time_budget_match = (same_machine and ar.get("time_budget_seconds") is not None and br.get("time_budget_seconds") is not None
+                         and _within(ar["time_budget_seconds"], br["time_budget_seconds"])
+                         and ar.get("wall_seconds") is not None and br.get("wall_seconds") is not None
+                         and ar["wall_seconds"] <= ar["time_budget_seconds"]
+                         and br["wall_seconds"] <= br["time_budget_seconds"])
+    ai, bi = ar.get("inference_profile"), br.get("inference_profile")
+    inference_match = bool(ai and bi and ai["cache_parity_verified"] and bi["cache_parity_verified"] and
+                          _all_present_equal(ai, bi, ("workload_sha256", "hardware_id", "software_sha256", "precision", "unit", "mode", "batch_size")))
+    aq, bq = ar.get("quality_target"), br.get("quality_target")
+    quality_match = bool(aq and bq and _all_present_equal(aq, bq,
+                           ("metric", "unit", "direction", "threshold", "validation_contract_sha256")))
     full = param and data_equal and full_flops and targets and selection and independently_declared and a["study_id"] == b["study_id"]
     return {
         "left": a_id, "right": b_id,
@@ -220,6 +262,9 @@ def compare(data: dict, a_id: str, b_id: str) -> dict:
         "end_to_end_compute_matched_1pct": bool(full_flops),
         "evaluation_targets_identical": targets,
         "selection_policy_matched": selection,
+        "same_hardware_time_budget": bool(time_budget_match),
+        "inference_workload_matched": inference_match,
+        "quality_target_matched": quality_match,
         "independent_evidence_declared": independently_declared,
         "fully_controlled_candidate": full,
         "scientific_superiority_authorized": False,
