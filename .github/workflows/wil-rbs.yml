@@ -19,3 +19,36 @@ jobs:
         run: python -m unittest discover -s research/wil-rbs/tests -v
       - name: Validate historical examples
         run: python research/wil-rbs/wil_rbs.py validate research/wil-rbs/examples/historical_aggregates.json
+      - name: Import frozen upstream six-fit study and validate records
+        run: |
+          python research/wil-rbs/wil_rbs_ingest.py \
+            research/wil-rbs/examples/upstream/langdepth106_PROTOCOL.json \
+            research/wil-rbs/examples/upstream/langdepth106_RESULT.json \
+            --output /tmp/wil-rbs-langdepth106.json
+          python research/wil-rbs/wil_rbs.py validate /tmp/wil-rbs-langdepth106.json
+          python research/wil-rbs/wil_rbs_frontier.py /tmp/wil-rbs-langdepth106.json \
+            --study LANGDEPTH106 --cost training_wall_seconds > /tmp/wil-rbs-frontier-time.json
+          python research/wil-rbs/wil_rbs_frontier.py /tmp/wil-rbs-langdepth106.json \
+            --study LANGDEPTH106 --cost training_flops > /tmp/wil-rbs-frontier-flops.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('/tmp/wil-rbs-langdepth106.json').read_text())
+          t=json.loads(Path('/tmp/wil-rbs-frontier-time.json').read_text())
+          f=json.loads(Path('/tmp/wil-rbs-frontier-flops.json').read_text())
+          assert len([r for r in m['records'] if r['kind']=='run'])==6
+          assert len([r for r in m['records'] if r['kind']=='checkpoint'])==30
+          assert len([r for r in m['records'] if r['kind']=='evaluation'])==48
+          assert t['status']=='EXPLORATORY_ONLY' and t['complete_cost_measurements']
+          assert not f['complete_cost_measurements']
+          assert all(x['descriptive_pareto'] is None for x in f['arms'])
+          PY
+      - name: Publish read-only import analysis artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wil-rbs-langdepth106-analysis
+          path: |
+            /tmp/wil-rbs-langdepth106.json
+            /tmp/wil-rbs-frontier-time.json
+            /tmp/wil-rbs-frontier-flops.json
+          retention-days: 30
