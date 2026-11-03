@@ -1,0 +1,375 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:woyengi:wil-rbs:schema:v1",
+  "title": "WIL-RBS v1 research records",
+  "description": "Structural interchange schema. The stdlib Python validator additionally enforces cross-field and relational constraints. Do not treat this document as a scientific qualification gate.",
+  "type": "object",
+  "required": [
+    "schema",
+    "records"
+  ],
+  "properties": {
+    "schema": {
+      "const": "wil-rbs.v1"
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/run"
+          },
+          {
+            "$ref": "#/$defs/evaluation"
+          },
+          {
+            "$ref": "#/$defs/historical"
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "required": [
+        "level",
+        "refs"
+      ],
+      "properties": {
+        "level": {
+          "enum": [
+            "reported",
+            "source_reproduced",
+            "independently_verified"
+          ]
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "source_note": {
+          "type": "string"
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": [
+        "family",
+        "trainable_parameters",
+        "deployed_parameters"
+      ],
+      "properties": {
+        "family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trainable_parameters": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deployed_parameters": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "config_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "required": [
+        "name",
+        "unit",
+        "direction",
+        "value",
+        "split",
+        "target_count"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "direction": {
+          "enum": [
+            "min",
+            "max"
+          ]
+        },
+        "value": {
+          "type": "number"
+        },
+        "split": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "target_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evaluator_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": [
+        "dataset_id",
+        "target_unit",
+        "train_exposure_units",
+        "context_length"
+      ],
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "train_exposure_units": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "context_length": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "optimizer",
+        "updates"
+      ],
+      "properties": {
+        "optimizer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "updates": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "required": [
+        "training_flops"
+      ],
+      "properties": {
+        "wall_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "flop_budget": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "training_flops": {
+          "type": "object",
+          "required": [
+            "method",
+            "value"
+          ],
+          "properties": {
+            "method": {
+              "enum": [
+                "unavailable",
+                "analytical_estimate",
+                "operator_census",
+                "measured_profiler"
+              ]
+            },
+            "value": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "scope": {
+              "type": "string"
+            },
+            "receipt_ref": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "base": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "project_id",
+        "study_id",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "study_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "run": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base"
+        },
+        {
+          "type": "object",
+          "required": [
+            "arm_id",
+            "seed",
+            "model",
+            "data",
+            "training",
+            "resources"
+          ],
+          "properties": {
+            "kind": {
+              "const": "run"
+            },
+            "arm_id": {
+              "type": "string"
+            },
+            "seed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "model": {
+              "$ref": "#/$defs/model"
+            },
+            "data": {
+              "$ref": "#/$defs/data"
+            },
+            "training": {
+              "$ref": "#/$defs/training"
+            },
+            "resources": {
+              "$ref": "#/$defs/resources"
+            }
+          }
+        }
+      ]
+    },
+    "evaluation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base"
+        },
+        {
+          "type": "object",
+          "required": [
+            "run_id",
+            "metric"
+          ],
+          "properties": {
+            "kind": {
+              "const": "evaluation"
+            },
+            "run_id": {
+              "type": "string"
+            },
+            "metric": {
+              "$ref": "#/$defs/metric"
+            }
+          }
+        }
+      ]
+    },
+    "historical": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base"
+        },
+        {
+          "type": "object",
+          "required": [
+            "seed_count",
+            "model",
+            "data",
+            "training",
+            "resources",
+            "metric"
+          ],
+          "properties": {
+            "kind": {
+              "const": "historical_aggregate"
+            },
+            "seed_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "model": {
+              "$ref": "#/$defs/model"
+            },
+            "data": {
+              "$ref": "#/$defs/data"
+            },
+            "training": {
+              "$ref": "#/$defs/training"
+            },
+            "resources": {
+              "$ref": "#/$defs/resources"
+            },
+            "metric": {
+              "$ref": "#/$defs/metric"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
