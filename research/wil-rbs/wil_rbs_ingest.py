@@ -61,6 +61,8 @@ def import_langdepth106(protocol: dict, results: dict, *, protocol_bytes: bytes 
         require(r['sample_offset_sha256']==audit['sample_offset_sha256'], 'sample-order mismatch')
         require(r['training_byte_presentations']==fit['total_predicted_training_bytes_per_fit'], 'training exposure mismatch')
         require(r['train_sha256']==source['splits']['TRAIN']['sha256'], 'train split digest mismatch')
+        require(r['optimizer_metadata']['optimizer']==fit['optimizer'], 'optimizer identity differs from registered recipe')
+        require(r['scheduler_metadata']['steps']==fit['steps'], 'scheduler length differs from frozen steps')
         require(r['full_training_flops']=='NOT_MEASURED', 'unexpected FLOP evidence; review adapter before importing')
         require(r['independently_qualified'] is False, 'unexpected qualification status; review adapter')
         run_id=f'langdepth106-{arm}-seed{seed}'
@@ -74,7 +76,8 @@ def import_langdepth106(protocol: dict, results: dict, *, protocol_bytes: bytes 
             'source_commit':protocol['implementation']['source_commit'],
             'checkpoint_sha256':r['checkpoint_sha256'],
             'model':{'family':f'TAC106 {arm} layers','trainable_parameters':r['parameter_count'],
-                     'deployed_parameters':r['parameter_count'],'config_sha256':canonical_sha(actual_config)},
+                     'deployed_parameters':r['parameter_count'],'config_sha256':canonical_sha(actual_config),
+                     'architecture_config':actual_config},
             'data':{'dataset_id':'TinyShakespeare','dataset_sha256':source['canonical_sha256'],
                     'train_split_sha256':source['splits']['TRAIN']['sha256'],
                     'sample_order_sha256':r['sample_offset_sha256'],
@@ -82,6 +85,10 @@ def import_langdepth106(protocol: dict, results: dict, *, protocol_bytes: bytes 
                     'target_unit':'byte','train_exposure_units':r['training_byte_presentations'],
                     'context_length':fit['sequence_length']},
             'training':{'optimizer':fit['optimizer'],'updates':r['actual_steps'],
+                        'batch_size':fit['batch_size'],'sequence_length':fit['sequence_length'],
+                        'optimizer_metadata':r['optimizer_metadata'],
+                        'scheduler_metadata':r['scheduler_metadata'],
+                        'first_fit_loss':r['first_fit_loss'],'last_fit_loss':r['last_fit_loss'],
                         'optimizer_contract_sha256':None,'tuning_policy_sha256':None,
                         'selection_policy_sha256':None},
             'resources':{'wall_seconds':r['wall_seconds'],'flop_budget':None,
