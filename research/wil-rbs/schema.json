@@ -25,9 +25,15 @@
           },
           {
             "$ref": "#/$defs/historical"
+          },
+          {
+            "$ref": "#/$defs/checkpoint"
           }
         ]
       }
+    },
+    "import_metadata": {
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -135,6 +141,9 @@
             "string",
             "null"
           ]
+        },
+        "protocol_mode": {
+          "type": "string"
         }
       }
     },
@@ -361,6 +370,12 @@
             },
             "metric": {
               "$ref": "#/$defs/metric"
+            },
+            "checkpoint_id": {
+              "type": [
+                "string",
+                "null"
+              ]
             }
           }
         }
@@ -529,6 +544,42 @@
           "minimum": 0
         }
       }
+    },
+    "checkpoint": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base"
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "run_id",
+            "step",
+            "checkpoint_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "checkpoint"
+            },
+            "run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "step": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "checkpoint_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "artifact_name": {
+              "type": "string"
+            }
+          }
+        }
+      ]
     }
   }
 }
