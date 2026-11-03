@@ -89,6 +89,9 @@
             "string",
             "null"
           ]
+        },
+        "architecture_config": {
+          "type": "object"
         }
       }
     },
@@ -188,6 +191,26 @@
         "updates": {
           "type": "integer",
           "minimum": 1
+        },
+        "batch_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sequence_length": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "optimizer_metadata": {
+          "type": "object"
+        },
+        "scheduler_metadata": {
+          "type": "object"
+        },
+        "first_fit_loss": {
+          "type": "number"
+        },
+        "last_fit_loss": {
+          "type": "number"
         }
       }
     },
