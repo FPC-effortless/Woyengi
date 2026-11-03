@@ -1,0 +1,227 @@
+{
+  "schema": "wil-rbs.v1",
+  "records": [
+    {
+      "kind": "historical_aggregate",
+      "id": "tac106-four-summary",
+      "project_id": "TAC-OSM",
+      "study_id": "LANGDEPTH106",
+      "seed_count": 3,
+      "model": {
+        "family": "TAC106 4-layer",
+        "trainable_parameters": 998024,
+        "deployed_parameters": 998024,
+        "config_sha256": null
+      },
+      "data": {
+        "dataset_id": "TinyShakespeare",
+        "dataset_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "train_split_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "sample_order_sha256": null,
+        "target_contract_sha256": null,
+        "target_unit": "byte",
+        "train_exposure_units": 4194304,
+        "context_length": 128,
+        "tokenizer_sha256": null,
+        "preprocessing_sha256": null
+      },
+      "training": {
+        "optimizer": "AdamW",
+        "updates": 4096,
+        "optimizer_contract_sha256": null,
+        "tuning_policy_sha256": null,
+        "selection_policy_sha256": null
+      },
+      "resources": {
+        "wall_seconds": 736.8,
+        "flop_budget": null,
+        "training_flops": {
+          "value": null,
+          "method": "unavailable"
+        }
+      },
+      "metric": {
+        "name": "nll",
+        "unit": "nat/byte",
+        "direction": "min",
+        "split": "test",
+        "value": 1.644815,
+        "target_count": 55769,
+        "target_sha256": null,
+        "evaluator_sha256": null
+      },
+      "evidence": {
+        "level": "reported",
+        "refs": [
+          "https://github.com/FPC-effortless/TAC-OSM/pull/686"
+        ]
+      }
+    },
+    {
+      "kind": "historical_aggregate",
+      "id": "transformer107-summary",
+      "project_id": "TAC-OSM",
+      "study_id": "LANGBASE107",
+      "seed_count": 3,
+      "model": {
+        "family": "Transformer107 4-layer",
+        "trainable_parameters": 998816,
+        "deployed_parameters": 998816,
+        "config_sha256": null
+      },
+      "data": {
+        "dataset_id": "TinyShakespeare",
+        "dataset_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "train_split_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "sample_order_sha256": null,
+        "target_contract_sha256": null,
+        "target_unit": "byte",
+        "train_exposure_units": 4194304,
+        "context_length": 128,
+        "tokenizer_sha256": null,
+        "preprocessing_sha256": null
+      },
+      "training": {
+        "optimizer": "AdamW",
+        "updates": 4096,
+        "optimizer_contract_sha256": null,
+        "tuning_policy_sha256": null,
+        "selection_policy_sha256": null
+      },
+      "resources": {
+        "wall_seconds": 325.0,
+        "flop_budget": null,
+        "training_flops": {
+          "value": null,
+          "method": "unavailable"
+        }
+      },
+      "metric": {
+        "name": "nll",
+        "unit": "nat/byte",
+        "direction": "min",
+        "split": "test",
+        "value": 1.724744,
+        "target_count": 55769,
+        "target_sha256": null,
+        "evaluator_sha256": null
+      },
+      "evidence": {
+        "level": "reported",
+        "refs": [
+          "https://github.com/FPC-effortless/TAC-OSM/pull/688"
+        ]
+      }
+    },
+    {
+      "kind": "historical_aggregate",
+      "id": "fusion001-summary",
+      "project_id": "Fusion",
+      "study_id": "FUSION001",
+      "seed_count": 3,
+      "model": {
+        "family": "CED LoopMoE Fusion001",
+        "trainable_parameters": 999969,
+        "deployed_parameters": 999969,
+        "config_sha256": null
+      },
+      "data": {
+        "dataset_id": "TinyShakespeare",
+        "dataset_sha256": null,
+        "train_split_sha256": null,
+        "sample_order_sha256": null,
+        "target_contract_sha256": null,
+        "target_unit": "character",
+        "train_exposure_units": 4194304,
+        "context_length": 128,
+        "tokenizer_sha256": null,
+        "preprocessing_sha256": null
+      },
+      "training": {
+        "optimizer": "AdamW",
+        "updates": 4096,
+        "optimizer_contract_sha256": null,
+        "tuning_policy_sha256": null,
+        "selection_policy_sha256": null
+      },
+      "resources": {
+        "wall_seconds": 1069.8,
+        "flop_budget": null,
+        "training_flops": {
+          "value": null,
+          "method": "unavailable"
+        }
+      },
+      "metric": {
+        "name": "nll",
+        "unit": "nat/character",
+        "direction": "min",
+        "split": "test",
+        "value": 1.750801,
+        "target_count": null,
+        "target_sha256": null,
+        "evaluator_sha256": null
+      },
+      "evidence": {
+        "level": "reported",
+        "refs": [],
+        "source_note": "Woyengi Intelligence Labs archived FUSION001 experiment comparison and compute audit (2026-11-02), originally provided in ChatGPT Library; raw per-run receipts not imported into this example."
+      }
+    },
+    {
+      "kind": "historical_aggregate",
+      "id": "gru-fusion-control-summary",
+      "project_id": "Fusion",
+      "study_id": "FUSION001",
+      "seed_count": 3,
+      "model": {
+        "family": "Matched GRU",
+        "trainable_parameters": 1007872,
+        "deployed_parameters": 1007872,
+        "config_sha256": null
+      },
+      "data": {
+        "dataset_id": "TinyShakespeare",
+        "dataset_sha256": null,
+        "train_split_sha256": null,
+        "sample_order_sha256": null,
+        "target_contract_sha256": null,
+        "target_unit": "character",
+        "train_exposure_units": 4194304,
+        "context_length": 128,
+        "tokenizer_sha256": null,
+        "preprocessing_sha256": null
+      },
+      "training": {
+        "optimizer": "AdamW",
+        "updates": 4096,
+        "optimizer_contract_sha256": null,
+        "tuning_policy_sha256": null,
+        "selection_policy_sha256": null
+      },
+      "resources": {
+        "wall_seconds": 1008.6,
+        "flop_budget": null,
+        "training_flops": {
+          "value": null,
+          "method": "unavailable"
+        }
+      },
+      "metric": {
+        "name": "nll",
+        "unit": "nat/character",
+        "direction": "min",
+        "split": "test",
+        "value": 1.617543,
+        "target_count": null,
+        "target_sha256": null,
+        "evaluator_sha256": null
+      },
+      "evidence": {
+        "level": "reported",
+        "refs": [],
+        "source_note": "Woyengi Intelligence Labs archived FUSION001 experiment comparison and compute audit (2026-11-02), originally provided in ChatGPT Library; raw per-run receipts not imported into this example."
+      }
+    }
+  ]
+}
