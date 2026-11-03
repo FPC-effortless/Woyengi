@@ -39,6 +39,9 @@ Unlike a typical leaderboard, a missing hash or FLOP measurement is **unknown**,
 | `end_to_end_compute_matched_1pct` | Same measured/census method, full-training scope, actual FLOPs and FLOP budgets within 1% |
 | `evaluation_targets_identical` | Same metric, units, split, count, target digest and evaluator digest |
 | `selection_policy_matched` | Same non-null optimizer, selection and tuning policy digests |
+| `same_hardware_time_budget` | Same hardware/software/precision, identical declared wall-time budget and non-overbudget measured duration |
+| `inference_workload_matched` | Same hardware/software, cache-verified mode, fixed workload, batch size and decoding unit |
+| `quality_target_matched` | Same target metric, units, validation contract, direction and quality threshold; independent cost-to-target can then be compared |
 | `fully_controlled_candidate` | Structural conjunction plus claimed independent evidence; **not** externally verified scientific superiority |
 | `quality_ranking` | `left/right/tie` only for identical target/scorer contracts; otherwise `NOT_COMPARABLE` |
 | `scientific_superiority_authorized` | Always false: this tool never grants research qualification |
@@ -52,7 +55,7 @@ Unlike a typical leaderboard, a missing hash or FLOP measurement is **unknown**,
 - `nat/byte`, `nat/character`, `nat/token`, `reward/episode` and `ms/byte` are distinct units.
 - A historical `target_count` may be null; a new `evaluation` must supply one.
 - A `historical_aggregate` may not claim independent raw-run attestation even if its published summary was checked.
-- Records are intended for append-only research ledgers. This CLI verifies a snapshot; it does not yet implement storage locking, Merkle commits, signatures, CI provenance, statistical uncertainty or a full dashboard.
+- Records are intended for append-only research ledgers. This CLI verifies a snapshot; it does not yet implement storage locking, Merkle commits, signatures, cryptographic verification of profiler receipts, statistical uncertainty or a full dashboard.
 
 ## Historical example provenance
 
