@@ -134,7 +134,8 @@ def validate(data: Any) -> dict:
     require(isinstance(records, list) and bool(records), "records must be a nonempty list")
     seen: set[str] = set()
     runs: dict[str, dict] = {}
-    counts = {"run": 0, "evaluation": 0, "historical_aggregate": 0}
+    checkpoints: dict[str, dict] = {}
+    counts = {"run": 0, "evaluation": 0, "historical_aggregate": 0, "checkpoint": 0}
     for i, raw in enumerate(records):
         p = f"records[{i}]"
         r = obj(raw, p)
@@ -184,20 +185,51 @@ def validate(data: Any) -> dict:
             else:
                 number(r.get("seed_count"), f"{p}.seed_count", integer=True, positive=True)
                 metric(r.get("metric"), f"{p}.metric", historical=True)
+        elif kind == "checkpoint":
+            nonempty(r.get("run_id"), f"{p}.run_id")
+            number(r.get("step"), f"{p}.step", integer=True)
+            sha(r.get("checkpoint_sha256"), f"{p}.checkpoint_sha256", required=True)
+            if r.get("artifact_name") is not None:
+                nonempty(r["artifact_name"], f"{p}.artifact_name")
+            checkpoints[rid] = r
         else:
             nonempty(r.get("run_id"), f"{p}.run_id")
             metric(r.get("metric"), f"{p}.metric")
             sha(r.get("checkpoint_sha256"), f"{p}.checkpoint_sha256")
+            if r.get("checkpoint_id") is not None:
+                nonempty(r["checkpoint_id"], f"{p}.checkpoint_id")
             if r["evidence"]["level"] == "independently_verified":
                 sha(r.get("checkpoint_sha256"), f"{p}.checkpoint_sha256", required=True)
                 sha(r["metric"].get("target_sha256"), f"{p}.metric.target_sha256", required=True)
                 sha(r["metric"].get("evaluator_sha256"), f"{p}.metric.evaluator_sha256", required=True)
+    seen_steps: set[tuple[str, int]] = set()
+    for cp in checkpoints.values():
+        require(cp["run_id"] in runs, f"checkpoint {cp['id']}: orphan run_id")
+        parent = runs[cp["run_id"]]
+        require(cp["study_id"] == parent["study_id"] and cp["project_id"] == parent["project_id"],
+                f"checkpoint {cp['id']}: parent identity mismatch")
+        require(cp["step"] <= parent["training"]["updates"], f"checkpoint {cp['id']}: step exceeds run updates")
+        key = (cp["run_id"], cp["step"])
+        require(key not in seen_steps, f"checkpoint {cp['id']}: duplicate run/step")
+        seen_steps.add(key)
+        if cp["step"] == parent["training"]["updates"] and parent.get("checkpoint_sha256") is not None:
+            require(cp["checkpoint_sha256"] == parent["checkpoint_sha256"],
+                    f"checkpoint {cp['id']}: final hash mismatch")
+        if cp["evidence"]["level"] == "independently_verified":
+            require(parent["evidence"]["level"] == "independently_verified",
+                    f"checkpoint {cp['id']}: parent run lacks independent verification")
     for r in records:
         if r["kind"] == "evaluation":
             require(r["run_id"] in runs, f"evaluation {r['id']}: orphan run_id")
             parent = runs[r["run_id"]]
             require(r["study_id"] == parent["study_id"] and r["project_id"] == parent["project_id"], f"evaluation {r['id']}: parent identity mismatch")
-            if r.get("checkpoint_sha256") and parent.get("checkpoint_sha256"):
+            if r.get("checkpoint_id") is not None:
+                cp = checkpoints.get(r["checkpoint_id"])
+                require(cp is not None and cp["run_id"] == r["run_id"],
+                        f"evaluation {r['id']}: absent or unrelated checkpoint_id")
+                require(r.get("checkpoint_sha256") == cp["checkpoint_sha256"],
+                        f"evaluation {r['id']}: checkpoint_id hash mismatch")
+            elif r.get("checkpoint_sha256") and parent.get("checkpoint_sha256"):
                 require(r["checkpoint_sha256"] == parent["checkpoint_sha256"], f"evaluation {r['id']}: checkpoint differs from run")
             if r["evidence"]["level"] == "independently_verified":
                 require(parent["evidence"]["level"] == "independently_verified", f"evaluation {r['id']}: parent run lacks independent verification")
