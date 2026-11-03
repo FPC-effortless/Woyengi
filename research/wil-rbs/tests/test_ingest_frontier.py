@@ -38,7 +38,11 @@ def source_fixture():
                'sample_offset_sha256':offset,'training_byte_presentations':4194304,
                'train_sha256':H('b'),'full_training_flops':'NOT_MEASURED',
                'independently_qualified':False,'checkpoints':cps,
-               'config':models[arm]['config'],'source_receipt_sha256':H('5'),
+               'config':models[arm]['config'],
+               'optimizer_metadata':{'optimizer':'AdamW','lr':0.0003,'betas':[0.9,0.95]},
+               'scheduler_metadata':{'steps':4096,'warmup_steps':128},
+               'first_fit_loss':5.1,'last_fit_loss':1.5,
+               'source_receipt_sha256':H('5'),
                'implementation_sha256':H('6'),'python_version':'3.12',
                'torch_version':'2.15','cpu_threads':2,'hardware':'CPU',
                'process_cpu_seconds':12,'peak_rss_bytes':1000,'wall_seconds':110 if arm=='four' else 120}
@@ -61,6 +65,7 @@ class IngestionTests(unittest.TestCase):
         self.assertEqual(validate(m)['counts'],{'run':6,'checkpoint':12,'evaluation':48,'historical_aggregate':0})
         self.assertEqual({x['evidence']['level'] for x in m['records']},{'reported'})
         self.assertTrue(all(x['resources']['training_flops']['value'] is None for x in m['records'] if x['kind']=='run'))
+        self.assertTrue(all(x['training']['optimizer_metadata']['lr']==0.0003 for x in m['records'] if x['kind']=='run'))
         self.assertTrue(all(x['metric']['target_sha256'] is None for x in m['records'] if x['kind']=='evaluation'))
 
     def test_bad_receipt_rejected(self):
