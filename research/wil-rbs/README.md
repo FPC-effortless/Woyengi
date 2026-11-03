@@ -69,3 +69,26 @@ TAC106 and Transformer107 values are transcribed from GitHub research PRs #686 a
 4. Add queryable Pareto frontiers and uncertainty-aware reports, with distinct real-world scientific promotion handled by the original domain gates.
 
 Research tracking: https://github.com/FPC-effortless/Woyengi/issues/67
+
+## v1.1: Original per-seed import and quality/cost frontiers
+
+`wil_rbs_ingest.py` imports the original **LANGDEPTH106** `PROTOCOL.json` and `RESULT.json` without fitting, fetching any model weights or asserting independent source/checkpoint verification. The frozen upstream source snapshots live in `examples/upstream/` for deterministic CI, with original research URLs retained in every record.
+
+```sh
+python wil_rbs_ingest.py examples/upstream/langdepth106_PROTOCOL.json examples/upstream/langdepth106_RESULT.json --output /tmp/langdepth106_wil_rbs.json
+python wil_rbs.py validate /tmp/langdepth106_wil_rbs.json
+python wil_rbs_frontier.py /tmp/langdepth106_wil_rbs.json --study LANGDEPTH106 --metric nll --split test --mode reset_windows --cost training_wall_seconds
+python wil_rbs_frontier.py /tmp/langdepth106_wil_rbs.json --study LANGDEPTH106 --metric nll --split test --mode reset_windows --cost training_flops
+```
+
+The import contains **6 run records, 30 checkpoint records and 48 individual evaluation records** (TEST and DEV; reset and continuous carry; NLL and accuracy). The importer checks source-published step counts, sample-order fingerprints, parameter geometry, per-run checkpoint identity, target counts, and the original paired mean. It deliberately leaves target/evaluator digests and training FLOPs unknown: upstream published receipts say `NOT_MEASURED` for full-training FLOPs. It never fetches/checks the actual `.pt` checkpoint payloads.
+
+`wil_rbs_frontier.py` computes per-arm mean, sample standard deviation, completeness and **descriptive** Pareto membership using observed per-run quality and cost. The output is unconditionally tagged `EXPLORATORY_ONLY` and `scientific_superiority_authorized=false`. Missing cost measurements cause a null frontier, never a zero or invented FLOP rate. It does not construct confidence intervals from reused target bytes or pretend independent qualification from published aggregates.
+
+The historical TAC106 four-layer arm is descriptively better on both mean TEST reset NLL and mean training wall seconds than the eight-layer arm, but this does not establish resource-matched architectural superiority. The same-studier paired-seed analysis and caveats remain governed by the original study.
+
+### Compute instrumentation contract — not yet a measured FLOP result
+
+For actual future training-compute measurement, report **separate** forward, backward, optimizer, attention, normalization, gating, associative-scan, sparse-dispatch and tokenization/representation costs. Define one multiply-accumulate as two floating-point operations. Audit unaccounted/fused kernels explicitly. `torch.profiler(..., with_flops=True)` or linear-only forward hooks are partial counters, not automatically full-training-FLOP receipts. Record actual hardware, precision, threads, batch, sequence length, time basis, warmup, repetitions, synchronization, compiler modes, peak allocated memory, and source-hash identity. Until all required kernel domains have independently checked coverage, mark complete training FLOPs **unavailable** and any counter as `partial` outside the comparability gate.
+
+This workflow is a research-only data-import and benchmarking utility. It does not amend Woyengi's active product PRD, run experiments, open protected test sets, authenticate original checkpoint bytes or change TAC-OSM's external independent-review requirements.
