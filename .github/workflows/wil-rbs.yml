@@ -43,6 +43,46 @@ jobs:
           assert not f['complete_cost_measurements']
           assert all(x['descriptive_pareto'] is None for x in f['arms'])
           PY
+      - name: Recover Transformer107 per-seed source FIT receipts and run paired comparison
+        run: |
+          python research/wil-rbs/wil_rbs_transformer.py \
+            research/wil-rbs/examples/upstream/langbase107_RESULT.json \
+            research/wil-rbs/examples/upstream/langbase107_AUDIT.json \
+            --receipts research/wil-rbs/examples/upstream/langbase107_FIT_RECEIPTS.json \
+            --output /tmp/wil-rbs-transformer107.json
+          python research/wil-rbs/wil_rbs.py validate /tmp/wil-rbs-transformer107.json
+          python research/wil-rbs/wil_rbs_paired.py \
+            /tmp/wil-rbs-langdepth106.json /tmp/wil-rbs-transformer107.json > /tmp/wil-rbs-paired.json
+          python research/wil-rbs/wil_rbs_compute.py \
+            research/wil-rbs/examples/fusion001_projection_mac_report.json > /tmp/wil-rbs-partial-compute.json
+          python - <<'PYTEST'
+          import json
+          from pathlib import Path
+          t=json.loads(Path('/tmp/wil-rbs-transformer107.json').read_text())
+          p=json.loads(Path('/tmp/wil-rbs-paired.json').read_text())
+          c=json.loads(Path('/tmp/wil-rbs-partial-compute.json').read_text())
+          assert sum(r['kind']=='run' for r in t['records'])==3
+          assert sum(r['kind']=='checkpoint' for r in t['records'])==15
+          assert sum(r['kind']=='evaluation' for r in t['records'])==24
+          assert abs(p['mean_transformer_minus_tac_quality']-0.07992910915257223)<1e-10
+          assert abs(p['mean_transformer_training_wall_seconds']-325.023113271)<1e-6
+          assert p['matched_per_seed_training_sample_order'] and not p['scientific_superiority_authorized']
+          assert c['training_flops'] is None and not c['end_to_end_training_flops_eligible']
+          PYTEST
+      - name: Verify append-only experimental registry and exported snapshot
+        run: |
+          python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl /tmp/wil-rbs-langdepth106.json
+          python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl /tmp/wil-rbs-transformer107.json
+          python research/wil-rbs/wil_rbs_ledger.py verify /tmp/wil-rbs-events.jsonl > /tmp/wil-rbs-ledger-verification.json
+          python research/wil-rbs/wil_rbs_ledger.py export /tmp/wil-rbs-events.jsonl --output /tmp/wil-rbs-registry-snapshot.json
+          python research/wil-rbs/wil_rbs.py validate /tmp/wil-rbs-registry-snapshot.json
+          python - <<'PYTEST'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('/tmp/wil-rbs-ledger-verification.json').read_text())
+          assert x['status']=='VALID' and x['records']==6+30+48+3+15+24
+          assert x['external_anchor_required']
+          PYTEST
       - name: Publish read-only import analysis artifact
         uses: actions/upload-artifact@v4
         with:
@@ -51,4 +91,9 @@ jobs:
             /tmp/wil-rbs-langdepth106.json
             /tmp/wil-rbs-frontier-time.json
             /tmp/wil-rbs-frontier-flops.json
+            /tmp/wil-rbs-transformer107.json
+            /tmp/wil-rbs-paired.json
+            /tmp/wil-rbs-partial-compute.json
+            /tmp/wil-rbs-ledger-verification.json
+            /tmp/wil-rbs-registry-snapshot.json
           retention-days: 30
