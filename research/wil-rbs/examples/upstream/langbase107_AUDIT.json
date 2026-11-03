@@ -1,0 +1,29 @@
+{
+  "schema": "langbase107.independent-result-audit.v1",
+  "workflow_run_id": 41239984498,
+  "source_head_sha": "a2589ed16856854ea138d0d447ef88a5c72f6e73",
+  "original_artifacts": [
+    {"name": "LANGBASE107-fit-10601-attempt-1", "id": 13057152649, "zip_sha256": "f3e45c4e20fee56240b1c999e39782fd029e8ed31cb31e805f5bc66504924fca"},
+    {"name": "LANGBASE107-fit-10602-attempt-1", "id": 13057201598, "zip_sha256": "eb3bfe5a2cae91f5ffe5c9ef6457d5e91867fe0169d671dd535a671857a6c16b"},
+    {"name": "LANGBASE107-fit-10603-attempt-1", "id": 13057625789, "zip_sha256": "ff5bc59dd2a0ac21f0a13d4235ebce4952db107e21705690ce81d1c2a14b0e2d"},
+    {"name": "LANGBASE107-final-evaluation-attempt-1", "id": 13056639904, "zip_sha256": "5562dd36adf232c79ad10453c07f0b05044b3558898c05d119362d7a26449193"}
+  ],
+  "checkpoint_sha256": {
+    "10601": "a0c62977e74623df0f15540d8d672c07d8f095b9e982e5195099d6612e831f02",
+    "10602": "909ca9642d682c5351f1c6e4915ccc8e07d4c86a6e324e070e130141720f2afc",
+    "10603": "fea4c18aa792bdd269a33c7926f0c0260ee89234b21d8774776ec0e71f3dfd9b"
+  },
+  "checks_passed": 35,
+  "checks": [
+    "all three fit receipts identify 4,096 completed optimizer updates",
+    "all three fits contain 998,816 learned parameters and 4,194,304 byte presentations",
+    "all three per-seed offset fingerprints exactly match the paired LANGDEPTH106 TAC fit",
+    "all three original checkpoint bytes match their fit-receipt SHA-256",
+    "all three checkpoints load strictly into the registered source model",
+    "all six held-out score paths count exactly 55,769 legal TEST targets per seed",
+    "reported aggregate NLL values reproduce from the per-seed rows",
+    "four-layer TAC reset-window NLL is lower in all three paired seeds"
+  ],
+  "qualification": "independent arithmetic and artifact-integrity audit; no independent scientific attestation or complete FLOP certification"
+}
+
