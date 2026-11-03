@@ -229,6 +229,33 @@
               "type": "string"
             }
           }
+        },
+        "time_budget_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
+        "inference_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/inference_profile"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quality_target": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/quality_target"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -299,6 +326,16 @@
             },
             "resources": {
               "$ref": "#/$defs/resources"
+            },
+            "runtime": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/runtime"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         }
@@ -366,10 +403,132 @@
             },
             "metric": {
               "$ref": "#/$defs/metric"
+            },
+            "runtime": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/runtime"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         }
       ]
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "hardware_id",
+        "software_sha256",
+        "precision"
+      ],
+      "properties": {
+        "hardware_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "software_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "precision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpu_threads": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        }
+      }
+    },
+    "inference_profile": {
+      "type": "object",
+      "required": [
+        "workload_sha256",
+        "software_sha256",
+        "hardware_id",
+        "precision",
+        "unit",
+        "mode",
+        "batch_size",
+        "decode_ms_per_unit",
+        "cache_parity_verified"
+      ],
+      "properties": {
+        "workload_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "software_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "hardware_id": {
+          "type": "string"
+        },
+        "precision": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "batch_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "decode_ms_per_unit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cache_parity_verified": {
+          "type": "boolean"
+        }
+      }
+    },
+    "quality_target": {
+      "type": "object",
+      "required": [
+        "metric",
+        "unit",
+        "direction",
+        "threshold",
+        "validation_contract_sha256",
+        "time_to_target_seconds"
+      ],
+      "properties": {
+        "metric": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "min",
+            "max"
+          ]
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "validation_contract_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "time_to_target_seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
     }
   }
 }
