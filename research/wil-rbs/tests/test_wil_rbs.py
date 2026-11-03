@@ -24,7 +24,8 @@ def run(rid, arm, size=100_000, seed=1):
                      "train_exposure_units": 1024, "context_length": 128},
             "training": {"optimizer": "AdamW", "updates": 4, "optimizer_contract_sha256": H,
                          "tuning_policy_sha256": J, "selection_policy_sha256": K},
-            "resources": {"wall_seconds": 1.5, "flop_budget": 10000,
+            "runtime": {"hardware_id": "cpu-intel-001", "software_sha256": H, "precision": "fp32", "cpu_threads": 1},
+            "resources": {"wall_seconds": 1.5, "time_budget_seconds": 5.0, "flop_budget": 10000,
                           "training_flops": {"value": 9999, "method": "measured_profiler", "scope": "end_to_end_training", "receipt_ref": "https://example.org/receipt"}},
             "evidence": {"level": "independently_verified", "refs": ["https://example.org/log"]}}
 
@@ -135,6 +136,39 @@ class ContractTests(unittest.TestCase):
             m["records"][2]["metric"]["value"] = v
             with self.assertRaises(ContractError):
                 validate(m)
+
+    def test_same_time_budget_must_have_same_runtime(self):
+        m = manifest()
+        self.assertTrue(compare(m, "eval-a", "eval-b")["same_hardware_time_budget"])
+        m["records"][1]["runtime"]["hardware_id"] = "different-cpu"
+        self.assertFalse(compare(m, "eval-a", "eval-b")["same_hardware_time_budget"])
+
+    def test_inference_requires_same_workload_and_caching_parity(self):
+        m = manifest()
+        i = {"workload_sha256": H, "software_sha256": J, "hardware_id": "one-cpu", "precision": "fp32",
+             "unit": "byte", "mode": "cached_incremental", "batch_size": 1,
+             "decode_ms_per_unit": 2.5, "cache_parity_verified": True}
+        for r in m["records"][:2]:
+            r["resources"]["inference_profile"] = copy.deepcopy(i)
+        self.assertTrue(compare(m, "eval-a", "eval-b")["inference_workload_matched"])
+        m["records"][0]["resources"]["inference_profile"]["cache_parity_verified"] = False
+        self.assertFalse(compare(m, "eval-a", "eval-b")["inference_workload_matched"])
+
+    def test_quality_target_comparison_requires_same_threshold(self):
+        m = manifest()
+        q = {"metric": "dev_nll", "unit": "nat/byte", "direction": "min", "threshold": 1.8,
+             "validation_contract_sha256": H, "time_to_target_seconds": 2.1}
+        for r in m["records"][:2]:
+            r["resources"]["quality_target"] = copy.deepcopy(q)
+        self.assertTrue(compare(m, "eval-a", "eval-b")["quality_target_matched"])
+        m["records"][1]["resources"]["quality_target"]["threshold"] = 2.0
+        self.assertFalse(compare(m, "eval-a", "eval-b")["quality_target_matched"])
+
+    def test_structural_schema_includes_quality_time_and_runtime(self):
+        d = json.loads((ROOT / "schema.json").read_text())
+        self.assertIn("inference_profile", d["$defs"])
+        self.assertIn("quality_target", d["$defs"])
+        self.assertIn("runtime", d["$defs"])
 
     def test_cli_validates_history(self):
         path = ROOT / "examples" / "historical_aggregates.json"
