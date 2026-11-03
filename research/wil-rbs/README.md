@@ -93,4 +93,84 @@ For actual future training-compute measurement, report **separate** forward, bac
 
 This workflow is a research-only data-import and benchmarking utility. It does not amend Woyengi's active product PRD, run experiments, open protected test sets, authenticate original checkpoint bytes or change TAC-OSM's external independent-review requirements.
 
-Imported run records also retain source-reported model geometry, batch/sequence shape, optimizer betas/epsilon/weight decay/gradient clipping, learning-rate schedule, and first/last TRAIN loss. These fields describe the actual fitted run; TRAIN loss is not a held-out model-selection metric, and neither it nor a forward-only MAC count certifies full training FLOPs.
+## v1.2: original Transformer107 archive recovery, persistent ledger, and partial compute
+
+The optional `wil_rbs_transformer.py` importer reads source-published
+`LANGBASE107` final scoring and the original GitHub artifact-integrity audit.
+Unlike the v1.1 TAC importer, the v1.2 Transformer importer can additionally
+read a **captured raw FIT receipt bundle** whose three original receipt byte
+hashes are pinned in the importer and whose original GitHub ZIP hashes match
+the source audit. This bundle was made after downloading all three original
+~47 MB fit artifacts, verifying whole-ZIP SHA-256 against `AUDIT.json`, and
+verifying all 15 original checkpoint file hashes. The original final-eval
+ZIP was also downloaded and matched its audit SHA-256; its `RESULT.json` is
+retained unchanged. The 140+ MB original checkpoint archives are deliberately
+**not included** in the source repository. Audit inputs and extracted original
+receipt bytes are retained in `examples/upstream/`.
+
+Per-seed training wall seconds are therefore **277.1844, 344.6446, 353.2404**,
+not imputed from a 325-second aggregate; sample-order digests match TAC106's
+corresponding original seeds. The original receipts say `NOT_CERTIFIED` for
+full training FLOPs, which this importer preserves as missing. Both result
+sets are post-hoc exploratory and none is scientifically qualified.
+
+```sh
+# From repository root; requires Python 3.10+
+python research/wil-rbs/wil_rbs_transformer.py \
+  research/wil-rbs/examples/upstream/langbase107_RESULT.json \
+  research/wil-rbs/examples/upstream/langbase107_AUDIT.json \
+  --receipts research/wil-rbs/examples/upstream/langbase107_FIT_RECEIPTS.json \
+  --output /tmp/wil-rbs-transformer107.json
+
+python research/wil-rbs/wil_rbs_paired.py \
+  /tmp/wil-rbs-langdepth106.json /tmp/wil-rbs-transformer107.json
+
+# Append records without changing previously stored records.
+python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl /tmp/wil-rbs-langdepth106.json
+python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl /tmp/wil-rbs-transformer107.json
+python research/wil-rbs/wil_rbs_ledger.py verify /tmp/wil-rbs-events.jsonl
+python research/wil-rbs/wil_rbs_ledger.py export /tmp/wil-rbs-events.jsonl --output /tmp/wil-rbs-all.json
+
+python research/wil-rbs/wil_rbs_compute.py \
+  research/wil-rbs/examples/fusion001_projection_mac_report.json
+```
+
+To redo source ZIP verification after separately downloading the exact three
+original fit archives from [GitHub Actions run 41239984498](https://github.com/FPC-effortless/TAC-OSM/actions/runs/41239984498):
+
+```sh
+python research/wil-rbs/capture_transformer107.py \
+  research/wil-rbs/examples/upstream/langbase107_AUDIT.json \
+  /path/to/LANGBASE107-fit-10601.zip \
+  /path/to/LANGBASE107-fit-10602.zip \
+  /path/to/LANGBASE107-fit-10603.zip \
+  --output /tmp/recovered-receipts.json
+```
+
+`wil_rbs_paired.py` refuses unmatched source/fit split hashes, seed offsets,
+exposures, context, metric units, and target counts. On original data it
+reports a **0.079929 nats/byte** mean TEST reset-window advantage for TAC106
+against Transformer107 and a **2.2673x** faster mean recorded training time
+for Transformer107. This is a source-reported descriptive tradeoff, **not** a
+pre-registered or FLOP-matched architecture result. Source replay and
+independent scorer/target-hash authentication remain open.
+
+`wil_rbs_ledger.py` is a POSIX-local JSONL experimental ledger. Each appended
+record includes a canonical SHA-256 digest, a previous event digest, and its
+own event digest. Reads verify the whole chain and cross-record references;
+appends take a cooperative POSIX file lock and fsync. For a *trusted*
+tamper-detection guarantee, the head hash must be anchored outside the file
+(e.g. in an independently reviewed Git commit). Anyone able to rewrite the
+ledger and all hashes can otherwise rewrite history. This is **not** a signed
+Woyengi Platform canonical ledger and does not authorize research promotion.
+
+`wil_rbs_compute.py` handles explicitly **partial** projection MAC censuses,
+converts MAC to FLOPs using 1 MAC = 2 FLOPs, and discloses excluded backward,
+optimizer, attention, routing and memory operations. A PyTorch partial
+profiler or projection census must never be labeled `end_to_end_training`.
+No certified GPU/CPU training-FLOP collector was implemented in this version.
+
+The project-specific TAC-OSM scientific gates and Woyengi constitutional
+state/evidence boundaries remain separate and unchanged. This code belongs
+in research infrastructure, not the platform kernel, and is unmerged until
+its PR/CI/reviewer requirements are satisfied.
