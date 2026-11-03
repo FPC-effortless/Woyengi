@@ -1,0 +1,193 @@
+{
+  "architecture_superiority_eligible": false,
+  "frozen_tac_reference": {
+    "carried_tensor_bytes": 295936,
+    "cpu_decode_bytes_per_second_mean_run_medians": 206.498077498087,
+    "cpu_prefill_bytes_per_second_mean_run_medians": 7118.922732496973,
+    "parameters": 998024,
+    "test_carry_accuracy": 0.5221658388471493,
+    "test_carry_nll_nats": 1.623409323054104,
+    "test_reset_accuracy": 0.5152683390414029,
+    "test_reset_bits_per_byte": 2.3729661815332928,
+    "test_reset_nll_nats": 1.644814818293901,
+    "training_wall_seconds_mean": 736.9232799173334
+  },
+  "independently_qualified": false,
+  "limitations": [
+    "The TAC TEST result was known before this Transformer control was registered.",
+    "The comparison is parameter- and exposure-matched but complete training FLOPs are not certified matched.",
+    "Tiny Shakespeare is a small public language diagnostic, not general intelligence evidence.",
+    "No independently signed source/reward/goal/access attestation was supplied."
+  ],
+  "posthoc_transformer_minus_tac_test_reset_accuracy": -0.027566091078078003,
+  "posthoc_transformer_minus_tac_test_reset_nll": 0.07992910915257223,
+  "protocol_sha256": "ff256f3d4f64741314866900bb1a63ad4c0f23f4e5c34847bc97d6d9fb891ab3",
+  "runs": [
+    {
+      "checkpoint_sha256": "a0c62977e74623df0f15540d8d672c07d8f095b9e982e5195099d6612e831f02",
+      "dev_carry": {
+        "accuracy": 0.5132421237605121,
+        "bits_per_byte": 2.352646790493854,
+        "nll_nats": 1.6307304896842192,
+        "perplexity": 5.107604408452317,
+        "targets": 55769
+      },
+      "dev_reset": {
+        "accuracy": 0.5093510731768546,
+        "bits_per_byte": 2.375240327702488,
+        "nll_nats": 1.64639113629926,
+        "perplexity": 5.188222413523567,
+        "targets": 55769
+      },
+      "resources": {
+        "carried_tensor_bytes": 524288,
+        "decode_bytes_per_second_median": 664.4989396102534,
+        "prefill_bytes_per_second_median": 22981.101275934805,
+        "repetitions": [
+          {
+            "decode_bytes_per_second": 664.4989396102534,
+            "prefill_bytes_per_second": 23652.242556010086
+          },
+          {
+            "decode_bytes_per_second": 661.9270517811142,
+            "prefill_bytes_per_second": 22254.320989355892
+          },
+          {
+            "decode_bytes_per_second": 664.5387547346699,
+            "prefill_bytes_per_second": 22981.101275934805
+          }
+        ]
+      },
+      "seed": 10601,
+      "test_carry": {
+        "accuracy": 0.4926034176693145,
+        "bits_per_byte": 2.4479984467094478,
+        "nll_nats": 1.6968232213517793,
+        "perplexity": 5.456585464632587,
+        "targets": 55769
+      },
+      "test_reset": {
+        "accuracy": 0.4896447847370403,
+        "bits_per_byte": 2.471640783853041,
+        "nll_nats": 1.7132108406847084,
+        "perplexity": 5.546742623016848,
+        "targets": 55769
+      }
+    },
+    {
+      "checkpoint_sha256": "909ca9642d682c5351f1c6e4915ccc8e07d4c86a6e324e070e130141720f2afc",
+      "dev_carry": {
+        "accuracy": 0.5063027847011781,
+        "bits_per_byte": 2.383508467991007,
+        "nll_nats": 1.652122174428721,
+        "perplexity": 5.218041680059077,
+        "targets": 55769
+      },
+      "dev_reset": {
+        "accuracy": 0.504186913876885,
+        "bits_per_byte": 2.400431592907839,
+        "nll_nats": 1.663852390751087,
+        "perplexity": 5.279610841555821,
+        "targets": 55769
+      },
+      "resources": {
+        "carried_tensor_bytes": 524288,
+        "decode_bytes_per_second_median": 659.6799618325363,
+        "prefill_bytes_per_second_median": 22753.144733458357,
+        "repetitions": [
+          {
+            "decode_bytes_per_second": 659.6799618325363,
+            "prefill_bytes_per_second": 23756.967705163028
+          },
+          {
+            "decode_bytes_per_second": 654.0413521732803,
+            "prefill_bytes_per_second": 22753.144733458357
+          },
+          {
+            "decode_bytes_per_second": 659.730959756057,
+            "prefill_bytes_per_second": 22694.254842972605
+          }
+        ]
+      },
+      "seed": 10602,
+      "test_carry": {
+        "accuracy": 0.4865427029353225,
+        "bits_per_byte": 2.492403885318455,
+        "nll_nats": 1.72760272592514,
+        "perplexity": 5.6271479103061255,
+        "targets": 55769
+      },
+      "test_reset": {
+        "accuracy": 0.4838709677419355,
+        "bits_per_byte": 2.509355718265585,
+        "nll_nats": 1.7393528411377666,
+        "perplexity": 5.6936575291927785,
+        "targets": 55769
+      }
+    },
+    {
+      "checkpoint_sha256": "fea4c18aa792bdd269a33c7926f0c0260ee89234b21d8774776ec0e71f3dfd9b",
+      "dev_carry": {
+        "accuracy": 0.5104986641324033,
+        "bits_per_byte": 2.3569194168113894,
+        "nll_nats": 1.633692048569805,
+        "perplexity": 5.122753300768185,
+        "targets": 55769
+      },
+      "dev_reset": {
+        "accuracy": 0.509369004285535,
+        "bits_per_byte": 2.3708030292842546,
+        "nll_nats": 1.6433154354113586,
+        "perplexity": 5.172289508225502,
+        "targets": 55769
+      },
+      "resources": {
+        "carried_tensor_bytes": 524288,
+        "decode_bytes_per_second_median": 664.9006386250933,
+        "prefill_bytes_per_second_median": 23019.18145232013,
+        "repetitions": [
+          {
+            "decode_bytes_per_second": 665.3210548332938,
+            "prefill_bytes_per_second": 24061.276552221396
+          },
+          {
+            "decode_bytes_per_second": 663.107691704208,
+            "prefill_bytes_per_second": 23019.18145232013
+          },
+          {
+            "decode_bytes_per_second": 664.9006386250933,
+            "prefill_bytes_per_second": 22834.414459605483
+          }
+        ]
+      },
+      "seed": 10603,
+      "test_carry": {
+        "accuracy": 0.49168893112661155,
+        "bits_per_byte": 2.4661389771610285,
+        "nll_nats": 1.7093972788881542,
+        "perplexity": 5.525630059873614,
+        "targets": 55769
+      },
+      "test_reset": {
+        "accuracy": 0.48959099141099893,
+        "bits_per_byte": 2.4838420306725175,
+        "nll_nats": 1.7216681005169447,
+        "perplexity": 5.593851793057092,
+        "targets": 55769
+      }
+    }
+  ],
+  "schema": "langbase107.owner-final-evaluation.v1",
+  "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+  "status": "THREE_TRANSFORMER_FITS_POSTHOC_EVALUATED_EXPLORATORY",
+  "transformer": {
+    "carried_tensor_bytes": 524288,
+    "mean_decode_bytes_per_second": 663.026513355961,
+    "mean_test_carry_accuracy": 0.49027835057708286,
+    "mean_test_carry_nll_nats": 1.7112744087216911,
+    "mean_test_reset_accuracy": 0.4877022479633249,
+    "mean_test_reset_bits_per_byte": 2.488279510930381,
+    "mean_test_reset_nll_nats": 1.7247439274464733,
+    "parameters": 998816
+  }
+}
