@@ -16,6 +16,7 @@ const errors = [];
 const own = (o, k) => Object.hasOwn(o, k);
 const object = x => x !== null && typeof x === 'object' && !Array.isArray(x);
 const nonempty = x => typeof x === 'string' && x.trim().length > 0;
+const placeholder = x => typeof x === 'string' && /^(?:not[ _-]?run|blocked|todo|tbd|unknown|fixture-only|placeholder|n\/a)$/i.test(x.trim());
 const finitePositive = x => typeof x === 'number' && Number.isFinite(x) && x > 0;
 if (!object(receipt)) errors.push('root must be an object');
 else {
@@ -24,11 +25,11 @@ else {
     'local_state_boundary','local_output_boundary','preprocessing_location',
     'embedding_location','inference_location','state_update_location',
     'speech_location','parity_reference','test_operator','tested_at_utc']) {
-    if (!own(receipt, field) || !nonempty(receipt[field])) errors.push(field + ': required nonempty string');
+    if (!own(receipt, field) || !nonempty(receipt[field]) || placeholder(receipt[field])) errors.push(field + ': required non-placeholder string');
   }
   if (!/^[a-f0-9]{64}$/i.test(receipt.model_sha256 ?? '')) errors.push('model_sha256: expected 64 hex characters');
   if (nonempty(receipt.tested_at_utc) && (Number.isNaN(Date.parse(receipt.tested_at_utc)) || !receipt.tested_at_utc.endsWith('Z'))) errors.push('tested_at_utc: expected UTC timestamp');
-  for (const field of ['preprocessing_location','embedding_location','inference_location','state_update_location']) {
+  for (const field of ['local_input_boundary','local_state_boundary','local_output_boundary','preprocessing_location','embedding_location','inference_location','state_update_location']) {
     if (receipt[field] !== 'device') errors.push(field + ': must equal device');
   }
   if (!['device','not_applicable'].includes(receipt.speech_location)) errors.push('speech_location: device or not_applicable required');
@@ -43,7 +44,7 @@ else {
   if (receipt.airplane_mode_tested !== true) errors.push('airplane_mode_tested must be true');
   if (receipt.network_requests_observed !== 0) errors.push('network_requests_observed must be zero');
   if (receipt.cloud_fallback_observed !== false) errors.push('cloud_fallback_observed must be false');
-  if (!nonempty(receipt.raw_evidence_path)) errors.push('raw_evidence_path required');
+  if (!nonempty(receipt.raw_evidence_path) || placeholder(receipt.raw_evidence_path)) errors.push('raw_evidence_path: non-placeholder path required');
 }
 if (errors.length) {
   console.error('INVALID physical-device receipt:\n' + errors.map(x => '- ' + x).join('\n'));
