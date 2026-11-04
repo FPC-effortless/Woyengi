@@ -1,0 +1,318 @@
+{
+  "cohort": [
+    {
+      "artifact_id": 13057152649,
+      "artifact_name": "LANGBASE107-fit-10601-attempt-1",
+      "artifact_zip_sha256": "f3e45c4e20fee56240b1c999e39782fd029e8ed31cb31e805f5bc66504924fca",
+      "checkpoint_bytes_verified": [
+        {
+          "file": "checkpoint-0.pt",
+          "sha256": "c8024c229bd406fadbf033775a8c98b997b0dcec3a89460763a3d7eb534c6bcb",
+          "step": 0
+        },
+        {
+          "file": "checkpoint-256.pt",
+          "sha256": "c232c3f80e9d2c78c42f50848f717611ae1dcd8b80a57cb34efaca9571eaa690",
+          "step": 256
+        },
+        {
+          "file": "checkpoint-1024.pt",
+          "sha256": "39340ce5ad45c483d038e52f5da7e2b05a28acaab1e2ea2d9b2ea0d8e7cfc535",
+          "step": 1024
+        },
+        {
+          "file": "checkpoint-2048.pt",
+          "sha256": "b2534251f79cedad16af90d990c1eda80e426e1e74e0f9086d9ef109853a74d6",
+          "step": 2048
+        },
+        {
+          "file": "checkpoint-4096.pt",
+          "sha256": "a0c62977e74623df0f15540d8d672c07d8f095b9e982e5195099d6612e831f02",
+          "step": 4096
+        }
+      ],
+      "fit_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "causal_transformer",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "a0c62977e74623df0f15540d8d672c07d8f095b9e982e5195099d6612e831f02",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "sha256": "c8024c229bd406fadbf033775a8c98b997b0dcec3a89460763a3d7eb534c6bcb",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "sha256": "c232c3f80e9d2c78c42f50848f717611ae1dcd8b80a57cb34efaca9571eaa690",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "sha256": "39340ce5ad45c483d038e52f5da7e2b05a28acaab1e2ea2d9b2ea0d8e7cfc535",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "sha256": "b2534251f79cedad16af90d990c1eda80e426e1e74e0f9086d9ef109853a74d6",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "sha256": "a0c62977e74623df0f15540d8d672c07d8f095b9e982e5195099d6612e831f02",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "context": 128,
+          "depth": 4,
+          "ffn_width": 680,
+          "heads": 8,
+          "vocab_size": 256,
+          "width": 128
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "f11a293a0e1ddf3e96bff57b73a322dd809c92dac44b2151526f3ddf2dabe0e3",
+        "first_fit_loss": 5.525065898895264,
+        "full_training_flops": "NOT_CERTIFIED",
+        "hardware": "CPU",
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "3050123d08b1eb562e3e52bc70ef7b9f6e89d9bd583d19385106b57557431032",
+        "last_fit_loss": 1.5638766288757324,
+        "parameter_count": 998816,
+        "parameters_changed": true,
+        "peak_rss_bytes": 535592960,
+        "precision": "float32",
+        "process_cpu_seconds": 554.214362027,
+        "protocol_sha256": "ff256f3d4f64741314866900bb1a63ad4c0f23f4e5c34847bc97d6d9fb891ab3",
+        "sample_draws": 32768,
+        "sample_offset_sha256": "af1afe983f64e1c840af0f2a68195446a398936d69ed88f21a607aad469ca4ad",
+        "schema": "langbase107.owner-fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_POSTHOC_TRANSFORMER_CONTROL",
+        "seed": 10601,
+        "smoke": false,
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 277.18438499300004
+      },
+      "fit_receipt_sha256": "2cc8eb28bc091097d99fe3d76dcf8b1f35d0c21f134dc2dfaffdf919712bb8da",
+      "raw_fit_receipt_b64": "ewogICJhcm0iOiAiY2F1c2FsX3RyYW5zZm9ybWVyIiwKICAic2VlZCI6IDEwNjAxLAogICJjb25maWciOiB7CiAgICAidm9jYWJfc2l6ZSI6IDI1NiwKICAgICJ3aWR0aCI6IDEyOCwKICAgICJkZXB0aCI6IDQsCiAgICAiaGVhZHMiOiA4LAogICAgImZmbl93aWR0aCI6IDY4MCwKICAgICJjb250ZXh0IjogMTI4CiAgfSwKICAicGFyYW1ldGVyX2NvdW50IjogOTk4ODE2LAogICJzb3VyY2Vfc2hhMjU2IjogIjg2YzRlNmFhOWRiN2MwNDJlYzc5ZjMzOWRjYjk2ZDQyYjAwNzVlMTZiOGZjMmU4NmJmMGNhNTdlMmRjNTY1ZWQiLAogICJ0cmFpbl9zaGEyNTYiOiAiYTllMjRlMjNhMWVjNzc3NDRkYWQyNjg0NGJmZDVhMDliNmUwNDE5NTRlMWVlZjAwMDBlN2YyNGNiYTZkYjczNSIsCiAgInByb3RvY29sX3NoYTI1NiI6ICJmZjI1NmYzZDRmNjQ3NDEzMTQ4NjY5MDBiYjFhNjNhZDRjMGYyM2Y0ZTVjMzQ4NDdiYzk3ZDZkOWZiODkxYWIzIiwKICAic2NpZW50aWZpY19zdGF0dXMiOiAiT1dORVJfQVVUSE9SSVpFRF9FWFBMT1JBVE9SWV9QT1NUSE9DX1RSQU5TRk9STUVSX0NPTlRST0wiLAogICJzbW9rZSI6IGZhbHNlLAogICJpbml0aWFsaXplZF9wYXJhbWV0ZXJzX3NoYTI1NiI6ICIzMDUwMTIzZDA4YjFlYjU2MmUzZTUyYmM3MGVmN2I5ZjZlODlkOWJkNTgzZDE5Mzg1MTA2YjU3NTU3NDMxMDMyIiwKICAic2NoZW1hIjogImxhbmdiYXNlMTA3Lm93bmVyLWZpdC1yZWNlaXB0LnYxIiwKICAic3RhdHVzIjogIkZJVF9DT01QTEVURURfRVhQTE9SQVRPUlkiLAogICJhY3R1YWxfc3RlcHMiOiA0MDk2LAogICJleHBlY3RlZF9zdGVwcyI6IDQwOTYsCiAgInNhbXBsZV9kcmF3cyI6IDMyNzY4LAogICJzYW1wbGVfb2Zmc2V0X3NoYTI1NiI6ICJhZjFhZmU5ODNmNjRlMWM4NDBhZjBmMmE2ODE5NTQ0NmEzOTg5MzZkNjllZDg4ZjIxYTYwN2FhZDQ2OWNhNGFkIiwKICAidHJhaW5pbmdfYnl0ZV9wcmVzZW50YXRpb25zIjogNDE5NDMwNCwKICAiZmlyc3RfZml0X2xvc3MiOiA1LjUyNTA2NTg5ODg5NTI2NCwKICAibGFzdF9maXRfbG9zcyI6IDEuNTYzODc2NjI4ODc1NzMyNCwKICAiZmluYWxfcGFyYW1ldGVyc19zaGEyNTYiOiAiZjExYTI5M2EwZTFkZGYzZTk2YmZmNTdiNzNhMzIyZGQ4MDljOTJkYWM0NGIyMTUxNTI2ZjNkZGYyZGFiZTBlMyIsCiAgInBhcmFtZXRlcnNfY2hhbmdlZCI6IHRydWUsCiAgImNoZWNrcG9pbnRfZmlsZSI6ICJjaGVja3BvaW50LTQwOTYucHQiLAogICJjaGVja3BvaW50X3NoYTI1NiI6ICJhMGM2Mjk3N2U3NDYyM2RmMGYxNTU0MGQ4ZDY3MmMwN2Q4ZjA5NWI5ZTk4MmU1MTk1MDk5ZDY2MTJlODMxZjAyIiwKICAiY2hlY2twb2ludHMiOiBbCiAgICB7CiAgICAgICJzdGVwIjogMCwKICAgICAgImZpbGUiOiAiY2hlY2twb2ludC0wLnB0IiwKICAgICAgInNoYTI1NiI6ICJjODAyNGMyMjliZDQwNmZhZGJmMDMzNzc1YThjOThiOTk3YjBkY2VjM2E4OTQ2MDc2M2EzZDdlYjUzNGM2YmNiIgogICAgfSwKICAgIHsKICAgICAgInN0ZXAiOiAyNTYsCiAgICAgICJmaWxlIjogImNoZWNrcG9pbnQtMjU2LnB0IiwKICAgICAgInNoYTI1NiI6ICJjMjMyYzNmODBlOWQyYzc4YzQyZjUwODQ4ZjcxNzYxMWFlMWRjZDhiODBhNTdjYjM0ZWZhY2E5NTcxZWFhNjkwIgogICAgfSwKICAgIHsKICAgICAgInN0ZXAiOiAxMDI0LAogICAgICAiZmlsZSI6ICJjaGVja3BvaW50LTEwMjQucHQiLAogICAgICAic2hhMjU2IjogIjM5MzQwY2U1YWQ0NWM0ODNkMDM4ZTUyZjVkYTdlMmIwNWEyOGFjYWFiMWUyZWEyZDliMmVhMGQ4ZTdjZmM1MzUiCiAgICB9LAogICAgewogICAgICAic3RlcCI6IDIwNDgsCiAgICAgICJmaWxlIjogImNoZWNrcG9pbnQtMjA0OC5wdCIsCiAgICAgICJzaGEyNTYiOiAiYjI1MzQyNTFmNzljZWRhZDE2YWY5MGQ5OTBjMWVkYTgwZTQyNmUxZTc0ZTBmOTA4NmQ5ZWYxMDk4NTNhNzRkNiIKICAgIH0sCiAgICB7CiAgICAgICJzdGVwIjogNDA5NiwKICAgICAgImZpbGUiOiAiY2hlY2twb2ludC00MDk2LnB0IiwKICAgICAgInNoYTI1NiI6ICJhMGM2Mjk3N2U3NDYyM2RmMGYxNTU0MGQ4ZDY3MmMwN2Q4ZjA5NWI5ZTk4MmU1MTk1MDk5ZDY2MTJlODMxZjAyIgogICAgfQogIF0sCiAgIndhbGxfc2Vjb25kcyI6IDI3Ny4xODQzODQ5OTMwMDAwNCwKICAicHJvY2Vzc19jcHVfc2Vjb25kcyI6IDU1NC4yMTQzNjIwMjcsCiAgInBlYWtfcnNzX2J5dGVzIjogNTM1NTkyOTYwLAogICJoYXJkd2FyZSI6ICJDUFUiLAogICJjcHVfdGhyZWFkcyI6IDIsCiAgInByZWNpc2lvbiI6ICJmbG9hdDMyIiwKICAiZGV2X3Njb3JlZCI6IGZhbHNlLAogICJ0ZXN0X2FjY2Vzc2VkIjogZmFsc2UsCiAgImluZGVwZW5kZW50bHlfcXVhbGlmaWVkIjogZmFsc2UsCiAgImFyY2hpdGVjdHVyZV9zdXBlcmlvcml0eSI6IGZhbHNlLAogICJmdWxsX3RyYWluaW5nX2Zsb3BzIjogIk5PVF9DRVJUSUZJRUQiCn0K"
+    },
+    {
+      "artifact_id": 13057201598,
+      "artifact_name": "LANGBASE107-fit-10602-attempt-1",
+      "artifact_zip_sha256": "eb3bfe5a2cae91f5ffe5c9ef6457d5e91867fe0169d671dd535a671857a6c16b",
+      "checkpoint_bytes_verified": [
+        {
+          "file": "checkpoint-0.pt",
+          "sha256": "6e9b26eebc82a6f3c582eef33aad30868ab5e8d9a1c61cb5b6201cc84e09f836",
+          "step": 0
+        },
+        {
+          "file": "checkpoint-256.pt",
+          "sha256": "dad06e912e4440df7d4968a93a37ecc7ef2c2ecde0e272e3cd09caf0e21391eb",
+          "step": 256
+        },
+        {
+          "file": "checkpoint-1024.pt",
+          "sha256": "9fba41120a3094546646a763703d2a334d422ac6a088babbd87cd87411a2beca",
+          "step": 1024
+        },
+        {
+          "file": "checkpoint-2048.pt",
+          "sha256": "71b52c0939597d63091ccca26643da8a181c7b5053c232a02db0fb878311fb15",
+          "step": 2048
+        },
+        {
+          "file": "checkpoint-4096.pt",
+          "sha256": "909ca9642d682c5351f1c6e4915ccc8e07d4c86a6e324e070e130141720f2afc",
+          "step": 4096
+        }
+      ],
+      "fit_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "causal_transformer",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "909ca9642d682c5351f1c6e4915ccc8e07d4c86a6e324e070e130141720f2afc",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "sha256": "6e9b26eebc82a6f3c582eef33aad30868ab5e8d9a1c61cb5b6201cc84e09f836",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "sha256": "dad06e912e4440df7d4968a93a37ecc7ef2c2ecde0e272e3cd09caf0e21391eb",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "sha256": "9fba41120a3094546646a763703d2a334d422ac6a088babbd87cd87411a2beca",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "sha256": "71b52c0939597d63091ccca26643da8a181c7b5053c232a02db0fb878311fb15",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "sha256": "909ca9642d682c5351f1c6e4915ccc8e07d4c86a6e324e070e130141720f2afc",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "context": 128,
+          "depth": 4,
+          "ffn_width": 680,
+          "heads": 8,
+          "vocab_size": 256,
+          "width": 128
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "30c63a075b3900841e66623654ac8d4a4e2a67d6a7786ad1fb824aa96ee8b1aa",
+        "first_fit_loss": 5.54913330078125,
+        "full_training_flops": "NOT_CERTIFIED",
+        "hardware": "CPU",
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "002f7c6644bb0c5ef1fd38c653727b49132aef882801447f67eaeef13db35861",
+        "last_fit_loss": 1.5614244937896729,
+        "parameter_count": 998816,
+        "parameters_changed": true,
+        "peak_rss_bytes": 520732672,
+        "precision": "float32",
+        "process_cpu_seconds": 689.14124726,
+        "protocol_sha256": "ff256f3d4f64741314866900bb1a63ad4c0f23f4e5c34847bc97d6d9fb891ab3",
+        "sample_draws": 32768,
+        "sample_offset_sha256": "efc1cf90e849624c3dabe8357694f58260adcbdcfed1c7ea97a9a5d78ecd3c81",
+        "schema": "langbase107.owner-fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_POSTHOC_TRANSFORMER_CONTROL",
+        "seed": 10602,
+        "smoke": false,
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 344.644581621
+      },
+      "fit_receipt_sha256": "2ae6d7aa5466329e9235ee0a9b6d1c6ff8ecc888e7f40781147485a5ff9bc862",
+      "raw_fit_receipt_b64": "ewogICJhcm0iOiAiY2F1c2FsX3RyYW5zZm9ybWVyIiwKICAic2VlZCI6IDEwNjAyLAogICJjb25maWciOiB7CiAgICAidm9jYWJfc2l6ZSI6IDI1NiwKICAgICJ3aWR0aCI6IDEyOCwKICAgICJkZXB0aCI6IDQsCiAgICAiaGVhZHMiOiA4LAogICAgImZmbl93aWR0aCI6IDY4MCwKICAgICJjb250ZXh0IjogMTI4CiAgfSwKICAicGFyYW1ldGVyX2NvdW50IjogOTk4ODE2LAogICJzb3VyY2Vfc2hhMjU2IjogIjg2YzRlNmFhOWRiN2MwNDJlYzc5ZjMzOWRjYjk2ZDQyYjAwNzVlMTZiOGZjMmU4NmJmMGNhNTdlMmRjNTY1ZWQiLAogICJ0cmFpbl9zaGEyNTYiOiAiYTllMjRlMjNhMWVjNzc3NDRkYWQyNjg0NGJmZDVhMDliNmUwNDE5NTRlMWVlZjAwMDBlN2YyNGNiYTZkYjczNSIsCiAgInByb3RvY29sX3NoYTI1NiI6ICJmZjI1NmYzZDRmNjQ3NDEzMTQ4NjY5MDBiYjFhNjNhZDRjMGYyM2Y0ZTVjMzQ4NDdiYzk3ZDZkOWZiODkxYWIzIiwKICAic2NpZW50aWZpY19zdGF0dXMiOiAiT1dORVJfQVVUSE9SSVpFRF9FWFBMT1JBVE9SWV9QT1NUSE9DX1RSQU5TRk9STUVSX0NPTlRST0wiLAogICJzbW9rZSI6IGZhbHNlLAogICJpbml0aWFsaXplZF9wYXJhbWV0ZXJzX3NoYTI1NiI6ICIwMDJmN2M2NjQ0YmIwYzVlZjFmZDM4YzY1MzcyN2I0OTEzMmFlZjg4MjgwMTQ0N2Y2N2VhZWVmMTNkYjM1ODYxIiwKICAic2NoZW1hIjogImxhbmdiYXNlMTA3Lm93bmVyLWZpdC1yZWNlaXB0LnYxIiwKICAic3RhdHVzIjogIkZJVF9DT01QTEVURURfRVhQTE9SQVRPUlkiLAogICJhY3R1YWxfc3RlcHMiOiA0MDk2LAogICJleHBlY3RlZF9zdGVwcyI6IDQwOTYsCiAgInNhbXBsZV9kcmF3cyI6IDMyNzY4LAogICJzYW1wbGVfb2Zmc2V0X3NoYTI1NiI6ICJlZmMxY2Y5MGU4NDk2MjRjM2RhYmU4MzU3Njk0ZjU4MjYwYWRjYmRjZmVkMWM3ZWE5N2E5YTVkNzhlY2QzYzgxIiwKICAidHJhaW5pbmdfYnl0ZV9wcmVzZW50YXRpb25zIjogNDE5NDMwNCwKICAiZmlyc3RfZml0X2xvc3MiOiA1LjU0OTEzMzMwMDc4MTI1LAogICJsYXN0X2ZpdF9sb3NzIjogMS41NjE0MjQ0OTM3ODk2NzI5LAogICJmaW5hbF9wYXJhbWV0ZXJzX3NoYTI1NiI6ICIzMGM2M2EwNzViMzkwMDg0MWU2NjYyMzY1NGFjOGQ0YTRlMmE2N2Q2YTc3ODZhZDFmYjgyNGFhOTZlZThiMWFhIiwKICAicGFyYW1ldGVyc19jaGFuZ2VkIjogdHJ1ZSwKICAiY2hlY2twb2ludF9maWxlIjogImNoZWNrcG9pbnQtNDA5Ni5wdCIsCiAgImNoZWNrcG9pbnRfc2hhMjU2IjogIjkwOWNhOTY0MmQ2ODJjNTM1MWYxYzZlNDkxNWNjYzhlMDdkNGM4NmE2ZTMyNGUwNzBlMTMwMTQxNzIwZjJhZmMiLAogICJjaGVja3BvaW50cyI6IFsKICAgIHsKICAgICAgInN0ZXAiOiAwLAogICAgICAiZmlsZSI6ICJjaGVja3BvaW50LTAucHQiLAogICAgICAic2hhMjU2IjogIjZlOWIyNmVlYmM4MmE2ZjNjNTgyZWVmMzNhYWQzMDg2OGFiNWU4ZDlhMWM2MWNiNWI2MjAxY2M4NGUwOWY4MzYiCiAgICB9LAogICAgewogICAgICAic3RlcCI6IDI1NiwKICAgICAgImZpbGUiOiAiY2hlY2twb2ludC0yNTYucHQiLAogICAgICAic2hhMjU2IjogImRhZDA2ZTkxMmU0NDQwZGY3ZDQ5NjhhOTNhMzdlY2M3ZWYyYzJlY2RlMGUyNzJlM2NkMDljYWYwZTIxMzkxZWIiCiAgICB9LAogICAgewogICAgICAic3RlcCI6IDEwMjQsCiAgICAgICJmaWxlIjogImNoZWNrcG9pbnQtMTAyNC5wdCIsCiAgICAgICJzaGEyNTYiOiAiOWZiYTQxMTIwYTMwOTQ1NDY2NDZhNzYzNzAzZDJhMzM0ZDQyMmFjNmEwODhiYWJiZDg3Y2Q4NzQxMWEyYmVjYSIKICAgIH0sCiAgICB7CiAgICAgICJzdGVwIjogMjA0OCwKICAgICAgImZpbGUiOiAiY2hlY2twb2ludC0yMDQ4LnB0IiwKICAgICAgInNoYTI1NiI6ICI3MWI1MmMwOTM5NTk3ZDYzMDkxY2NjYTI2NjQzZGE4YTE4MWM3YjUwNTNjMjMyYTAyZGIwZmI4NzgzMTFmYjE1IgogICAgfSwKICAgIHsKICAgICAgInN0ZXAiOiA0MDk2LAogICAgICAiZmlsZSI6ICJjaGVja3BvaW50LTQwOTYucHQiLAogICAgICAic2hhMjU2IjogIjkwOWNhOTY0MmQ2ODJjNTM1MWYxYzZlNDkxNWNjYzhlMDdkNGM4NmE2ZTMyNGUwNzBlMTMwMTQxNzIwZjJhZmMiCiAgICB9CiAgXSwKICAid2FsbF9zZWNvbmRzIjogMzQ0LjY0NDU4MTYyMSwKICAicHJvY2Vzc19jcHVfc2Vjb25kcyI6IDY4OS4xNDEyNDcyNiwKICAicGVha19yc3NfYnl0ZXMiOiA1MjA3MzI2NzIsCiAgImhhcmR3YXJlIjogIkNQVSIsCiAgImNwdV90aHJlYWRzIjogMiwKICAicHJlY2lzaW9uIjogImZsb2F0MzIiLAogICJkZXZfc2NvcmVkIjogZmFsc2UsCiAgInRlc3RfYWNjZXNzZWQiOiBmYWxzZSwKICAiaW5kZXBlbmRlbnRseV9xdWFsaWZpZWQiOiBmYWxzZSwKICAiYXJjaGl0ZWN0dXJlX3N1cGVyaW9yaXR5IjogZmFsc2UsCiAgImZ1bGxfdHJhaW5pbmdfZmxvcHMiOiAiTk9UX0NFUlRJRklFRCIKfQo="
+    },
+    {
+      "artifact_id": 13057625789,
+      "artifact_name": "LANGBASE107-fit-10603-attempt-1",
+      "artifact_zip_sha256": "ff5bc59dd2a0ac21f0a13d4235ebce4952db107e21705690ce81d1c2a14b0e2d",
+      "checkpoint_bytes_verified": [
+        {
+          "file": "checkpoint-0.pt",
+          "sha256": "afc95d62e3aa25aa9385df58aee24d30014c4280a14fcf54a419d618cc3d5149",
+          "step": 0
+        },
+        {
+          "file": "checkpoint-256.pt",
+          "sha256": "011f6c39a4f6698a5c35ec1966885876d572afcc37c85647ed227b1d52fb6efd",
+          "step": 256
+        },
+        {
+          "file": "checkpoint-1024.pt",
+          "sha256": "d17f06c11f8dee174ba1ff02084279b9ba0b2b21b46c76cadb83a17937a00c56",
+          "step": 1024
+        },
+        {
+          "file": "checkpoint-2048.pt",
+          "sha256": "6e0205b775727e0c6fd9285dc45f452935ea39f22d117ba1303b83e758e2199d",
+          "step": 2048
+        },
+        {
+          "file": "checkpoint-4096.pt",
+          "sha256": "fea4c18aa792bdd269a33c7926f0c0260ee89234b21d8774776ec0e71f3dfd9b",
+          "step": 4096
+        }
+      ],
+      "fit_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "causal_transformer",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "fea4c18aa792bdd269a33c7926f0c0260ee89234b21d8774776ec0e71f3dfd9b",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "sha256": "afc95d62e3aa25aa9385df58aee24d30014c4280a14fcf54a419d618cc3d5149",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "sha256": "011f6c39a4f6698a5c35ec1966885876d572afcc37c85647ed227b1d52fb6efd",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "sha256": "d17f06c11f8dee174ba1ff02084279b9ba0b2b21b46c76cadb83a17937a00c56",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "sha256": "6e0205b775727e0c6fd9285dc45f452935ea39f22d117ba1303b83e758e2199d",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "sha256": "fea4c18aa792bdd269a33c7926f0c0260ee89234b21d8774776ec0e71f3dfd9b",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "context": 128,
+          "depth": 4,
+          "ffn_width": 680,
+          "heads": 8,
+          "vocab_size": 256,
+          "width": 128
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "7c93bbaee79a53eb5b17177b8093dc5a2a53193d15d544c3376f9c4a97093fa8",
+        "first_fit_loss": 5.471395969390869,
+        "full_training_flops": "NOT_CERTIFIED",
+        "hardware": "CPU",
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "a59f7c1abf1aa1bab9b80ca14f1f54f997ab4a286a6ca1d0814a3974ad33c91e",
+        "last_fit_loss": 1.4918831586837769,
+        "parameter_count": 998816,
+        "parameters_changed": true,
+        "peak_rss_bytes": 518434816,
+        "precision": "float32",
+        "process_cpu_seconds": 706.323041371,
+        "protocol_sha256": "ff256f3d4f64741314866900bb1a63ad4c0f23f4e5c34847bc97d6d9fb891ab3",
+        "sample_draws": 32768,
+        "sample_offset_sha256": "171e84336bc712de65bd62cda8494ab690e9ade8c586ceb90a24bfa730bf5cfa",
+        "schema": "langbase107.owner-fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_POSTHOC_TRANSFORMER_CONTROL",
+        "seed": 10603,
+        "smoke": false,
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 353.24037319900003
+      },
+      "fit_receipt_sha256": "766288fe983e9fdb376ac88c44a70d6d2298b95946628e7c9737ba2603fbf5fc",
+      "raw_fit_receipt_b64": "ewogICJhcm0iOiAiY2F1c2FsX3RyYW5zZm9ybWVyIiwKICAic2VlZCI6IDEwNjAzLAogICJjb25maWciOiB7CiAgICAidm9jYWJfc2l6ZSI6IDI1NiwKICAgICJ3aWR0aCI6IDEyOCwKICAgICJkZXB0aCI6IDQsCiAgICAiaGVhZHMiOiA4LAogICAgImZmbl93aWR0aCI6IDY4MCwKICAgICJjb250ZXh0IjogMTI4CiAgfSwKICAicGFyYW1ldGVyX2NvdW50IjogOTk4ODE2LAogICJzb3VyY2Vfc2hhMjU2IjogIjg2YzRlNmFhOWRiN2MwNDJlYzc5ZjMzOWRjYjk2ZDQyYjAwNzVlMTZiOGZjMmU4NmJmMGNhNTdlMmRjNTY1ZWQiLAogICJ0cmFpbl9zaGEyNTYiOiAiYTllMjRlMjNhMWVjNzc3NDRkYWQyNjg0NGJmZDVhMDliNmUwNDE5NTRlMWVlZjAwMDBlN2YyNGNiYTZkYjczNSIsCiAgInByb3RvY29sX3NoYTI1NiI6ICJmZjI1NmYzZDRmNjQ3NDEzMTQ4NjY5MDBiYjFhNjNhZDRjMGYyM2Y0ZTVjMzQ4NDdiYzk3ZDZkOWZiODkxYWIzIiwKICAic2NpZW50aWZpY19zdGF0dXMiOiAiT1dORVJfQVVUSE9SSVpFRF9FWFBMT1JBVE9SWV9QT1NUSE9DX1RSQU5TRk9STUVSX0NPTlRST0wiLAogICJzbW9rZSI6IGZhbHNlLAogICJpbml0aWFsaXplZF9wYXJhbWV0ZXJzX3NoYTI1NiI6ICJhNTlmN2MxYWJmMWFhMWJhYjliODBjYTE0ZjFmNTRmOTk3YWI0YTI4NmE2Y2ExZDA4MTRhMzk3NGFkMzNjOTFlIiwKICAic2NoZW1hIjogImxhbmdiYXNlMTA3Lm93bmVyLWZpdC1yZWNlaXB0LnYxIiwKICAic3RhdHVzIjogIkZJVF9DT01QTEVURURfRVhQTE9SQVRPUlkiLAogICJhY3R1YWxfc3RlcHMiOiA0MDk2LAogICJleHBlY3RlZF9zdGVwcyI6IDQwOTYsCiAgInNhbXBsZV9kcmF3cyI6IDMyNzY4LAogICJzYW1wbGVfb2Zmc2V0X3NoYTI1NiI6ICIxNzFlODQzMzZiYzcxMmRlNjViZDYyY2RhODQ5NGFiNjkwZTlhZGU4YzU4NmNlYjkwYTI0YmZhNzMwYmY1Y2ZhIiwKICAidHJhaW5pbmdfYnl0ZV9wcmVzZW50YXRpb25zIjogNDE5NDMwNCwKICAiZmlyc3RfZml0X2xvc3MiOiA1LjQ3MTM5NTk2OTM5MDg2OSwKICAibGFzdF9maXRfbG9zcyI6IDEuNDkxODgzMTU4NjgzNzc2OSwKICAiZmluYWxfcGFyYW1ldGVyc19zaGEyNTYiOiAiN2M5M2JiYWVlNzlhNTNlYjViMTcxNzdiODA5M2RjNWEyYTUzMTkzZDE1ZDU0NGMzMzc2ZjljNGE5NzA5M2ZhOCIsCiAgInBhcmFtZXRlcnNfY2hhbmdlZCI6IHRydWUsCiAgImNoZWNrcG9pbnRfZmlsZSI6ICJjaGVja3BvaW50LTQwOTYucHQiLAogICJjaGVja3BvaW50X3NoYTI1NiI6ICJmZWE0YzE4YWE3OTJiZGQyNjlhMzNjNzkyNmYwYzAyNjBlZTg5MjM0YjIxZDg3NzQ3NzZlYzBlNzFmM2RmZDliIiwKICAiY2hlY2twb2ludHMiOiBbCiAgICB7CiAgICAgICJzdGVwIjogMCwKICAgICAgImZpbGUiOiAiY2hlY2twb2ludC0wLnB0IiwKICAgICAgInNoYTI1NiI6ICJhZmM5NWQ2MmUzYWEyNWFhOTM4NWRmNThhZWUyNGQzMDAxNGM0MjgwYTE0ZmNmNTRhNDE5ZDYxOGNjM2Q1MTQ5IgogICAgfSwKICAgIHsKICAgICAgInN0ZXAiOiAyNTYsCiAgICAgICJmaWxlIjogImNoZWNrcG9pbnQtMjU2LnB0IiwKICAgICAgInNoYTI1NiI6ICIwMTFmNmMzOWE0ZjY2OThhNWMzNWVjMTk2Njg4NTg3NmQ1NzJhZmNjMzdjODU2NDdlZDIyN2IxZDUyZmI2ZWZkIgogICAgfSwKICAgIHsKICAgICAgInN0ZXAiOiAxMDI0LAogICAgICAiZmlsZSI6ICJjaGVja3BvaW50LTEwMjQucHQiLAogICAgICAic2hhMjU2IjogImQxN2YwNmMxMWY4ZGVlMTc0YmExZmYwMjA4NDI3OWI5YmEwYjJiMjFiNDZjNzZjYWRiODNhMTc5MzdhMDBjNTYiCiAgICB9LAogICAgewogICAgICAic3RlcCI6IDIwNDgsCiAgICAgICJmaWxlIjogImNoZWNrcG9pbnQtMjA0OC5wdCIsCiAgICAgICJzaGEyNTYiOiAiNmUwMjA1Yjc3NTcyN2UwYzZmZDkyODVkYzQ1ZjQ1MjkzNWVhMzlmMjJkMTE3YmExMzAzYjgzZTc1OGUyMTk5ZCIKICAgIH0sCiAgICB7CiAgICAgICJzdGVwIjogNDA5NiwKICAgICAgImZpbGUiOiAiY2hlY2twb2ludC00MDk2LnB0IiwKICAgICAgInNoYTI1NiI6ICJmZWE0YzE4YWE3OTJiZGQyNjlhMzNjNzkyNmYwYzAyNjBlZTg5MjM0YjIxZDg3NzQ3NzZlYzBlNzFmM2RmZDliIgogICAgfQogIF0sCiAgIndhbGxfc2Vjb25kcyI6IDM1My4yNDAzNzMxOTkwMDAwMywKICAicHJvY2Vzc19jcHVfc2Vjb25kcyI6IDcwNi4zMjMwNDEzNzEsCiAgInBlYWtfcnNzX2J5dGVzIjogNTE4NDM0ODE2LAogICJoYXJkd2FyZSI6ICJDUFUiLAogICJjcHVfdGhyZWFkcyI6IDIsCiAgInByZWNpc2lvbiI6ICJmbG9hdDMyIiwKICAiZGV2X3Njb3JlZCI6IGZhbHNlLAogICJ0ZXN0X2FjY2Vzc2VkIjogZmFsc2UsCiAgImluZGVwZW5kZW50bHlfcXVhbGlmaWVkIjogZmFsc2UsCiAgImFyY2hpdGVjdHVyZV9zdXBlcmlvcml0eSI6IGZhbHNlLAogICJmdWxsX3RyYWluaW5nX2Zsb3BzIjogIk5PVF9DRVJUSUZJRUQiCn0K"
+    }
+  ],
+  "provenance": "local whole-ZIP hash and member checks, NOT scientific re-execution or external signature",
+  "schema": "wil-rbs.transformer107-extracted-receipts.v1"
+}
