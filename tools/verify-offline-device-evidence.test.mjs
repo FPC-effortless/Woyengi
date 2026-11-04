@@ -14,17 +14,17 @@ function check(value) {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 const valid = {
-  model_id: 'fixture-only', model_sha256: 'a'.repeat(64),
-  device_model: 'fixture-only', device_os: 'Android', device_os_version: '16',
-  runtime: 'fixture-only', export_format: 'fixture-only', operator_compatibility: 'fixture-only',
+  model_id: 'synthetic-example', model_sha256: 'a'.repeat(64),
+  device_model: 'synthetic-example', device_os: 'Android', device_os_version: '16',
+  runtime: 'synthetic-example', export_format: 'synthetic-example', operator_compatibility: 'synthetic-example',
   local_input_boundary: 'device', local_state_boundary: 'device', local_output_boundary: 'device',
   preprocessing_location: 'device', embedding_location: 'device', inference_location: 'device',
   state_update_location: 'device', speech_location: 'not_applicable',
-  parity_reference: 'fixture-only', test_operator: 'fixture-only', tested_at_utc: '2026-11-03T00:00:00Z',
+  parity_reference: 'synthetic-example', test_operator: 'synthetic-example', tested_at_utc: '2026-11-03T00:00:00Z',
   measurements: { latency_p50_ms: 1, latency_p95_ms: 2, peak_ram_mb: 3,
     energy_mj_per_inference: 4, numerical_parity_max_abs_error: 0 },
   physical_device_tested: true, airplane_mode_tested: true,
-  network_requests_observed: 0, cloud_fallback_observed: false, raw_evidence_path: 'fixture-only'
+  network_requests_observed: 0, cloud_fallback_observed: false, raw_evidence_path: 'synthetic-example'
 };
 test('complete synthetic fixture passes schema only', () => assert.equal(check(valid).status, 0));
 test('missing physical evidence fails closed', () => assert.notEqual(check({ ...valid, physical_device_tested: false }).status, 0));
@@ -32,3 +32,7 @@ test('network activity fails closed', () => assert.notEqual(check({ ...valid, ne
 test('remote preprocessing fails closed', () => assert.notEqual(check({ ...valid, preprocessing_location: 'cloud' }).status, 0));
 test('unmeasured energy fails closed', () => assert.notEqual(check({ ...valid, measurements: { ...valid.measurements, energy_mj_per_inference: null } }).status, 0));
 test('p95 below p50 fails closed', () => assert.notEqual(check({ ...valid, measurements: { ...valid.measurements, latency_p95_ms: 0.5 } }).status, 0));
+
+test('placeholder operator compatibility fails closed', () => assert.notEqual(check({ ...valid, operator_compatibility: 'NOT RUN' }).status, 0));
+test('remote output boundary fails closed', () => assert.notEqual(check({ ...valid, local_output_boundary: 'cloud' }).status, 0));
+test('placeholder evidence path fails closed', () => assert.notEqual(check({ ...valid, raw_evidence_path: 'TBD' }).status, 0));
