@@ -73,6 +73,7 @@ jobs:
         run: |
           python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl /tmp/wil-rbs-langdepth106.json
           python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl /tmp/wil-rbs-transformer107.json
+          python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl research/wil-rbs/examples/historical_aggregates.json
           python research/wil-rbs/wil_rbs_ledger.py verify /tmp/wil-rbs-events.jsonl > /tmp/wil-rbs-ledger-verification.json
           python research/wil-rbs/wil_rbs_ledger.py export /tmp/wil-rbs-events.jsonl --output /tmp/wil-rbs-registry-snapshot.json
           python research/wil-rbs/wil_rbs.py validate /tmp/wil-rbs-registry-snapshot.json
@@ -80,9 +81,25 @@ jobs:
           import json
           from pathlib import Path
           x=json.loads(Path('/tmp/wil-rbs-ledger-verification.json').read_text())
-          assert x['status']=='VALID' and x['records']==6+30+48+3+15+24
+          assert x['status']=='VALID' and x['records']==6+30+48+3+15+24+4
           assert x['external_anchor_required']
           PYTEST
+      - name: Cross-study catalog; missing data cannot generate rankings
+        run: |
+          python research/wil-rbs/wil_rbs_catalog.py /tmp/wil-rbs-registry-snapshot.json --output /tmp/wil-rbs-cross-study-catalog.json
+          python research/wil-rbs/wil_rbs_catalog.py /tmp/wil-rbs-registry-snapshot.json --cost training_flops --output /tmp/wil-rbs-cross-study-flops.json
+          python - <<'PYCHECK'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('/tmp/wil-rbs-cross-study-catalog.json').read_text())
+          f=json.loads(Path('/tmp/wil-rbs-cross-study-flops.json').read_text())
+          assert c['status']=='EXPLORATORY_CATALOG'
+          assert c['record_count']==7 and c['comparability_group_count']==0
+          assert all(m['descriptive_pareto'] is None for m in c['models'])
+          assert f['record_count']==7 and f['comparability_group_count']==0
+          assert all(m['mean_cost'] is None for m in f['models'])
+          assert c['science_qualified'] is False
+          PYCHECK
       - name: Publish read-only import analysis artifact
         uses: actions/upload-artifact@v4
         with:
@@ -96,4 +113,6 @@ jobs:
             /tmp/wil-rbs-partial-compute.json
             /tmp/wil-rbs-ledger-verification.json
             /tmp/wil-rbs-registry-snapshot.json
+            /tmp/wil-rbs-cross-study-catalog.json
+            /tmp/wil-rbs-cross-study-flops.json
           retention-days: 30
