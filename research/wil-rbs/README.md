@@ -174,3 +174,53 @@ The project-specific TAC-OSM scientific gates and Woyengi constitutional
 state/evidence boundaries remain separate and unchanged. This code belongs
 in research infrastructure, not the platform kernel, and is unmerged until
 its PR/CI/reviewer requirements are satisfied.
+
+## v1.3: cross-study catalogue and opt-in training instrumentation
+
+`wil_rbs_catalog.py` produces a descriptive catalogue across studies and
+historical summaries, including the source contract, NLL units, seed variation,
+training time/parameter/state costs, and **missing evidence status**. No score
+ranking is permitted from a shared dataset name or absent evaluator hashes.
+
+```sh
+python research/wil-rbs/wil_rbs_catalog.py /tmp/wil-rbs-registry-snapshot.json \
+  --metric nll --split test --mode reset_windows --cost training_wall_seconds
+python research/wil-rbs/wil_rbs_catalog.py /tmp/wil-rbs-registry-snapshot.json \
+  --cost training_flops
+```
+
+The GitHub workflow now appends four historical summaries to the original 126
+TAC106/Transformer107 training-run, checkpoint and evaluation records: **130
+records total**, comprising 9 runs, 45 checkpoints, 72 evaluations and
+4 historical summaries. The catalogue contains 7 descriptive model entries.
+Missing exact target/evaluator digests and full training FLOPs prevent a
+qualified cross-study leaderboard. Historical summaries lacking a specified
+reset-versus-carry mode are displayed but never assigned a guessed mode.
+
+`wil_rbs_instrument.py` supplies an opt-in context manager for recording
+attempted, completed and failed training steps, including named `data`,
+`forward`, `backward`, `optimizer` and `other` durations. The caller must
+execute its own approved update; no training job starts automatically.
+
+```python
+from wil_rbs_instrument import TrainingStepMeter
+
+meter = TrainingStepMeter(run_id="authorized-run-id",
+                          hardware_id="cpu-runner", precision="fp32")
+with meter.step(1):
+    with meter.stage("forward"):
+        ...  # actual approved forward pass
+    with meter.stage("backward"):
+        ...  # actual approved backward pass
+    with meter.stage("optimizer"):
+        ...  # actual approved optimizer update
+receipt = meter.receipt()
+```
+
+**Limitations:** This is a timing receipt, not a complete FLOP measurement or
+signed independent attestation. Accelerator timings require a synchronization
+callback. `profile_torch_forward` optionally records a partial CPU PyTorch
+operator FLOP census, explicitly leaving training FLOPs and uncovered kernels
+unknown. A SHA-256 digest helps detect accidental receipt changes, but an
+external trust anchor is required for tamper resistance. No GPU compute or
+model training is triggered by the new tests.
