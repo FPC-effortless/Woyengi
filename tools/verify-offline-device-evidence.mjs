@@ -28,7 +28,11 @@ else {
     if (!own(receipt, field) || !nonempty(receipt[field]) || placeholder(receipt[field])) errors.push(field + ': required non-placeholder string');
   }
   if (!/^[a-f0-9]{64}$/i.test(receipt.model_sha256 ?? '')) errors.push('model_sha256: expected 64 hex characters');
-  if (nonempty(receipt.tested_at_utc) && (Number.isNaN(Date.parse(receipt.tested_at_utc)) || !receipt.tested_at_utc.endsWith('Z'))) errors.push('tested_at_utc: expected UTC timestamp');
+  if (nonempty(receipt.tested_at_utc)) {
+    const testedAt = Date.parse(receipt.tested_at_utc);
+    if (Number.isNaN(testedAt) || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$/.test(receipt.tested_at_utc)) errors.push('tested_at_utc: expected ISO UTC timestamp');
+    else if (testedAt > Date.now() + 5 * 60 * 1000) errors.push('tested_at_utc: cannot be in the future');
+  }
   for (const field of ['local_input_boundary','local_state_boundary','local_output_boundary','preprocessing_location','embedding_location','inference_location','state_update_location']) {
     if (receipt[field] !== 'device') errors.push(field + ': must equal device');
   }
@@ -37,6 +41,9 @@ else {
   else for (const field of ['latency_p50_ms','latency_p95_ms','peak_ram_mb','energy_mj_per_inference','numerical_parity_max_abs_error']) {
     const value = receipt.measurements[field];
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) errors.push('measurements.' + field + ': finite nonnegative number required');
+  }
+  if (object(receipt.measurements)) for (const field of ['latency_p50_ms','latency_p95_ms','peak_ram_mb','energy_mj_per_inference']) {
+    if (!finitePositive(receipt.measurements[field])) errors.push('measurements.' + field + ': positive physical measurement required');
   }
   if (object(receipt.measurements) && finitePositive(receipt.measurements.latency_p50_ms) &&
       receipt.measurements.latency_p95_ms < receipt.measurements.latency_p50_ms) errors.push('p95 must be >= p50');
