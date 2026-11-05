@@ -36,3 +36,12 @@ test('p95 below p50 fails closed', () => assert.notEqual(check({ ...valid, measu
 test('placeholder operator compatibility fails closed', () => assert.notEqual(check({ ...valid, operator_compatibility: 'NOT RUN' }).status, 0));
 test('remote output boundary fails closed', () => assert.notEqual(check({ ...valid, local_output_boundary: 'cloud' }).status, 0));
 test('placeholder evidence path fails closed', () => assert.notEqual(check({ ...valid, raw_evidence_path: 'TBD' }).status, 0));
+
+for (const field of ['latency_p50_ms','latency_p95_ms','peak_ram_mb','energy_mj_per_inference']) {
+  test(`zero ${field} cannot qualify physical evidence`, () =>
+    assert.notEqual(check({ ...valid, measurements: { ...valid.measurements, [field]: 0 } }).status, 0));
+}
+test('future physical test timestamp fails closed', () =>
+  assert.notEqual(check({ ...valid, tested_at_utc: '2999-01-01T00:00:00Z' }).status, 0));
+test('timestamp without seconds fails closed', () =>
+  assert.notEqual(check({ ...valid, tested_at_utc: '2026-11-03T00:00Z' }).status, 0));
