@@ -32,6 +32,24 @@ function certification(overrides: Record<string, unknown> = {}): unknown {
   };
 }
 
+test("asserts only boundary metadata, not unvalidated certification evidence or scores", () => {
+  const metadata: unknown = {
+    contract: "woyengi.package-certification.v1",
+    id: "package-certification:metadata-only",
+    packageId: "application-package:repair-app",
+    decision: "NOT_CERTIFIED",
+    productionReadyClaim: false,
+    evaluatedAt: "2026-08-27T12:00:00.000Z",
+  };
+  assertWoyengiPackageCertification(metadata);
+  assert.equal(metadata.decision, "NOT_CERTIFIED");
+  // @ts-expect-error The boundary assertion does not validate or expose scores.
+  assert.equal(metadata.score, undefined);
+  // @ts-expect-error The boundary assertion does not validate or expose evidence.
+  assert.equal(metadata.evidenceIds, undefined);
+  assert.equal(certifyClaimBoundary(metadata).provenance.sourceCertificationId, metadata.id);
+});
+
 test("emits only Woyengi evaluated-scope claims with explicit cross-product non-implications", () => {
   const boundary = certifyClaimBoundary(certification());
 

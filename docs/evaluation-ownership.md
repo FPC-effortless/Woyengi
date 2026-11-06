@@ -16,6 +16,8 @@ The existing package certification artifact is `woyengi.package-certification.v1
 
 That boundary is fail-closed. It accepts only the Woyengi package-certification contract and rejects scientific/frontier qualification fields or semantic-commit authority fields smuggled into the source artifact.
 
+`assertWoyengiPackageCertification()` validates only the metadata needed for this claim boundary. It narrows to `WoyengiPackageCertificationMetadata`, not the full certification result: it does not validate scores, evidence, or whether certification succeeded. The boundary states allowed claim categories, not that those claims have been earned.
+
 ## Veritas-owned qualification
 
 Veritas owns scientific benchmark qualification, frontier qualification, capability comparisons, longitudinal capability observation, training-value evidence, evaluator secrecy, contamination/leakage controls, and evaluator-private truth.

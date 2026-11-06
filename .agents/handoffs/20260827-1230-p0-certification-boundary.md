@@ -78,3 +78,11 @@ on this device. Static review covered the strict-tsconfig risks (`exactOptionalP
 `noUncheckedIndexedAccess`, `verbatimModuleSyntax`, `rewriteRelativeImportExtensions`, `erasableSyntaxOnly`);
 both files use `import type`, `.ts` relative imports, and no optional-property or unsafe-index patterns.
 `tsc` must be confirmed by PR CI before merge.
+
+## 2026-11-06 independent review repair
+
+Review of PR #30 at `d53e0c362e97888e0a51e47d64aca6768387de07` found that the exported assertion narrowed to the full `PackageCertificationResult` despite checking only claim-boundary metadata. The repair narrows to a six-field `Pick` of that type; runtime rejection rules and boundary output are unchanged. This is a metadata boundary, not a replacement for evidence/score validation or a successful certification decision.
+
+The added regression accepts metadata for `NOT_CERTIFIED` and verifies its provenance while compile-time negative assertions prevent score/evidence access. Before the repair, typecheck reported two unused `@ts-expect-error` directives; afterward typecheck and all 10 evaluation tests pass.
+
+Local verification (Node 24.22.1, TypeScript 5.9.3): typecheck, package boundaries, deep-module, Python SDK test, adversarial benchmark, architecture gate, security gate, and `git diff --check` pass. Full `node --test`: 118 pass, 1 fail. The visual QA test cannot launch Chromium in this environment (`socket() failed: Operation not permitted`), then times out waiting for CDP. No browser sandbox settings were changed. Container smoke was not run locally. Fresh final-head CI and independent integration review remain required before merge; this local repair does not grant release or semantic/external-effect authority.

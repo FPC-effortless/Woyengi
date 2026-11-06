@@ -45,7 +45,12 @@ const FORBIDDEN_CROSS_PRODUCT_FIELDS = Object.freeze([
   "qualification",
 ] as const);
 
-export function assertWoyengiPackageCertification(value: unknown): asserts value is PackageCertificationResult {
+// This seam checks claim-boundary metadata, not the certification's scores or evidence.
+export type WoyengiPackageCertificationMetadata = Pick<PackageCertificationResult,
+  "contract" | "id" | "packageId" | "decision" | "productionReadyClaim" | "evaluatedAt"
+>;
+
+export function assertWoyengiPackageCertification(value: unknown): asserts value is WoyengiPackageCertificationMetadata {
   if (!isRecord(value)) throw new TypeError("expected Woyengi package certification artifact");
   if (value.contract !== "woyengi.package-certification.v1") {
     throw new TypeError("expected Woyengi package certification contract woyengi.package-certification.v1");
