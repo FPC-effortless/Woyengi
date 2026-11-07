@@ -20,7 +20,7 @@ node packages/predictive-sdk/examples/me111_host_quickstart.ts "$APK" "$PY" > "$
 node packages/predictive-sdk/examples/me111_host_quickstart.ts "$APK" "$PY" > "$tmp/second.json"
 cmp -s "$tmp/first.json" "$tmp/second.json" || { echo "FAIL: host replay receipt changed" >&2; exit 1; }
 "$PY" - "$tmp/first.json" <<'PY'
-import json, sys
+import json, math, sys
 
 def unique_object(pairs):
     result = {}
@@ -33,9 +33,18 @@ def unique_object(pairs):
 def reject_nonfinite(value):
     raise ValueError(f"nonfinite JSON constant: {value}")
 
+def finite_float(token):
+    try:
+        value = float(token)
+    except (OverflowError, ValueError) as exc:
+        raise ValueError("invalid JSON floating-point number") from exc
+    if not math.isfinite(value):
+        raise ValueError("nonfinite JSON floating-point number")
+    return value
+
 try:
     with open(sys.argv[1], encoding="utf-8") as f:
-        receipt = json.load(f, object_pairs_hook=unique_object, parse_constant=reject_nonfinite)
+        receipt = json.load(f, object_pairs_hook=unique_object, parse_constant=reject_nonfinite, parse_float=finite_float)
     if not isinstance(receipt, dict) or not receipt:
         raise ValueError("receipt must be a nonempty JSON object")
 except (ValueError, UnicodeError) as exc:
