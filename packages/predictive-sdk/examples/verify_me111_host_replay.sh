@@ -18,11 +18,28 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 node packages/predictive-sdk/examples/me111_host_quickstart.ts "$APK" "$PY" > "$tmp/first.json"
 node packages/predictive-sdk/examples/me111_host_quickstart.ts "$APK" "$PY" > "$tmp/second.json"
-cmp "$tmp/first.json" "$tmp/second.json" || { echo "FAIL: host replay receipt changed" >&2; exit 1; }
+cmp -s "$tmp/first.json" "$tmp/second.json" || { echo "FAIL: host replay receipt changed" >&2; exit 1; }
 "$PY" - "$tmp/first.json" <<'PY'
-import json,sys
-with open(sys.argv[1], encoding="utf-8") as f:
-    receipt=json.load(f)
-assert isinstance(receipt, dict), "receipt must be an object"
-print("PASS: two identical host replay receipts; independent physical-device qualification NOT RUN")
+import json, sys
+
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+def reject_nonfinite(value):
+    raise ValueError(f"nonfinite JSON constant: {value}")
+
+try:
+    with open(sys.argv[1], encoding="utf-8") as f:
+        receipt = json.load(f, object_pairs_hook=unique_object, parse_constant=reject_nonfinite)
+    if not isinstance(receipt, dict) or not receipt:
+        raise ValueError("receipt must be a nonempty JSON object")
+except (ValueError, UnicodeError) as exc:
+    print(f"FAIL: invalid host replay receipt: {exc}", file=sys.stderr)
+    sys.exit(1)
+print("PASS: two identical, strict-JSON host replay receipts; independent physical-device qualification NOT RUN")
 PY
