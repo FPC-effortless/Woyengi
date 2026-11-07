@@ -1,0 +1,1867 @@
+{
+  "all_six_final_checkpoint_audit": "PASS",
+  "architecture_superiority_eligible": false,
+  "independent_attestation": false,
+  "interpretation_limits": [
+    "Within-family depth/width allocation experiment, not an isolated depth intervention or comparison against Transformer/Mamba/BDH.",
+    "Eight layers hold twice the number of per-layer cache states; matched weights do not imply matched runtime or state bytes.",
+    "Tiny Shakespeare is a small public benchmark, not independent evidence of general language, exact recall, reasoning, or commercial capability.",
+    "Owner-authorized exploration does not fabricate independent source/goal/reward/ACL attestation or pass the separate qualified-research gate."
+  ],
+  "paired_summary": {
+    "dev/continuous_carry": {
+      "maximum_nll_difference": 0.09187864097551302,
+      "mean_nll_eight_minus_four": 0.08948172360573392,
+      "minimum_nll_difference": 0.08612959104088569,
+      "paired_runs": [
+        {
+          "accuracy_eight_minus_four": -0.022485610285283952,
+          "nll_eight_minus_four": 0.09187864097551302,
+          "seed": 10601
+        },
+        {
+          "accuracy_eight_minus_four": -0.022646990263407996,
+          "nll_eight_minus_four": 0.08612959104088569,
+          "seed": 10602
+        },
+        {
+          "accuracy_eight_minus_four": -0.022682852480768845,
+          "nll_eight_minus_four": 0.09043693880080306,
+          "seed": 10603
+        }
+      ],
+      "run_count": 3,
+      "uncertainty_scope": "three initialization/sampling runs on one fixed text split; no byte-level bootstrap or architecture-superiority claim"
+    },
+    "dev/reset_windows": {
+      "maximum_nll_difference": 0.09135465378455532,
+      "mean_nll_eight_minus_four": 0.08808698067730052,
+      "minimum_nll_difference": 0.08526288123524584,
+      "paired_runs": [
+        {
+          "accuracy_eight_minus_four": -0.019616632896411912,
+          "nll_eight_minus_four": 0.09135465378455532,
+          "seed": 10601
+        },
+        {
+          "accuracy_eight_minus_four": -0.021714572612024585,
+          "nll_eight_minus_four": 0.08526288123524584,
+          "seed": 10602
+        },
+        {
+          "accuracy_eight_minus_four": -0.022055263676953096,
+          "nll_eight_minus_four": 0.08764340701210038,
+          "seed": 10603
+        }
+      ],
+      "run_count": 3,
+      "uncertainty_scope": "three initialization/sampling runs on one fixed text split; no byte-level bootstrap or architecture-superiority claim"
+    },
+    "test/continuous_carry": {
+      "maximum_nll_difference": 0.07072574417031108,
+      "mean_nll_eight_minus_four": 0.06472483798388162,
+      "minimum_nll_difference": 0.05684851812427505,
+      "paired_runs": [
+        {
+          "accuracy_eight_minus_four": -0.0142373002922771,
+          "nll_eight_minus_four": 0.07072574417031108,
+          "seed": 10601
+        },
+        {
+          "accuracy_eight_minus_four": -0.020566981656475858,
+          "nll_eight_minus_four": 0.06660025165705874,
+          "seed": 10602
+        },
+        {
+          "accuracy_eight_minus_four": -0.014846957987412313,
+          "nll_eight_minus_four": 0.05684851812427505,
+          "seed": 10603
+        }
+      ],
+      "run_count": 3,
+      "uncertainty_scope": "three initialization/sampling runs on one fixed text split; no byte-level bootstrap or architecture-superiority claim"
+    },
+    "test/reset_windows": {
+      "maximum_nll_difference": 0.07146748526265889,
+      "mean_nll_eight_minus_four": 0.06448451708814429,
+      "minimum_nll_difference": 0.05635451829948357,
+      "paired_runs": [
+        {
+          "accuracy_eight_minus_four": -0.013771091466585395,
+          "nll_eight_minus_four": 0.07146748526265889,
+          "seed": 10601
+        },
+        {
+          "accuracy_eight_minus_four": -0.01879180189711127,
+          "nll_eight_minus_four": 0.0656315477022904,
+          "seed": 10602
+        },
+        {
+          "accuracy_eight_minus_four": -0.014452473596442417,
+          "nll_eight_minus_four": 0.05635451829948357,
+          "seed": 10603
+        }
+      ],
+      "run_count": 3,
+      "uncertainty_scope": "three initialization/sampling runs on one fixed text split; no byte-level bootstrap or architecture-superiority claim"
+    }
+  },
+  "protocol_sha256": "ab162c4811e563dab9fcffc99c3125b6b96309604c47eb7d8bbb686796f7dbfa",
+  "runs": [
+    {
+      "arm": "four",
+      "checkpoint_integrity": {
+        "actual_steps": 4096,
+        "arm": "four",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "574e5792ecf64f830f88c3ba83ae50e7142af9d6dbfca68c2a4f4e507486c5a4",
+        "final_parameters_sha256": "93cb1f6993500ee0c0c161b30862596b3db83f6a2a01c11cc4f9eb4172519a41",
+        "independent_attestation": false,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "original_parameters_sha256": "e49492f1c207611d413a9a80816a4d68488c2a8c4edb5d33c944624772288bca",
+        "parameter_count": 998024,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "af1afe983f64e1c840af0f2a68195446a398936d69ed88f21a607aad469ca4ad",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "seed": 10601,
+        "status": "PASS_REGISTERED_FINAL_CHECKPOINT_INTEGRITY"
+      },
+      "cpu_inference_resource_fixture": {
+        "batch_size": 1,
+        "decode_seconds": [
+          0.31088105400004906,
+          0.3092828099999565,
+          0.3079658070000164
+        ],
+        "decode_steps": 64,
+        "full_flops_measured": false,
+        "gpu_measured": false,
+        "hardware": "CPU",
+        "median_decode_bytes_per_second": 206.9303496046515,
+        "median_decode_seconds_per_byte": 0.00483254390624932,
+        "median_prefill_bytes_per_second": 7055.6233373244995,
+        "median_prefill_seconds": 0.018141557999967972,
+        "persistent_logical_tensor_bytes": 295936,
+        "persistent_physical_storage_bytes": 295936,
+        "prefill_bytes": 128,
+        "prefill_seconds": [
+          0.018153409999968062,
+          0.018001577999996243,
+          0.018141557999967972
+        ],
+        "process_peak_rss_kib_cumulative": 453952,
+        "repetitions": 3,
+        "rss_scope": "Linux process cumulative high-water mark; not isolated per-model peak",
+        "threads": 2,
+        "torch_version": "2.15.0+cpu",
+        "warmups": 1,
+        "workload_scope": "fixed synthetic resource fixture, no capability metric"
+      },
+      "generation": {
+        "display_file": "samples/four_seed10601.txt",
+        "final_clock": 519,
+        "generated_bytes": 512,
+        "generator_seed": 10699,
+        "prompt_hex": "524f4d454f3a0a",
+        "raw_file": "samples/four_seed10601.bin",
+        "serialization_replay": {
+          "logits_max_abs_difference": 0.0,
+          "scope": "same loaded model and config; not independent checkpoint authenticity",
+          "state_config_signature": "4ab73d525821636d2462f8a1496b04ab46f90f8f1db744c6351179233b4c02fc",
+          "status": "PASS_EXACT_CPU_REPLAY"
+        },
+        "sha256": "7ff741753d776f044b99401ba2714b21f51c766e66af00fe41af3380d34eb369",
+        "temperature": 0.8,
+        "total_bytes_including_prompt": 519,
+        "vocabulary": "all 256 byte IDs"
+      },
+      "metrics": {
+        "dev": {
+          "continuous_carry": {
+            "bits_per_byte": 2.190887639877417,
+            "chunks": 436,
+            "correct_count": 30693,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.550359518729043,
+            "next_byte_nll_nats": 1.518607590504664,
+            "nll_sum_nats": 84691.22671485461,
+            "partition_bytes": 55770,
+            "perplexity": 4.565863215633853,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.223345045383714,
+            "chunks": 436,
+            "correct_count": 30221,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5418960354318707,
+            "next_byte_nll_nats": 1.5411053496196447,
+            "nll_sum_nats": 85945.90424293796,
+            "partition_bytes": 55770,
+            "perplexity": 4.669749124713206,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        },
+        "test": {
+          "continuous_carry": {
+            "bits_per_byte": 2.3307682688493863,
+            "chunks": 436,
+            "correct_count": 29083,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.521490433753519,
+            "next_byte_nll_nats": 1.6155654540915365,
+            "nll_sum_nats": 90098.4698092309,
+            "partition_bytes": 55770,
+            "perplexity": 5.0307317672226315,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.3593922807826826,
+            "chunks": 436,
+            "correct_count": 28732,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5151966146066811,
+            "next_byte_nll_nats": 1.6354061072594153,
+            "nll_sum_nats": 91204.96319575033,
+            "partition_bytes": 55770,
+            "perplexity": 5.131541530196957,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        }
+      },
+      "seed": 10601,
+      "training_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "four",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_readback": {
+          "checkpoint_tensors_reloaded": true,
+          "fixed_TRAIN_probe_logits_exact": true,
+          "optimizer_reloaded": true,
+          "sampler_rng_reloaded": true
+        },
+        "checkpoint_sha256": "574e5792ecf64f830f88c3ba83ae50e7142af9d6dbfca68c2a4f4e507486c5a4",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "d808165718b37c3b36c575561a4cff9a30e03b1fd55db7990742874ce375ad9f",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "9c6a4df8d86b7a7cd8d1b9486db91d6e876a4312a22c0a4692a34ebf24afef89",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "37abd5e2f0b0f4946e1060e84c886712d73334e67d92bc231c77bc4782acab17",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "bfc443dd419fcedbd8ae36423f84911793e9b3065270257335e2499e7d6f4b47",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "574e5792ecf64f830f88c3ba83ae50e7142af9d6dbfca68c2a4f4e507486c5a4",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "chunk_size": 32,
+          "d_model": 120,
+          "ffn_dim": 224,
+          "key_dim": 16,
+          "local_rope": true,
+          "n_heads": 4,
+          "n_layers": 4,
+          "rotary": true,
+          "tied_embedding": true,
+          "value_dim": 16,
+          "window": 128,
+          "write_rank": 2
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "error": null,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "93cb1f6993500ee0c0c161b30862596b3db83f6a2a01c11cc4f9eb4172519a41",
+        "first_fit_loss": 5.547273635864258,
+        "full_training_flops": "NOT_MEASURED",
+        "hardware": "CPU",
+        "implementation_sha256": {
+          "research/langcache104/kernels.py": "1c2782bbaaac7aa54722f420bbbad8c5215f260ed591a6cef154c0540f41b8d1",
+          "research/langcache104/model.py": "84507fd17ace7eb2e880d5f15ee7a3a80c41543041eee103ca926966bcd1e882"
+        },
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "e49492f1c207611d413a9a80816a4d68488c2a8c4edb5d33c944624772288bca",
+        "last_fit_loss": 1.4460419416427612,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "optimizer_updates": 4096,
+        "original_parameters_sha256": "e49492f1c207611d413a9a80816a4d68488c2a8c4edb5d33c944624772288bca",
+        "parameter_count": 998024,
+        "parameters_changed": true,
+        "peak_rss_bytes": 600137728,
+        "precision": "float32",
+        "process_cpu_seconds": 1447.664580715,
+        "protocol_sha256": "ab162c4811e563dab9fcffc99c3125b6b96309604c47eb7d8bbb686796f7dbfa",
+        "python_version": "3.12.15 (main, Oct  1 2026, 02:35:59) [GCC 13.3.0]",
+        "resumed_from_checkpoint_sha256": null,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "af1afe983f64e1c840af0f2a68195446a398936d69ed88f21a607aad469ca4ad",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "schema": "langdepth106.fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_DEPTH_WIDTH_ALLOCATION_STUDY",
+        "seed": 10601,
+        "smoke": false,
+        "source_receipt_sha256": "a241bea16401f2a8c0e2079edca8e5029b0b4e7f01a466d276fc12d9b4020b07",
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "state_policy": "RESET_EACH_INDEPENDENT_TRAIN_WINDOW",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "torch_version": "2.15.0+cpu",
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 724.233567083
+      }
+    },
+    {
+      "arm": "four",
+      "checkpoint_integrity": {
+        "actual_steps": 4096,
+        "arm": "four",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "3b73554ea2caf0826cc44a75ded990cff5bf0ff1204564316c87b20f8a55f360",
+        "final_parameters_sha256": "f13b50326f2e0723a5250499056bdf9a8f9e279b5b870a02115960f84243afdf",
+        "independent_attestation": false,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "original_parameters_sha256": "94d3bfedaa291a9b33b85b4e493fa6e485f3b6ba98d884c422caba6919a1e334",
+        "parameter_count": 998024,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "efc1cf90e849624c3dabe8357694f58260adcbdcfed1c7ea97a9a5d78ecd3c81",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "seed": 10602,
+        "status": "PASS_REGISTERED_FINAL_CHECKPOINT_INTEGRITY"
+      },
+      "cpu_inference_resource_fixture": {
+        "batch_size": 1,
+        "decode_seconds": [
+          0.30963155500000994,
+          0.3075282629999947,
+          0.3086651930000244
+        ],
+        "decode_steps": 64,
+        "full_flops_measured": false,
+        "gpu_measured": false,
+        "hardware": "CPU",
+        "median_decode_bytes_per_second": 207.34440245095905,
+        "median_decode_seconds_per_byte": 0.004822893640625381,
+        "median_prefill_bytes_per_second": 7185.010944515343,
+        "median_prefill_seconds": 0.017814864999991187,
+        "persistent_logical_tensor_bytes": 295936,
+        "persistent_physical_storage_bytes": 295936,
+        "prefill_bytes": 128,
+        "prefill_seconds": [
+          0.017814864999991187,
+          0.017888722999998663,
+          0.017763419999994312
+        ],
+        "process_peak_rss_kib_cumulative": 453952,
+        "repetitions": 3,
+        "rss_scope": "Linux process cumulative high-water mark; not isolated per-model peak",
+        "threads": 2,
+        "torch_version": "2.15.0+cpu",
+        "warmups": 1,
+        "workload_scope": "fixed synthetic resource fixture, no capability metric"
+      },
+      "generation": {
+        "display_file": "samples/four_seed10602.txt",
+        "final_clock": 519,
+        "generated_bytes": 512,
+        "generator_seed": 10699,
+        "prompt_hex": "524f4d454f3a0a",
+        "raw_file": "samples/four_seed10602.bin",
+        "serialization_replay": {
+          "logits_max_abs_difference": 0.0,
+          "scope": "same loaded model and config; not independent checkpoint authenticity",
+          "state_config_signature": "4ab73d525821636d2462f8a1496b04ab46f90f8f1db744c6351179233b4c02fc",
+          "status": "PASS_EXACT_CPU_REPLAY"
+        },
+        "sha256": "026978a3189e76f2240558be3bd5280bdd1d61c47454da1c5485efa1a16a5497",
+        "temperature": 0.8,
+        "total_bytes_including_prompt": 519,
+        "vocabulary": "all 256 byte IDs"
+      },
+      "metrics": {
+        "dev": {
+          "continuous_carry": {
+            "bits_per_byte": 2.18877342212636,
+            "chunks": 436,
+            "correct_count": 30687,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.5502519320769603,
+            "next_byte_nll_nats": 1.5171421264314293,
+            "nll_sum_nats": 84609.49924895438,
+            "partition_bytes": 55770,
+            "perplexity": 4.559177007523524,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.2225348058195897,
+            "chunks": 436,
+            "correct_count": 30281,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5429719019526977,
+            "next_byte_nll_nats": 1.540543734350194,
+            "nll_sum_nats": 85914.58352097597,
+            "partition_bytes": 55770,
+            "perplexity": 4.667127258609196,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        },
+        "test": {
+          "continuous_carry": {
+            "bits_per_byte": 2.357159858498014,
+            "chunks": 436,
+            "correct_count": 29087,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.5215621581882408,
+            "next_byte_nll_nats": 1.633858710046978,
+            "nll_sum_nats": 91118.66640060992,
+            "partition_bytes": 55770,
+            "perplexity": 5.1236071375493575,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.3879729048169205,
+            "chunks": 436,
+            "correct_count": 28669,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5140669547598128,
+            "next_byte_nll_nats": 1.655216686227391,
+            "nll_sum_nats": 92309.77937421536,
+            "partition_bytes": 55770,
+            "perplexity": 5.234213981387109,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        }
+      },
+      "seed": 10602,
+      "training_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "four",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_readback": {
+          "checkpoint_tensors_reloaded": true,
+          "fixed_TRAIN_probe_logits_exact": true,
+          "optimizer_reloaded": true,
+          "sampler_rng_reloaded": true
+        },
+        "checkpoint_sha256": "3b73554ea2caf0826cc44a75ded990cff5bf0ff1204564316c87b20f8a55f360",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "17641af24de7b5cd388ba05214e6f9c2857df49a7bfe4c91401f0410dc5d8552",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "35d828972c076c4d4bb8a707dba82fce073569a4c9d8afb41e4b0fa7d33c6211",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "48dd50ecb797682fb827fd651d6fd7fdee6369059560966015af10987077838a",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "3e7b000e4a6411e830fa9cd51578a9024c5219b494a025b194aecfa745c9a07d",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "3b73554ea2caf0826cc44a75ded990cff5bf0ff1204564316c87b20f8a55f360",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "chunk_size": 32,
+          "d_model": 120,
+          "ffn_dim": 224,
+          "key_dim": 16,
+          "local_rope": true,
+          "n_heads": 4,
+          "n_layers": 4,
+          "rotary": true,
+          "tied_embedding": true,
+          "value_dim": 16,
+          "window": 128,
+          "write_rank": 2
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "error": null,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "f13b50326f2e0723a5250499056bdf9a8f9e279b5b870a02115960f84243afdf",
+        "first_fit_loss": 5.570999622344971,
+        "full_training_flops": "NOT_MEASURED",
+        "hardware": "CPU",
+        "implementation_sha256": {
+          "research/langcache104/kernels.py": "1c2782bbaaac7aa54722f420bbbad8c5215f260ed591a6cef154c0540f41b8d1",
+          "research/langcache104/model.py": "84507fd17ace7eb2e880d5f15ee7a3a80c41543041eee103ca926966bcd1e882"
+        },
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "94d3bfedaa291a9b33b85b4e493fa6e485f3b6ba98d884c422caba6919a1e334",
+        "last_fit_loss": 1.402600646018982,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "optimizer_updates": 4096,
+        "original_parameters_sha256": "94d3bfedaa291a9b33b85b4e493fa6e485f3b6ba98d884c422caba6919a1e334",
+        "parameter_count": 998024,
+        "parameters_changed": true,
+        "peak_rss_bytes": 599179264,
+        "precision": "float32",
+        "process_cpu_seconds": 1482.105607318,
+        "protocol_sha256": "ab162c4811e563dab9fcffc99c3125b6b96309604c47eb7d8bbb686796f7dbfa",
+        "python_version": "3.12.15 (main, Oct  1 2026, 02:35:59) [GCC 13.3.0]",
+        "resumed_from_checkpoint_sha256": null,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "efc1cf90e849624c3dabe8357694f58260adcbdcfed1c7ea97a9a5d78ecd3c81",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "schema": "langdepth106.fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_DEPTH_WIDTH_ALLOCATION_STUDY",
+        "seed": 10602,
+        "smoke": false,
+        "source_receipt_sha256": "a241bea16401f2a8c0e2079edca8e5029b0b4e7f01a466d276fc12d9b4020b07",
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "state_policy": "RESET_EACH_INDEPENDENT_TRAIN_WINDOW",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "torch_version": "2.15.0+cpu",
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 741.495753992
+      }
+    },
+    {
+      "arm": "four",
+      "checkpoint_integrity": {
+        "actual_steps": 4096,
+        "arm": "four",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "26a727c781610e842fcb6cc2f5c945f081eb5e8ddeb7ba1834ec30dfa26864be",
+        "final_parameters_sha256": "ed8d49f731de763b1598a4abd71b6888a8dc0ff1b94857aa0ee4aa5b61f8452e",
+        "independent_attestation": false,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "original_parameters_sha256": "f69d5d3e8f8e8ce6b7948a5ca69a1a6d01abaebb43db0d8dbe2b951281c88f23",
+        "parameter_count": 998024,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "171e84336bc712de65bd62cda8494ab690e9ade8c586ceb90a24bfa730bf5cfa",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "seed": 10603,
+        "status": "PASS_REGISTERED_FINAL_CHECKPOINT_INTEGRITY"
+      },
+      "cpu_inference_resource_fixture": {
+        "batch_size": 1,
+        "decode_seconds": [
+          0.305027315000018,
+          0.3141187080000236,
+          0.3118612320000125
+        ],
+        "decode_steps": 64,
+        "full_flops_measured": false,
+        "gpu_measured": false,
+        "hardware": "CPU",
+        "median_decode_bytes_per_second": 205.2194804386505,
+        "median_decode_seconds_per_byte": 0.004872831750000195,
+        "median_prefill_bytes_per_second": 7116.133915651078,
+        "median_prefill_seconds": 0.017987294999954884,
+        "persistent_logical_tensor_bytes": 295936,
+        "persistent_physical_storage_bytes": 295936,
+        "prefill_bytes": 128,
+        "prefill_seconds": [
+          0.017987294999954884,
+          0.01791619300001912,
+          0.018284185000027264
+        ],
+        "process_peak_rss_kib_cumulative": 453952,
+        "repetitions": 3,
+        "rss_scope": "Linux process cumulative high-water mark; not isolated per-model peak",
+        "threads": 2,
+        "torch_version": "2.15.0+cpu",
+        "warmups": 1,
+        "workload_scope": "fixed synthetic resource fixture, no capability metric"
+      },
+      "generation": {
+        "display_file": "samples/four_seed10603.txt",
+        "final_clock": 519,
+        "generated_bytes": 512,
+        "generator_seed": 10699,
+        "prompt_hex": "524f4d454f3a0a",
+        "raw_file": "samples/four_seed10603.bin",
+        "serialization_replay": {
+          "logits_max_abs_difference": 0.0,
+          "scope": "same loaded model and config; not independent checkpoint authenticity",
+          "state_config_signature": "4ab73d525821636d2462f8a1496b04ab46f90f8f1db744c6351179233b4c02fc",
+          "status": "PASS_EXACT_CPU_REPLAY"
+        },
+        "sha256": "3797751eb3de2f8ad6b883abdbf472ed436d9414515546c81c98c94d2e72ebff",
+        "temperature": 0.8,
+        "total_bytes_including_prompt": 519,
+        "vocabulary": "all 256 byte IDs"
+      },
+      "metrics": {
+        "dev": {
+          "continuous_carry": {
+            "bits_per_byte": 2.1757132784190762,
+            "chunks": 436,
+            "correct_count": 30764,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.5516326274453549,
+            "next_byte_nll_nats": 1.508089524643018,
+            "nll_sum_nats": 84104.64469981646,
+            "partition_bytes": 55770,
+            "perplexity": 4.518090842519443,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.208920925305715,
+            "chunks": 436,
+            "correct_count": 30411,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5453029460811561,
+            "next_byte_nll_nats": 1.531107311455522,
+            "nll_sum_nats": 85388.323652563,
+            "partition_bytes": 55770,
+            "perplexity": 4.6232934147066285,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        },
+        "test": {
+          "continuous_carry": {
+            "bits_per_byte": 2.3383256117617948,
+            "chunks": 436,
+            "correct_count": 29192,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.5234449245996879,
+            "next_byte_nll_nats": 1.6208038050237974,
+            "nll_sum_nats": 90390.60740237216,
+            "partition_bytes": 55770,
+            "perplexity": 5.057153648790674,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.371533359000275,
+            "chunks": 436,
+            "correct_count": 28807,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5165414477577148,
+            "next_byte_nll_nats": 1.6438216613948973,
+            "nll_sum_nats": 91674.29023433203,
+            "partition_bytes": 55770,
+            "perplexity": 5.174908518418526,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        }
+      },
+      "seed": 10603,
+      "training_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "four",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_readback": {
+          "checkpoint_tensors_reloaded": true,
+          "fixed_TRAIN_probe_logits_exact": true,
+          "optimizer_reloaded": true,
+          "sampler_rng_reloaded": true
+        },
+        "checkpoint_sha256": "26a727c781610e842fcb6cc2f5c945f081eb5e8ddeb7ba1834ec30dfa26864be",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "33a64fa7b4676bd0879922b996364963a4d98123f4179aa95fc62dcaae738cfc",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "dc21402eeeaf3b9a930fce9dae21edb549f33d30ad9923c1a69a23aad2bc6abd",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "1087f51188472e6f849e46dd80a91ae4516f054f1334dc04a3ad6855e5d3cc52",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "0263f00daaea0d2d298bc847a7873bdb7ad411c07f87a0cf7f360d7b86cb9edd",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "26a727c781610e842fcb6cc2f5c945f081eb5e8ddeb7ba1834ec30dfa26864be",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "chunk_size": 32,
+          "d_model": 120,
+          "ffn_dim": 224,
+          "key_dim": 16,
+          "local_rope": true,
+          "n_heads": 4,
+          "n_layers": 4,
+          "rotary": true,
+          "tied_embedding": true,
+          "value_dim": 16,
+          "window": 128,
+          "write_rank": 2
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "error": null,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "ed8d49f731de763b1598a4abd71b6888a8dc0ff1b94857aa0ee4aa5b61f8452e",
+        "first_fit_loss": 5.617948055267334,
+        "full_training_flops": "NOT_MEASURED",
+        "hardware": "CPU",
+        "implementation_sha256": {
+          "research/langcache104/kernels.py": "1c2782bbaaac7aa54722f420bbbad8c5215f260ed591a6cef154c0540f41b8d1",
+          "research/langcache104/model.py": "84507fd17ace7eb2e880d5f15ee7a3a80c41543041eee103ca926966bcd1e882"
+        },
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "f69d5d3e8f8e8ce6b7948a5ca69a1a6d01abaebb43db0d8dbe2b951281c88f23",
+        "last_fit_loss": 1.351711392402649,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "optimizer_updates": 4096,
+        "original_parameters_sha256": "f69d5d3e8f8e8ce6b7948a5ca69a1a6d01abaebb43db0d8dbe2b951281c88f23",
+        "parameter_count": 998024,
+        "parameters_changed": true,
+        "peak_rss_bytes": 598867968,
+        "precision": "float32",
+        "process_cpu_seconds": 1489.215674697,
+        "protocol_sha256": "ab162c4811e563dab9fcffc99c3125b6b96309604c47eb7d8bbb686796f7dbfa",
+        "python_version": "3.12.15 (main, Oct  1 2026, 02:35:59) [GCC 13.3.0]",
+        "resumed_from_checkpoint_sha256": null,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "171e84336bc712de65bd62cda8494ab690e9ade8c586ceb90a24bfa730bf5cfa",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "schema": "langdepth106.fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_DEPTH_WIDTH_ALLOCATION_STUDY",
+        "seed": 10603,
+        "smoke": false,
+        "source_receipt_sha256": "a241bea16401f2a8c0e2079edca8e5029b0b4e7f01a466d276fc12d9b4020b07",
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "state_policy": "RESET_EACH_INDEPENDENT_TRAIN_WINDOW",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "torch_version": "2.15.0+cpu",
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 745.040518677
+      }
+    },
+    {
+      "arm": "eight",
+      "checkpoint_integrity": {
+        "actual_steps": 4096,
+        "arm": "eight",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "6404e6208ab5f7d841aec037f0afcb79fc213667b483ef3af6581b683148a6a0",
+        "final_parameters_sha256": "9638cfecf8cdeda5bc66a9195d7c5c17ff1721106ba20822f3ffabbc1d2ea23a",
+        "independent_attestation": false,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "original_parameters_sha256": "39465a67e446725bbc62c6d6a15af00e468d13ba8178b26bf07034453e51045b",
+        "parameter_count": 999784,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "af1afe983f64e1c840af0f2a68195446a398936d69ed88f21a607aad469ca4ad",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "seed": 10601,
+        "status": "PASS_REGISTERED_FINAL_CHECKPOINT_INTEGRITY"
+      },
+      "cpu_inference_resource_fixture": {
+        "batch_size": 1,
+        "decode_seconds": [
+          0.5963991400000168,
+          0.5971853579999902,
+          0.5996241409999925
+        ],
+        "decode_steps": 64,
+        "full_flops_measured": false,
+        "gpu_measured": false,
+        "hardware": "CPU",
+        "median_decode_bytes_per_second": 107.16940585137563,
+        "median_decode_seconds_per_byte": 0.009331021218749846,
+        "median_prefill_bytes_per_second": 3812.8773259172826,
+        "median_prefill_seconds": 0.03357044799997766,
+        "persistent_logical_tensor_bytes": 591872,
+        "persistent_physical_storage_bytes": 591872,
+        "prefill_bytes": 128,
+        "prefill_seconds": [
+          0.033769026000015856,
+          0.03332362999998395,
+          0.03357044799997766
+        ],
+        "process_peak_rss_kib_cumulative": 453952,
+        "repetitions": 3,
+        "rss_scope": "Linux process cumulative high-water mark; not isolated per-model peak",
+        "threads": 2,
+        "torch_version": "2.15.0+cpu",
+        "warmups": 1,
+        "workload_scope": "fixed synthetic resource fixture, no capability metric"
+      },
+      "generation": {
+        "display_file": "samples/eight_seed10601.txt",
+        "final_clock": 519,
+        "generated_bytes": 512,
+        "generator_seed": 10699,
+        "prompt_hex": "524f4d454f3a0a",
+        "raw_file": "samples/eight_seed10601.bin",
+        "serialization_replay": {
+          "logits_max_abs_difference": 0.0,
+          "scope": "same loaded model and config; not independent checkpoint authenticity",
+          "state_config_signature": "bd72b915e91b0c9debafc4c8a4b61bcbdec35decf4f1880583fd427d87b428df",
+          "status": "PASS_EXACT_CPU_REPLAY"
+        },
+        "sha256": "228a8ce486bce3f0ad7b056d2ccb3db14cc7fbdf48d8a4e08e37cb9592dd10fc",
+        "temperature": 0.8,
+        "total_bytes_including_prompt": 519,
+        "vocabulary": "all 256 byte IDs"
+      },
+      "metrics": {
+        "dev": {
+          "continuous_carry": {
+            "bits_per_byte": 2.3234404995764066,
+            "chunks": 436,
+            "correct_count": 29439,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.527873908443759,
+            "next_byte_nll_nats": 1.610486231480177,
+            "nll_sum_nats": 89815.206643418,
+            "partition_bytes": 55770,
+            "perplexity": 5.005244343622753,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.3551419513608196,
+            "chunks": 436,
+            "correct_count": 29127,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5222794025354588,
+            "next_byte_nll_nats": 1.6324600034042,
+            "nll_sum_nats": 91040.66192984884,
+            "partition_bytes": 55770,
+            "perplexity": 5.116445723737155,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        },
+        "test": {
+          "continuous_carry": {
+            "bits_per_byte": 2.4328039492270754,
+            "chunks": 436,
+            "correct_count": 28289,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.5072531334612419,
+            "next_byte_nll_nats": 1.6862911982618476,
+            "nll_sum_nats": 94042.77383586498,
+            "partition_bytes": 55770,
+            "perplexity": 5.399418152683873,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.462498067355926,
+            "chunks": 436,
+            "correct_count": 27964,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5014255231400957,
+            "next_byte_nll_nats": 1.7068735925220742,
+            "nll_sum_nats": 95190.63338136356,
+            "partition_bytes": 55770,
+            "perplexity": 5.511702684183527,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        }
+      },
+      "seed": 10601,
+      "training_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "eight",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_readback": {
+          "checkpoint_tensors_reloaded": true,
+          "fixed_TRAIN_probe_logits_exact": true,
+          "optimizer_reloaded": true,
+          "sampler_rng_reloaded": true
+        },
+        "checkpoint_sha256": "6404e6208ab5f7d841aec037f0afcb79fc213667b483ef3af6581b683148a6a0",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "6cb59785fbc6096c534756e49f19dc1d158af490d61d6ab56145d43a4f07dcf7",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "1330b3d55df559590ed4341ec01c1d9e3a65a6a3891fc9478e9aac00b2626c78",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "8c55c30d0175fd842d31ae6e73a7f04565692462db5f4760b53f10ac01c26c24",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "d629481973961c0772ebe59251a25a78ed8f0df8f8c9b4ccf327a63f249e162f",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "6404e6208ab5f7d841aec037f0afcb79fc213667b483ef3af6581b683148a6a0",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "chunk_size": 32,
+          "d_model": 72,
+          "ffn_dim": 120,
+          "key_dim": 16,
+          "local_rope": true,
+          "n_heads": 4,
+          "n_layers": 8,
+          "rotary": true,
+          "tied_embedding": true,
+          "value_dim": 16,
+          "window": 128,
+          "write_rank": 2
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "error": null,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "9638cfecf8cdeda5bc66a9195d7c5c17ff1721106ba20822f3ffabbc1d2ea23a",
+        "first_fit_loss": 5.541906833648682,
+        "full_training_flops": "NOT_MEASURED",
+        "hardware": "CPU",
+        "implementation_sha256": {
+          "research/langcache104/kernels.py": "1c2782bbaaac7aa54722f420bbbad8c5215f260ed591a6cef154c0540f41b8d1",
+          "research/langcache104/model.py": "84507fd17ace7eb2e880d5f15ee7a3a80c41543041eee103ca926966bcd1e882"
+        },
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "39465a67e446725bbc62c6d6a15af00e468d13ba8178b26bf07034453e51045b",
+        "last_fit_loss": 1.5350403785705566,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "optimizer_updates": 4096,
+        "original_parameters_sha256": "39465a67e446725bbc62c6d6a15af00e468d13ba8178b26bf07034453e51045b",
+        "parameter_count": 999784,
+        "parameters_changed": true,
+        "peak_rss_bytes": 721600512,
+        "precision": "float32",
+        "process_cpu_seconds": 1589.858137512,
+        "protocol_sha256": "ab162c4811e563dab9fcffc99c3125b6b96309604c47eb7d8bbb686796f7dbfa",
+        "python_version": "3.12.15 (main, Oct  1 2026, 02:35:59) [GCC 13.3.0]",
+        "resumed_from_checkpoint_sha256": null,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "af1afe983f64e1c840af0f2a68195446a398936d69ed88f21a607aad469ca4ad",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "schema": "langdepth106.fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_DEPTH_WIDTH_ALLOCATION_STUDY",
+        "seed": 10601,
+        "smoke": false,
+        "source_receipt_sha256": "a241bea16401f2a8c0e2079edca8e5029b0b4e7f01a466d276fc12d9b4020b07",
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "state_policy": "RESET_EACH_INDEPENDENT_TRAIN_WINDOW",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "torch_version": "2.15.0+cpu",
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 798.251882124
+      }
+    },
+    {
+      "arm": "eight",
+      "checkpoint_integrity": {
+        "actual_steps": 4096,
+        "arm": "eight",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "758f2230bd33f995d8cc1123260fc20f0917505850532ea2103021deab68b10c",
+        "final_parameters_sha256": "462cf6bf6a6d206bd66e3a76288b61aa5a1a4c979b8214104e7dadb10d51a6c2",
+        "independent_attestation": false,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "original_parameters_sha256": "686775e1db651ac5679bd2c06efe83dc0497ce2d7e04da2a034e37f9f6a04220",
+        "parameter_count": 999784,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "efc1cf90e849624c3dabe8357694f58260adcbdcfed1c7ea97a9a5d78ecd3c81",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "seed": 10602,
+        "status": "PASS_REGISTERED_FINAL_CHECKPOINT_INTEGRITY"
+      },
+      "cpu_inference_resource_fixture": {
+        "batch_size": 1,
+        "decode_seconds": [
+          0.6138085520000232,
+          0.6150885800000196,
+          0.6084653649999154
+        ],
+        "decode_steps": 64,
+        "full_flops_measured": false,
+        "gpu_measured": false,
+        "hardware": "CPU",
+        "median_decode_bytes_per_second": 104.26703862542075,
+        "median_decode_seconds_per_byte": 0.009590758625000362,
+        "median_prefill_bytes_per_second": 3695.2429232532536,
+        "median_prefill_seconds": 0.03463912999995955,
+        "persistent_logical_tensor_bytes": 591872,
+        "persistent_physical_storage_bytes": 591872,
+        "prefill_bytes": 128,
+        "prefill_seconds": [
+          0.034998253000026125,
+          0.03463912999995955,
+          0.03442255800007388
+        ],
+        "process_peak_rss_kib_cumulative": 453952,
+        "repetitions": 3,
+        "rss_scope": "Linux process cumulative high-water mark; not isolated per-model peak",
+        "threads": 2,
+        "torch_version": "2.15.0+cpu",
+        "warmups": 1,
+        "workload_scope": "fixed synthetic resource fixture, no capability metric"
+      },
+      "generation": {
+        "display_file": "samples/eight_seed10602.txt",
+        "final_clock": 519,
+        "generated_bytes": 512,
+        "generator_seed": 10699,
+        "prompt_hex": "524f4d454f3a0a",
+        "raw_file": "samples/eight_seed10602.bin",
+        "serialization_replay": {
+          "logits_max_abs_difference": 0.0,
+          "scope": "same loaded model and config; not independent checkpoint authenticity",
+          "state_config_signature": "bd72b915e91b0c9debafc4c8a4b61bcbdec35decf4f1880583fd427d87b428df",
+          "status": "PASS_EXACT_CPU_REPLAY"
+        },
+        "sha256": "f4dc6ab8764d73d6ee27c1403998cfd3acf51d5f45fdd9ec7458f1dac74b764d",
+        "temperature": 0.8,
+        "total_bytes_including_prompt": 519,
+        "vocabulary": "all 256 byte IDs"
+      },
+      "metrics": {
+        "dev": {
+          "continuous_carry": {
+            "bits_per_byte": 2.3130321559948404,
+            "chunks": 436,
+            "correct_count": 29424,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.5276049418135523,
+            "next_byte_nll_nats": 1.603271717472315,
+            "nll_sum_nats": 89412.86041171354,
+            "partition_bytes": 55770,
+            "perplexity": 4.969263885016967,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.3455431417495833,
+            "chunks": 436,
+            "correct_count": 29070,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5212573293406731,
+            "next_byte_nll_nats": 1.6258066155854398,
+            "nll_sum_nats": 90669.60914458439,
+            "partition_bytes": 55770,
+            "perplexity": 5.082517021651748,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        },
+        "test": {
+          "continuous_carry": {
+            "bits_per_byte": 2.4532437112856096,
+            "chunks": 436,
+            "correct_count": 27940,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.500995176531765,
+            "next_byte_nll_nats": 1.7004589617040367,
+            "nll_sum_nats": 94832.89583527241,
+            "partition_bytes": 55770,
+            "perplexity": 5.476460300570265,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.482659213212882,
+            "chunks": 436,
+            "correct_count": 27621,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.4952751528627015,
+            "next_byte_nll_nats": 1.7208482339296813,
+            "nll_sum_nats": 95969.9851580244,
+            "partition_bytes": 55770,
+            "perplexity": 5.589267460405236,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        }
+      },
+      "seed": 10602,
+      "training_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "eight",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_readback": {
+          "checkpoint_tensors_reloaded": true,
+          "fixed_TRAIN_probe_logits_exact": true,
+          "optimizer_reloaded": true,
+          "sampler_rng_reloaded": true
+        },
+        "checkpoint_sha256": "758f2230bd33f995d8cc1123260fc20f0917505850532ea2103021deab68b10c",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "7d4cd6864018fc2a0a03f47e174382c6675b884e2714ac1e838bf13ee1e0d08d",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "3e577f0852dec85f765a74da79d0059d6e4f763166b69efb492a43a25d168c08",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "7ccc200d4e1e0c784196979a6401fe534eb823a8d4aac3eceafccc9cc2f0b537",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "570805217450add6a6ccefcfa2286d37054693a3ff8742125a8fd65ec72109c4",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "758f2230bd33f995d8cc1123260fc20f0917505850532ea2103021deab68b10c",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "chunk_size": 32,
+          "d_model": 72,
+          "ffn_dim": 120,
+          "key_dim": 16,
+          "local_rope": true,
+          "n_heads": 4,
+          "n_layers": 8,
+          "rotary": true,
+          "tied_embedding": true,
+          "value_dim": 16,
+          "window": 128,
+          "write_rank": 2
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "error": null,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "462cf6bf6a6d206bd66e3a76288b61aa5a1a4c979b8214104e7dadb10d51a6c2",
+        "first_fit_loss": 5.543550968170166,
+        "full_training_flops": "NOT_MEASURED",
+        "hardware": "CPU",
+        "implementation_sha256": {
+          "research/langcache104/kernels.py": "1c2782bbaaac7aa54722f420bbbad8c5215f260ed591a6cef154c0540f41b8d1",
+          "research/langcache104/model.py": "84507fd17ace7eb2e880d5f15ee7a3a80c41543041eee103ca926966bcd1e882"
+        },
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "686775e1db651ac5679bd2c06efe83dc0497ce2d7e04da2a034e37f9f6a04220",
+        "last_fit_loss": 1.5275347232818604,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "optimizer_updates": 4096,
+        "original_parameters_sha256": "686775e1db651ac5679bd2c06efe83dc0497ce2d7e04da2a034e37f9f6a04220",
+        "parameter_count": 999784,
+        "parameters_changed": true,
+        "peak_rss_bytes": 719978496,
+        "precision": "float32",
+        "process_cpu_seconds": 1570.850989103,
+        "protocol_sha256": "ab162c4811e563dab9fcffc99c3125b6b96309604c47eb7d8bbb686796f7dbfa",
+        "python_version": "3.12.15 (main, Oct  1 2026, 02:35:59) [GCC 13.3.0]",
+        "resumed_from_checkpoint_sha256": null,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "efc1cf90e849624c3dabe8357694f58260adcbdcfed1c7ea97a9a5d78ecd3c81",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "schema": "langdepth106.fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_DEPTH_WIDTH_ALLOCATION_STUDY",
+        "seed": 10602,
+        "smoke": false,
+        "source_receipt_sha256": "a241bea16401f2a8c0e2079edca8e5029b0b4e7f01a466d276fc12d9b4020b07",
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "state_policy": "RESET_EACH_INDEPENDENT_TRAIN_WINDOW",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "torch_version": "2.15.0+cpu",
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 788.5845990619999
+      }
+    },
+    {
+      "arm": "eight",
+      "checkpoint_integrity": {
+        "actual_steps": 4096,
+        "arm": "eight",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_sha256": "ef374bde2c17bc4623ce199a1c131e9994c6856d23543b8c67b199b6a72d4a53",
+        "final_parameters_sha256": "75ecb63b0d6e89c56b7e78de405a5920570f924074088d9ae5dc324188a30bdb",
+        "independent_attestation": false,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "original_parameters_sha256": "710d9dbb7de0a3c1e2701aefc5770addc3574528f0a1f13b2d4bd578e3d080d6",
+        "parameter_count": 999784,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "171e84336bc712de65bd62cda8494ab690e9ade8c586ceb90a24bfa730bf5cfa",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "seed": 10603,
+        "status": "PASS_REGISTERED_FINAL_CHECKPOINT_INTEGRITY"
+      },
+      "cpu_inference_resource_fixture": {
+        "batch_size": 1,
+        "decode_seconds": [
+          0.6016971720000583,
+          0.5975426640000023,
+          0.5986480220000203
+        ],
+        "decode_steps": 64,
+        "full_flops_measured": false,
+        "gpu_measured": false,
+        "hardware": "CPU",
+        "median_decode_bytes_per_second": 106.90756111777118,
+        "median_decode_seconds_per_byte": 0.009353875343750317,
+        "median_prefill_bytes_per_second": 3793.072486508246,
+        "median_prefill_seconds": 0.03374572999996417,
+        "persistent_logical_tensor_bytes": 591872,
+        "persistent_physical_storage_bytes": 591872,
+        "prefill_bytes": 128,
+        "prefill_seconds": [
+          0.03336546599996382,
+          0.03374572999996417,
+          0.03388764299995728
+        ],
+        "process_peak_rss_kib_cumulative": 453952,
+        "repetitions": 3,
+        "rss_scope": "Linux process cumulative high-water mark; not isolated per-model peak",
+        "threads": 2,
+        "torch_version": "2.15.0+cpu",
+        "warmups": 1,
+        "workload_scope": "fixed synthetic resource fixture, no capability metric"
+      },
+      "generation": {
+        "display_file": "samples/eight_seed10603.txt",
+        "final_clock": 519,
+        "generated_bytes": 512,
+        "generator_seed": 10699,
+        "prompt_hex": "524f4d454f3a0a",
+        "raw_file": "samples/eight_seed10603.bin",
+        "serialization_replay": {
+          "logits_max_abs_difference": 0.0,
+          "scope": "same loaded model and config; not independent checkpoint authenticity",
+          "state_config_signature": "bd72b915e91b0c9debafc4c8a4b61bcbdec35decf4f1880583fd427d87b428df",
+          "status": "PASS_EXACT_CPU_REPLAY"
+        },
+        "sha256": "a708fe1eab899d1efd01d14fe328fbff6c54a9b66af860bc3564e78298cafd75",
+        "temperature": 0.8,
+        "total_bytes_including_prompt": 519,
+        "vocabulary": "all 256 byte IDs"
+      },
+      "metrics": {
+        "dev": {
+          "continuous_carry": {
+            "bits_per_byte": 2.3061862015401733,
+            "chunks": 436,
+            "correct_count": 29499,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.5289497749645861,
+            "next_byte_nll_nats": 1.598526463443821,
+            "nll_sum_nats": 89148.22233979845,
+            "partition_bytes": 55770,
+            "perplexity": 4.945739324697966,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.3353636339686856,
+            "chunks": 436,
+            "correct_count": 29181,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.523247682404203,
+            "next_byte_nll_nats": 1.6187507184676224,
+            "nll_sum_nats": 90276.10881822083,
+            "partition_bytes": 55770,
+            "perplexity": 5.046781525698421,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        },
+        "test": {
+          "continuous_carry": {
+            "bits_per_byte": 2.420340686941573,
+            "chunks": 436,
+            "correct_count": 28364,
+            "final_carried_clock": 55769,
+            "mode": "continuous_carry",
+            "next_byte_accuracy": 0.5085979666122756,
+            "next_byte_nll_nats": 1.6776523231480724,
+            "nll_sum_nats": 93560.99240964485,
+            "partition_bytes": 55770,
+            "perplexity": 5.352974154369636,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          },
+          "reset_windows": {
+            "bits_per_byte": 2.4528357430826264,
+            "chunks": 436,
+            "correct_count": 28001,
+            "final_carried_clock": null,
+            "mode": "reset_windows",
+            "next_byte_accuracy": 0.5020889741612724,
+            "next_byte_nll_nats": 1.7001761796943808,
+            "nll_sum_nats": 94817.12536537592,
+            "partition_bytes": 55770,
+            "perplexity": 5.474911875064426,
+            "perplexity_overflow": false,
+            "sequence_length": 128,
+            "target_count": 55769
+          }
+        }
+      },
+      "seed": 10603,
+      "training_receipt": {
+        "actual_steps": 4096,
+        "architecture_superiority": false,
+        "arm": "eight",
+        "checkpoint_file": "checkpoint-4096.pt",
+        "checkpoint_readback": {
+          "checkpoint_tensors_reloaded": true,
+          "fixed_TRAIN_probe_logits_exact": true,
+          "optimizer_reloaded": true,
+          "sampler_rng_reloaded": true
+        },
+        "checkpoint_sha256": "ef374bde2c17bc4623ce199a1c131e9994c6856d23543b8c67b199b6a72d4a53",
+        "checkpoints": [
+          {
+            "file": "checkpoint-0.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "bf57ea18f863d31fcc9ec759e511dedf3bee70b144b1ccfa19dc371b76c49862",
+            "step": 0
+          },
+          {
+            "file": "checkpoint-256.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "568c8fe4964456a0f11405a852ddbf0e0e1372b51e793274365e8ca0db725d6d",
+            "step": 256
+          },
+          {
+            "file": "checkpoint-1024.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "2b7786166ed2e5590d25ba56447db81f9e3bdc0694704bb1e48d99e776f18b22",
+            "step": 1024
+          },
+          {
+            "file": "checkpoint-2048.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "561e839912d5d79f74926ca8c4af0629fc6e1ec9b254e555727b87ae3b8f8fea",
+            "step": 2048
+          },
+          {
+            "file": "checkpoint-4096.pt",
+            "readback": {
+              "checkpoint_tensors_reloaded": true,
+              "fixed_TRAIN_probe_logits_exact": true,
+              "optimizer_reloaded": true,
+              "sampler_rng_reloaded": true
+            },
+            "sha256": "ef374bde2c17bc4623ce199a1c131e9994c6856d23543b8c67b199b6a72d4a53",
+            "step": 4096
+          }
+        ],
+        "config": {
+          "chunk_size": 32,
+          "d_model": 72,
+          "ffn_dim": 120,
+          "key_dim": 16,
+          "local_rope": true,
+          "n_heads": 4,
+          "n_layers": 8,
+          "rotary": true,
+          "tied_embedding": true,
+          "value_dim": 16,
+          "window": 128,
+          "write_rank": 2
+        },
+        "cpu_threads": 2,
+        "dev_scored": false,
+        "error": null,
+        "expected_steps": 4096,
+        "final_parameters_sha256": "75ecb63b0d6e89c56b7e78de405a5920570f924074088d9ae5dc324188a30bdb",
+        "first_fit_loss": 5.510556697845459,
+        "full_training_flops": "NOT_MEASURED",
+        "hardware": "CPU",
+        "implementation_sha256": {
+          "research/langcache104/kernels.py": "1c2782bbaaac7aa54722f420bbbad8c5215f260ed591a6cef154c0540f41b8d1",
+          "research/langcache104/model.py": "84507fd17ace7eb2e880d5f15ee7a3a80c41543041eee103ca926966bcd1e882"
+        },
+        "independently_qualified": false,
+        "initialized_parameters_sha256": "710d9dbb7de0a3c1e2701aefc5770addc3574528f0a1f13b2d4bd578e3d080d6",
+        "last_fit_loss": 1.441947102546692,
+        "optimizer_metadata": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "clip_grad_norm": 1.0,
+          "eps": 1e-08,
+          "lr": 0.0003,
+          "optimizer": "AdamW",
+          "weight_decay": 0.1
+        },
+        "optimizer_updates": 4096,
+        "original_parameters_sha256": "710d9dbb7de0a3c1e2701aefc5770addc3574528f0a1f13b2d4bd578e3d080d6",
+        "parameter_count": 999784,
+        "parameters_changed": true,
+        "peak_rss_bytes": 719286272,
+        "precision": "float32",
+        "process_cpu_seconds": 1628.761144465,
+        "protocol_sha256": "ab162c4811e563dab9fcffc99c3125b6b96309604c47eb7d8bbb686796f7dbfa",
+        "python_version": "3.12.15 (main, Oct  1 2026, 02:35:59) [GCC 13.3.0]",
+        "resumed_from_checkpoint_sha256": null,
+        "sample_draws": 32768,
+        "sample_offset_sha256": "171e84336bc712de65bd62cda8494ab690e9ade8c586ceb90a24bfa730bf5cfa",
+        "scheduler_metadata": {
+          "lr": 0.0003,
+          "min_lr": 3e-05,
+          "steps": 4096,
+          "warmup_steps": 128
+        },
+        "schema": "langdepth106.fit-receipt.v1",
+        "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_DEPTH_WIDTH_ALLOCATION_STUDY",
+        "seed": 10603,
+        "smoke": false,
+        "source_receipt_sha256": "a241bea16401f2a8c0e2079edca8e5029b0b4e7f01a466d276fc12d9b4020b07",
+        "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+        "state_policy": "RESET_EACH_INDEPENDENT_TRAIN_WINDOW",
+        "status": "FIT_COMPLETED_EXPLORATORY",
+        "test_accessed": false,
+        "torch_version": "2.15.0+cpu",
+        "train_sha256": "a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735",
+        "training_byte_presentations": 4194304,
+        "wall_seconds": 817.93514198
+      }
+    }
+  ],
+  "schema": "langdepth106.frozen-final-evaluation.v1",
+  "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_DEPTH_WIDTH_ALLOCATION_STUDY",
+  "source_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+  "study_id": "LANGDEPTH106",
+  "test_access": {
+    "explicit_final_flag": true,
+    "once_only_journal": "FINAL_TEST_STARTED.json",
+    "opened": true
+  }
+}

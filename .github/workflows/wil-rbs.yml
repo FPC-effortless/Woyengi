@@ -1,0 +1,118 @@
+name: WIL-RBS contract checks
+on:
+  pull_request:
+    paths:
+      - 'research/wil-rbs/**'
+      - '.github/workflows/wil-rbs.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Contract tests
+        run: python -m unittest discover -s research/wil-rbs/tests -v
+      - name: Validate historical examples
+        run: python research/wil-rbs/wil_rbs.py validate research/wil-rbs/examples/historical_aggregates.json
+      - name: Import frozen upstream six-fit study and validate records
+        run: |
+          python research/wil-rbs/wil_rbs_ingest.py \
+            research/wil-rbs/examples/upstream/langdepth106_PROTOCOL.json \
+            research/wil-rbs/examples/upstream/langdepth106_RESULT.json \
+            --output /tmp/wil-rbs-langdepth106.json
+          python research/wil-rbs/wil_rbs.py validate /tmp/wil-rbs-langdepth106.json
+          python research/wil-rbs/wil_rbs_frontier.py /tmp/wil-rbs-langdepth106.json \
+            --study LANGDEPTH106 --cost training_wall_seconds > /tmp/wil-rbs-frontier-time.json
+          python research/wil-rbs/wil_rbs_frontier.py /tmp/wil-rbs-langdepth106.json \
+            --study LANGDEPTH106 --cost training_flops > /tmp/wil-rbs-frontier-flops.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('/tmp/wil-rbs-langdepth106.json').read_text())
+          t=json.loads(Path('/tmp/wil-rbs-frontier-time.json').read_text())
+          f=json.loads(Path('/tmp/wil-rbs-frontier-flops.json').read_text())
+          assert len([r for r in m['records'] if r['kind']=='run'])==6
+          assert len([r for r in m['records'] if r['kind']=='checkpoint'])==30
+          assert len([r for r in m['records'] if r['kind']=='evaluation'])==48
+          assert t['status']=='EXPLORATORY_ONLY' and t['complete_cost_measurements']
+          assert not f['complete_cost_measurements']
+          assert all(x['descriptive_pareto'] is None for x in f['arms'])
+          PY
+      - name: Recover Transformer107 per-seed source FIT receipts and run paired comparison
+        run: |
+          python research/wil-rbs/wil_rbs_transformer.py \
+            research/wil-rbs/examples/upstream/langbase107_RESULT.json \
+            research/wil-rbs/examples/upstream/langbase107_AUDIT.json \
+            --receipts research/wil-rbs/examples/upstream/langbase107_FIT_RECEIPTS.json \
+            --output /tmp/wil-rbs-transformer107.json
+          python research/wil-rbs/wil_rbs.py validate /tmp/wil-rbs-transformer107.json
+          python research/wil-rbs/wil_rbs_paired.py \
+            /tmp/wil-rbs-langdepth106.json /tmp/wil-rbs-transformer107.json > /tmp/wil-rbs-paired.json
+          python research/wil-rbs/wil_rbs_compute.py \
+            research/wil-rbs/examples/fusion001_projection_mac_report.json > /tmp/wil-rbs-partial-compute.json
+          python - <<'PYTEST'
+          import json
+          from pathlib import Path
+          t=json.loads(Path('/tmp/wil-rbs-transformer107.json').read_text())
+          p=json.loads(Path('/tmp/wil-rbs-paired.json').read_text())
+          c=json.loads(Path('/tmp/wil-rbs-partial-compute.json').read_text())
+          assert sum(r['kind']=='run' for r in t['records'])==3
+          assert sum(r['kind']=='checkpoint' for r in t['records'])==15
+          assert sum(r['kind']=='evaluation' for r in t['records'])==24
+          assert abs(p['mean_transformer_minus_tac_quality']-0.07992910915257223)<1e-10
+          assert abs(p['mean_transformer_training_wall_seconds']-325.023113271)<1e-6
+          assert p['matched_per_seed_training_sample_order'] and not p['scientific_superiority_authorized']
+          assert c['training_flops'] is None and not c['end_to_end_training_flops_eligible']
+          PYTEST
+      - name: Verify append-only experimental registry and exported snapshot
+        run: |
+          python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl /tmp/wil-rbs-langdepth106.json
+          python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl /tmp/wil-rbs-transformer107.json
+          python research/wil-rbs/wil_rbs_ledger.py append /tmp/wil-rbs-events.jsonl research/wil-rbs/examples/historical_aggregates.json
+          python research/wil-rbs/wil_rbs_ledger.py verify /tmp/wil-rbs-events.jsonl > /tmp/wil-rbs-ledger-verification.json
+          python research/wil-rbs/wil_rbs_ledger.py export /tmp/wil-rbs-events.jsonl --output /tmp/wil-rbs-registry-snapshot.json
+          python research/wil-rbs/wil_rbs.py validate /tmp/wil-rbs-registry-snapshot.json
+          python - <<'PYTEST'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('/tmp/wil-rbs-ledger-verification.json').read_text())
+          assert x['status']=='VALID' and x['records']==6+30+48+3+15+24+4
+          assert x['external_anchor_required']
+          PYTEST
+      - name: Cross-study catalog; missing data cannot generate rankings
+        run: |
+          python research/wil-rbs/wil_rbs_catalog.py /tmp/wil-rbs-registry-snapshot.json --output /tmp/wil-rbs-cross-study-catalog.json
+          python research/wil-rbs/wil_rbs_catalog.py /tmp/wil-rbs-registry-snapshot.json --cost training_flops --output /tmp/wil-rbs-cross-study-flops.json
+          python - <<'PYCHECK'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('/tmp/wil-rbs-cross-study-catalog.json').read_text())
+          f=json.loads(Path('/tmp/wil-rbs-cross-study-flops.json').read_text())
+          assert c['status']=='EXPLORATORY_CATALOG'
+          assert c['record_count']==7 and c['comparability_group_count']==0
+          assert all(m['descriptive_pareto'] is None for m in c['models'])
+          assert f['record_count']==7 and f['comparability_group_count']==0
+          assert all(m['mean_cost'] is None for m in f['models'])
+          assert c['science_qualified'] is False
+          PYCHECK
+      - name: Publish read-only import analysis artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wil-rbs-langdepth106-analysis
+          path: |
+            /tmp/wil-rbs-langdepth106.json
+            /tmp/wil-rbs-frontier-time.json
+            /tmp/wil-rbs-frontier-flops.json
+            /tmp/wil-rbs-transformer107.json
+            /tmp/wil-rbs-paired.json
+            /tmp/wil-rbs-partial-compute.json
+            /tmp/wil-rbs-ledger-verification.json
+            /tmp/wil-rbs-registry-snapshot.json
+            /tmp/wil-rbs-cross-study-catalog.json
+            /tmp/wil-rbs-cross-study-flops.json
+          retention-days: 30

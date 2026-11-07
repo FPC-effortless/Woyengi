@@ -1,0 +1,88 @@
+{
+  "schema": "langdepth106.owner-authorized-depth-comparison.v1",
+  "study_id": "LANGDEPTH106",
+  "registration_date": "2026-10-31",
+  "owner_authorized": true,
+  "authorization_basis": "Current user request: test the four- and eight-layer LANGCACHE104 models at one million parameters on Tiny Shakespeare; prior explicit owner authorization permits bounded exploratory CPU fitting without a separate external sign-off.",
+  "scientific_status": "OWNER_AUTHORIZED_EXPLORATORY_DEPTH_WIDTH_ALLOCATION_STUDY",
+  "independent_attestation": false,
+  "architecture_superiority_eligible": false,
+  "primary_question": "At approximately one million trainable parameters and identical data presentations, how do four wider versus eight narrower LANGCACHE104 layers learn Tiny Shakespeare?",
+  "model_scale_policy": "declared-target-v2",
+  "target_trainable_parameters": 1000000,
+  "target_deployed_parameters": 1000000,
+  "parameter_relative_tolerance": 0.05,
+  "maximum_cross_arm_parameter_gap": 0.01,
+  "implementation": {
+    "repository": "FPC-effortless/TAC-OSM",
+    "source_commit": "b567f4c68a73106781555496c44145939efd1d92",
+    "source_files_sha256": {
+      "research/langcache104/model.py": "84507fd17ace7eb2e880d5f15ee7a3a80c41543041eee103ca926966bcd1e882",
+      "research/langcache104/kernels.py": "1c2782bbaaac7aa54722f420bbbad8c5215f260ed591a6cef154c0540f41b8d1"
+    },
+    "mathematical_companion_pr": "https://github.com/FPC-effortless/pnds-lean/pull/104",
+    "exact_store_used": false
+  },
+  "models": {
+    "four": {
+      "parameters": 998024,
+      "config": {"d_model":120,"n_layers":4,"n_heads":4,"key_dim":16,"value_dim":16,"write_rank":2,"ffn_dim":224,"window":128,"chunk_size":32,"rotary":true,"local_rope":true,"tied_embedding":true}
+    },
+    "eight": {
+      "parameters": 999784,
+      "config": {"d_model":72,"n_layers":8,"n_heads":4,"key_dim":16,"value_dim":16,"write_rank":2,"ffn_dim":120,"window":128,"chunk_size":32,"rotary":true,"local_rope":true,"tied_embedding":true}
+    }
+  },
+  "source": {
+    "repository": "karpathy/char-rnn",
+    "commit": "6f9487a6fe5b420b7ca9afb0d7c078e37c1d1b4e",
+    "path": "data/tinyshakespeare/input.txt",
+    "git_blob": "7dcb3a2d4cc3b48b6283dd46870bfeb78f88aac9",
+    "canonical_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+    "bytes": 1115394,
+    "representation": "unaltered raw byte IDs 0..255; corpus contains 65 ASCII characters",
+    "split_rule": "Contiguous TRAIN first floor(0.90*N), DEV through floor(0.95*N), TEST remainder; source and target always stay within the same partition.",
+    "splits": {
+      "TRAIN": {"bytes":1003854,"sha256":"a9e24e23a1ec77744dad26844bfd5a09b6e041954e1eef0000e7f24cba6db735"},
+      "DEV": {"bytes":55770,"sha256":"c64e90c160750d91a9d2d9b1ace5eab1a440f5a1701d32a8e97a179b7839f1c8"},
+      "TEST": {"bytes":55770,"sha256":"8b5a8c8af45905547ad03b7aae6980a277a5dd78924a6e6ac64b75d63d7d40bd"}
+    }
+  },
+  "seeds": [10601,10602,10603],
+  "fit": {
+    "steps":4096,"batch_size":8,"sequence_length":128,
+    "optimizer":"AdamW","lr":0.0003,"min_lr":0.00003,"warmup_steps":128,
+    "betas":[0.9,0.95],"eps":1e-8,"weight_decay":0.1,"clip_grad_norm":1.0,
+    "cpu_threads":2,"precision":"float32","deterministic_algorithms":true,
+    "sampling":"Uniform legal TRAIN offsets with replacement; independent CPU torch.Generator seeded identically per paired seed for both depths.",
+    "state_policy":"Reset carried state at each independently sampled training window; preserve differentiation through all 128 bytes.",
+    "save_checkpoints_at":[0,256,1024,2048,4096],
+    "dev_scoring_in_training":false,"test_access_in_training":false,
+    "total_predicted_training_bytes_per_fit":4194304
+  },
+  "evaluation": {
+    "selection":"Final checkpoint at exactly step4096 for every registered arm/seed; no best-DEV selection, no adaptive stopping or per-arm tuning.",
+    "require_all_six_final_fits":true,
+    "allow_final_test":true,
+    "test_policy":"One declared final comparison after all six checkpoints pass integrity/replay checks. No TEST-based tuning or checkpoint selection.",
+    "primary":"Full DEV and TEST partitions, reset 128-byte windows, every within-partition next-byte target counted exactly once.",
+    "secondary":"Continuous carried-state evaluation within each partition, reset between partitions; same legal byte history for both depths.",
+    "metrics":["next_byte_nll_nats","bits_per_byte","perplexity","next_byte_accuracy"],
+    "aggregation":"Report every seed and paired run differences; three runs do not establish general architecture superiority.",
+    "generation":{"prompt":"ROMEO:\n","bytes":512,"temperature":0.8,"seed":10699,"vocabulary":"all 256 byte IDs; no alphabet filter"},
+    "speed":"CPU-only measured prefill and recurrent batch-one decode; persistent tensor bytes and physical backing; full FLOPs and GPU speed unmeasured."
+  },
+  "resource_bounds": {
+    "hardware":"GitHub Actions ubuntu CPU; no GPU allocation",
+    "per_fit_max_seconds":2700,"github_fit_timeout_minutes":50,
+    "max_parallel_fits":6,"smoke_steps":8,"smoke_timeout_minutes":10,
+    "evaluation_timeout_minutes":25,
+    "compute_parity":"Identical updates/data presentations, closely matched weights; actual CPU time and state sizes reported separately. Full FLOP parity is not established."
+  },
+  "interpretation_limits":[
+    "Within-family depth/width allocation experiment, not an isolated depth intervention or comparison against Transformer/Mamba/BDH.",
+    "Eight layers hold twice the number of per-layer cache states; matched weights do not imply matched runtime or state bytes.",
+    "Tiny Shakespeare is a small public benchmark, not independent evidence of general language, exact recall, reasoning, or commercial capability.",
+    "Owner-authorized exploration does not fabricate independent source/goal/reward/ACL attestation or pass the separate qualified-research gate."
+  ]
+}

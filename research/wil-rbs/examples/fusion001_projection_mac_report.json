@@ -1,0 +1,22 @@
+{
+  "schema": "wil-rbs.partial-compute.v1",
+  "method": "source_operator_hooks",
+  "scope": "partial_projection_only",
+  "run_id": "fusion001-published-three-seed-model-family-census",
+  "source_ref": null,
+  "source_note": "Woyengi Intelligence Labs original private research report FUSION001_Compute_and_Timing_Audit.md (November 2, 2026); summary MAC census only; no public source artifact or independently reproduced counts.",
+  "input_unit": "character",
+  "projection_macs_per_input_unit": 1186944,
+  "forward_only": true,
+  "unaccounted_categories": [
+    "attention",
+    "associative_memory",
+    "router",
+    "normalization",
+    "activations",
+    "backward",
+    "optimizer",
+    "data_pipeline",
+    "distributed_communication"
+  ]
+}
