@@ -1,0 +1,22 @@
+name: Predictive offline export contract (constructed only)
+on:
+  push:
+    branches:
+      - feature/offline-only-predictive-export-2026-10-30
+  pull_request:
+    paths:
+      - "packages/predictive-export/**"
+      - ".github/workflows/predictive-offline-contract.yml"
+permissions:
+  contents: read
+jobs:
+  constructed-source-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.12.0"
+      - name: Verify Woyengi native source exporter and offline destination gate
+        run: node --test packages/predictive-export/test/export.test.ts
