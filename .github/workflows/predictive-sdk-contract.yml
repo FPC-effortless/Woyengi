@@ -51,6 +51,8 @@ jobs:
           node --test packages/predictive-sdk/test/quickstart.test.ts
           node --test packages/predictive-sdk/test/me111-bridge.test.ts
           ME111_PINNED_ANDROID_SOURCE=$GITHUB_WORKSPACE/pinned-me111 node --test packages/predictive-sdk/test/me111-upstream-contract.test.ts
+      - name: Validate host replay receipts (fixture-only; no APK or device qualification)
+        run: python -m unittest discover -s packages/predictive-sdk/examples -p 'test_host_replay_receipt.py' -v
       - name: Full local type and boundary checks
         run: |
           corepack enable
