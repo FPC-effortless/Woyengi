@@ -3,6 +3,7 @@ name: Woyengi local predictive SDK contract
 on:
   push:
     branches:
+      - company/host-replay-strict-json-20261107
       - company/woyengi-local-predictive-sdk-2026-10-30
       - company/sdk-deepfreeze-source-2026-10-30
       - company/sdk-constructed-quickstart-2026-10-31
@@ -11,6 +12,7 @@ on:
       - company/me111-host-runtime-demo-20261104
   pull_request:
     branches:
+      - main
       - feature/offline-only-predictive-export-2026-10-30
       - company/woyengi-local-predictive-sdk-2026-10-30
       - company/sdk-deepfreeze-source-2026-10-30
