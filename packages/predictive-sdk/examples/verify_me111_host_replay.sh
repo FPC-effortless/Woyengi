@@ -43,6 +43,9 @@ def finite_float(token):
     return value
 
 try:
+    # Bound untrusted receipt size before loading it into memory.
+    if __import__("os").path.getsize(sys.argv[1]) > 1024 * 1024:
+        raise ValueError("host replay receipt exceeds 1 MiB")
     with open(sys.argv[1], encoding="utf-8") as f:
         receipt = json.load(f, object_pairs_hook=unique_object, parse_constant=reject_nonfinite, parse_float=finite_float)
     if not isinstance(receipt, dict) or not receipt:
