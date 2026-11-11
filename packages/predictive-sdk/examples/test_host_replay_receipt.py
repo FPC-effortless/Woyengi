@@ -49,6 +49,9 @@ class ReceiptParserTests(unittest.TestCase):
     def test_nested_exponent_overflow(self):
         self.check_receipt('{"a":[{"b":-1e999}]}', False)
 
+    def test_oversized_receipt(self):
+        self.check_receipt('{"payload":"' + 'x' * (1024 * 1024) + '"}', False)
+
     def test_array_top_level(self):
         self.check_receipt('[1,2]', False)
 
