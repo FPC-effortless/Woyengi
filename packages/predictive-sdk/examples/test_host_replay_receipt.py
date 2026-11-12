@@ -37,6 +37,15 @@ class ReceiptParserTests(unittest.TestCase):
     def test_duplicate_key(self):
         self.check_receipt('{"a":1,"a":2}', False)
 
+    def test_nested_duplicate_key(self):
+        self.check_receipt('{"outer":{"a":1,"a":2}}', False)
+
+    def test_exact_size_limit_valid(self):
+        # The 1 MiB boundary is inclusive; only larger receipts are rejected.
+        prefix = '{"payload":"'
+        suffix = '"}'
+        self.check_receipt(prefix + 'x' * (1024 * 1024 - len(prefix) - len(suffix)) + suffix, True)
+
     def test_nan(self):
         self.check_receipt('{"a":NaN}', False)
 
