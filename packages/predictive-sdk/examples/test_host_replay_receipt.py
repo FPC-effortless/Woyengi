@@ -46,6 +46,23 @@ class ReceiptParserTests(unittest.TestCase):
         suffix = '"}'
         self.check_receipt(prefix + 'x' * (1024 * 1024 - len(prefix) - len(suffix)) + suffix, True)
 
+    def test_truncated_json(self):
+        self.check_receipt('{"local":true', False)
+
+    def test_top_level_scalar(self):
+        self.check_receipt('42', False)
+
+    def test_nested_nonfinite_constant(self):
+        self.check_receipt('{"events":[{"score":NaN}]}', False)
+
+    def test_exact_limit_utf8_bytes(self):
+        # Size enforcement counts UTF-8 bytes, not Python characters.
+        prefix = '{"payload":"'
+        suffix = '"}'
+        byte_budget = 1024 * 1024 - len(prefix) - len(suffix)
+        self.check_receipt(prefix + 'é' * (byte_budget // 2) + suffix, True)
+        self.check_receipt(prefix + 'é' * (byte_budget // 2 + 1) + suffix, False)
+
     def test_nan(self):
         self.check_receipt('{"a":NaN}', False)
 
