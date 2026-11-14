@@ -90,9 +90,9 @@ class ReceiptParserTests(unittest.TestCase):
     def test_exact_limit_utf8_bytes(self):
         base = valid_receipt(payload='')
         budget = 1024 * 1024 - len(base.encode('utf-8'))
-        self.assertEqual(budget % 2, 0)
-        self.check_receipt(valid_receipt(payload='é' * (budget // 2)), True)
-        self.check_receipt(valid_receipt(payload='é' * (budget // 2 + 1)), False)
+        filler = 'é' * (budget // 2) + 'x' * (budget % 2)
+        self.check_receipt(valid_receipt(payload=filler), True)
+        self.check_receipt(valid_receipt(payload=filler + 'é'), False)
 
     def test_nan(self):
         self.check_receipt('{"a":NaN}', False)
