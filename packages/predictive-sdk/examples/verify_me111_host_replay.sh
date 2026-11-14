@@ -53,5 +53,30 @@ try:
 except (ValueError, UnicodeError) as exc:
     print(f"FAIL: invalid host replay receipt: {exc}", file=sys.stderr)
     sys.exit(1)
+# A syntactically valid arbitrary object is not evidence of an actual host replay.
+expected_fields = {
+    "schema": "woyengi.me111-host-demonstration.v1",
+    "data": "CONSTRUCTED_PYTORCH_REFERENCE",
+    "execution": "HOST_ONNX_CPU",
+    "physicalDeviceQualification": "NOT_RUN",
+    "physicalNetworkTrace": "NOT_RUN",
+    "stateReplay": "PASSED_ACROSS_TWO_LOCAL_RUNTIME_PROCESSES",
+}
+try:
+    for key, expected in expected_fields.items():
+        if receipt.get(key) != expected:
+            raise ValueError(f"{key}: expected {expected}")
+    if receipt.get("apkSha256") != "f17a9f9a5752c32ffe8da407b27754793925a87bddb7b51a8bae56d64fb1f318":
+        raise ValueError("apkSha256: pinned artifact mismatch")
+    if not isinstance(receipt.get("forecasts"), list) or len(receipt["forecasts"]) != 2:
+        raise ValueError("forecasts: expected two local steps")
+    cases = receipt.get("cases")
+    if not isinstance(cases, dict) or cases.get("unauthorizedSource") != "DENIED" or cases.get("remoteFallback") != "REJECTED" or cases.get("canonicalHistoryDuringPrediction") != "UNCHANGED":
+        raise ValueError("cases: required authority and state checks absent")
+    if not isinstance(cases.get("conflict"), dict) or cases["conflict"].get("status") != "ABSTAIN" or cases["conflict"].get("reason") != "SOURCE_CONFLICT":
+        raise ValueError("cases: source-conflict abstention absent")
+except ValueError as exc:
+    print(f"FAIL: invalid host replay evidence: {exc}", file=sys.stderr)
+    sys.exit(1)
 print("PASS: two identical, strict-JSON host replay receipts; independent physical-device qualification NOT RUN")
 PY
