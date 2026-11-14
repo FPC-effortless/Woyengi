@@ -2,6 +2,7 @@
 
 These test receipt parsing only; they do not run the authenticated APK or qualify a device.
 """
+import json
 import pathlib
 import subprocess
 import sys
@@ -18,6 +19,27 @@ def parser_source():
     return text.split(marker, 1)[1].split('\nPY\n', 1)[0]
 
 
+def valid_receipt(**overrides):
+    receipt = {
+        "schema": "woyengi.me111-host-demonstration.v1",
+        "data": "CONSTRUCTED_PYTORCH_REFERENCE",
+        "execution": "HOST_ONNX_CPU",
+        "physicalDeviceQualification": "NOT_RUN",
+        "physicalNetworkTrace": "NOT_RUN",
+        "stateReplay": "PASSED_ACROSS_TWO_LOCAL_RUNTIME_PROCESSES",
+        "apkSha256": "f17a9f9a5752c32ffe8da407b27754793925a87bddb7b51a8bae56d64fb1f318",
+        "forecasts": [{}, {}],
+        "cases": {
+            "unauthorizedSource": "DENIED",
+            "remoteFallback": "REJECTED",
+            "canonicalHistoryDuringPrediction": "UNCHANGED",
+            "conflict": {"status": "ABSTAIN", "reason": "SOURCE_CONFLICT"},
+        },
+    }
+    receipt.update(overrides)
+    return json.dumps(receipt, ensure_ascii=False, separators=(',', ':'))
+
+
 class ReceiptParserTests(unittest.TestCase):
     def check_receipt(self, payload, valid):
         with tempfile.TemporaryDirectory() as directory:
@@ -29,7 +51,19 @@ class ReceiptParserTests(unittest.TestCase):
             self.assertEqual(result.returncode == 0, valid, result.stderr)
 
     def test_valid_object(self):
-        self.check_receipt('{"local":true,"error":0.0}', True)
+        self.check_receipt(valid_receipt(), True)
+
+    def test_missing_evidence_fields(self):
+        self.check_receipt('{"local":true}', False)
+
+    def test_false_device_qualification(self):
+        self.check_receipt(valid_receipt(physicalDeviceQualification='PASS'), False)
+
+    def test_wrong_apk_identity(self):
+        self.check_receipt(valid_receipt(apkSha256='0' * 64), False)
+
+    def test_missing_conflict_abstention(self):
+        self.check_receipt(valid_receipt(cases={'unauthorizedSource':'DENIED','remoteFallback':'REJECTED','canonicalHistoryDuringPrediction':'UNCHANGED'}), False)
 
     def test_empty_object(self):
         self.check_receipt('{}', False)
@@ -41,10 +75,8 @@ class ReceiptParserTests(unittest.TestCase):
         self.check_receipt('{"outer":{"a":1,"a":2}}', False)
 
     def test_exact_size_limit_valid(self):
-        # The 1 MiB boundary is inclusive; only larger receipts are rejected.
-        prefix = '{"payload":"'
-        suffix = '"}'
-        self.check_receipt(prefix + 'x' * (1024 * 1024 - len(prefix) - len(suffix)) + suffix, True)
+        base = valid_receipt(payload='')
+        self.check_receipt(valid_receipt(payload='x' * (1024 * 1024 - len(base.encode('utf-8')))), True)
 
     def test_truncated_json(self):
         self.check_receipt('{"local":true', False)
@@ -56,12 +88,11 @@ class ReceiptParserTests(unittest.TestCase):
         self.check_receipt('{"events":[{"score":NaN}]}', False)
 
     def test_exact_limit_utf8_bytes(self):
-        # Size enforcement counts UTF-8 bytes, not Python characters.
-        prefix = '{"payload":"'
-        suffix = '"}'
-        byte_budget = 1024 * 1024 - len(prefix) - len(suffix)
-        self.check_receipt(prefix + 'é' * (byte_budget // 2) + suffix, True)
-        self.check_receipt(prefix + 'é' * (byte_budget // 2 + 1) + suffix, False)
+        base = valid_receipt(payload='')
+        budget = 1024 * 1024 - len(base.encode('utf-8'))
+        self.assertEqual(budget % 2, 0)
+        self.check_receipt(valid_receipt(payload='é' * (budget // 2)), True)
+        self.check_receipt(valid_receipt(payload='é' * (budget // 2 + 1)), False)
 
     def test_nan(self):
         self.check_receipt('{"a":NaN}', False)
