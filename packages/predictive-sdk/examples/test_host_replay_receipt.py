@@ -28,7 +28,7 @@ def valid_receipt(**overrides):
         "physicalNetworkTrace": "NOT_RUN",
         "stateReplay": "PASSED_ACROSS_TWO_LOCAL_RUNTIME_PROCESSES",
         "apkSha256": "f17a9f9a5752c32ffe8da407b27754793925a87bddb7b51a8bae56d64fb1f318",
-        "forecasts": [{}, {}],
+        "forecasts": [{"hour": hour, "status": "FORECAST", "actionAuthority": "NOT_GRANTED", "maxAbsError": {"forecast": 0.0, "state": 0.0}} for hour in (100, 101)],
         "cases": {
             "unauthorizedSource": "DENIED",
             "remoteFallback": "REJECTED",
@@ -52,6 +52,24 @@ class ReceiptParserTests(unittest.TestCase):
 
     def test_valid_object(self):
         self.check_receipt(valid_receipt(), True)
+
+    def test_empty_forecast_evidence(self):
+        self.check_receipt(valid_receipt(forecasts=[{}, {}]), False)
+
+    def test_wrong_forecast_hour(self):
+        steps = json.loads(valid_receipt())["forecasts"]
+        steps[1]["hour"] = 100
+        self.check_receipt(valid_receipt(forecasts=steps), False)
+
+    def test_missing_numerical_parity(self):
+        steps = json.loads(valid_receipt())["forecasts"]
+        del steps[0]["maxAbsError"]
+        self.check_receipt(valid_receipt(forecasts=steps), False)
+
+    def test_negative_numerical_error(self):
+        steps = json.loads(valid_receipt())["forecasts"]
+        steps[0]["maxAbsError"]["state"] = -1
+        self.check_receipt(valid_receipt(forecasts=steps), False)
 
     def test_missing_evidence_fields(self):
         self.check_receipt('{"local":true}', False)
