@@ -70,6 +70,19 @@ try:
         raise ValueError("apkSha256: pinned artifact mismatch")
     if not isinstance(receipt.get("forecasts"), list) or len(receipt["forecasts"]) != 2:
         raise ValueError("forecasts: expected two local steps")
+    # The two constructed steps must contain real, bounded comparison evidence.
+    for index, step in enumerate(receipt["forecasts"]):
+        if not isinstance(step, dict) or step.get("hour") != 100 + index:
+            raise ValueError("forecasts: incorrect step identity or order")
+        if step.get("status") != "FORECAST" or step.get("actionAuthority") != "NOT_GRANTED":
+            raise ValueError("forecasts: missing authorized forecast result")
+        errors = step.get("maxAbsError")
+        if not isinstance(errors, dict):
+            raise ValueError("forecasts: missing numerical parity evidence")
+        for field in ("forecast", "state"):
+            value = errors.get(field)
+            if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+                raise ValueError(f"forecasts: invalid {field} error")
     cases = receipt.get("cases")
     if not isinstance(cases, dict) or cases.get("unauthorizedSource") != "DENIED" or cases.get("remoteFallback") != "REJECTED" or cases.get("canonicalHistoryDuringPrediction") != "UNCHANGED":
         raise ValueError("cases: required authority and state checks absent")
