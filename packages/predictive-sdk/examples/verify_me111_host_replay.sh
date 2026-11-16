@@ -61,6 +61,9 @@ expected_fields = {
     "physicalDeviceQualification": "NOT_RUN",
     "physicalNetworkTrace": "NOT_RUN",
     "stateReplay": "PASSED_ACROSS_TWO_LOCAL_RUNTIME_PROCESSES",
+    "runtime": "1.23.2",
+    "modelSha256": "dd65519a9e4f3388966538af53119b56e9292b46a9209d63ad4927b87f0a176b",
+    "checkpointSha256": "337b882e9a10631dc85700846ef2b15ca8908699499668186ad3a248dc108449",
 }
 try:
     for key, expected in expected_fields.items():
@@ -71,17 +74,34 @@ try:
     if not isinstance(receipt.get("forecasts"), list) or len(receipt["forecasts"]) != 2:
         raise ValueError("forecasts: expected two local steps")
     # The two constructed steps must contain real, bounded comparison evidence.
+    def finite_nonnegative_number(value):
+        if type(value) not in (int, float):
+            return False
+        try:
+            return math.isfinite(value) and value >= 0
+        except OverflowError:
+            # JSON integers are unbounded; device measurements are not.
+            return False
+
     for index, step in enumerate(receipt["forecasts"]):
         if not isinstance(step, dict) or step.get("hour") != 100 + index:
             raise ValueError("forecasts: incorrect step identity or order")
         if step.get("status") != "FORECAST" or step.get("actionAuthority") != "NOT_GRANTED":
             raise ValueError("forecasts: missing authorized forecast result")
+        if step.get("modelSha256") != expected_fields["modelSha256"]:
+            raise ValueError("forecasts: frozen model identity mismatch")
+        if step.get("scientificQualification") != "FAILED_MIXED_ME111":
+            raise ValueError("forecasts: failed/mixed scientific status must remain explicit")
+        if step.get("sourceQualification") != "STRUCTURAL_EXPORT_ONLY" or step.get("deviceQualification") != "NOT_RUN":
+            raise ValueError("forecasts: unqualified source/device status must remain explicit")
+        if step.get("units") != "STANDARDIZED_LOG1P_POLLUTANT":
+            raise ValueError("forecasts: model output units mismatch")
         errors = step.get("maxAbsError")
         if not isinstance(errors, dict):
             raise ValueError("forecasts: missing numerical parity evidence")
         for field in ("forecast", "state"):
             value = errors.get(field)
-            if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+            if not finite_nonnegative_number(value):
                 raise ValueError(f"forecasts: invalid {field} error")
     cases = receipt.get("cases")
     if not isinstance(cases, dict) or cases.get("unauthorizedSource") != "DENIED" or cases.get("remoteFallback") != "REJECTED" or cases.get("canonicalHistoryDuringPrediction") != "UNCHANGED":

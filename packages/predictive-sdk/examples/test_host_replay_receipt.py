@@ -27,8 +27,19 @@ def valid_receipt(**overrides):
         "physicalDeviceQualification": "NOT_RUN",
         "physicalNetworkTrace": "NOT_RUN",
         "stateReplay": "PASSED_ACROSS_TWO_LOCAL_RUNTIME_PROCESSES",
+        "runtime": "1.23.2",
+        "modelSha256": "dd65519a9e4f3388966538af53119b56e9292b46a9209d63ad4927b87f0a176b",
+        "checkpointSha256": "337b882e9a10631dc85700846ef2b15ca8908699499668186ad3a248dc108449",
         "apkSha256": "f17a9f9a5752c32ffe8da407b27754793925a87bddb7b51a8bae56d64fb1f318",
-        "forecasts": [{"hour": hour, "status": "FORECAST", "actionAuthority": "NOT_GRANTED", "maxAbsError": {"forecast": 0.0, "state": 0.0}} for hour in (100, 101)],
+        "forecasts": [{
+            "hour": hour, "status": "FORECAST", "actionAuthority": "NOT_GRANTED",
+            "modelSha256": "dd65519a9e4f3388966538af53119b56e9292b46a9209d63ad4927b87f0a176b",
+            "scientificQualification": "FAILED_MIXED_ME111",
+            "sourceQualification": "STRUCTURAL_EXPORT_ONLY",
+            "deviceQualification": "NOT_RUN",
+            "units": "STANDARDIZED_LOG1P_POLLUTANT",
+            "maxAbsError": {"forecast": 0.0, "state": 0.0},
+        } for hour in (100, 101)],
         "cases": {
             "unauthorizedSource": "DENIED",
             "remoteFallback": "REJECTED",
@@ -41,14 +52,17 @@ def valid_receipt(**overrides):
 
 
 class ReceiptParserTests(unittest.TestCase):
-    def check_receipt(self, payload, valid):
+    def run_receipt(self, payload):
         with tempfile.TemporaryDirectory() as directory:
             receipt = pathlib.Path(directory) / 'receipt.json'
             receipt.write_text(payload, encoding='utf-8')
-            result = subprocess.run([sys.executable, '-c',
+            return subprocess.run([sys.executable, '-c',
                 'import sys\nsys.argv = ["validator", sys.argv[1]]\n' + parser_source(),
                 str(receipt)], capture_output=True, text=True)
-            self.assertEqual(result.returncode == 0, valid, result.stderr)
+
+    def check_receipt(self, payload, valid):
+        result = self.run_receipt(payload)
+        self.assertEqual(result.returncode == 0, valid, result.stderr)
 
     def test_valid_object(self):
         self.check_receipt(valid_receipt(), True)
@@ -79,6 +93,29 @@ class ReceiptParserTests(unittest.TestCase):
 
     def test_wrong_apk_identity(self):
         self.check_receipt(valid_receipt(apkSha256='0' * 64), False)
+
+    def test_wrong_model_identity(self):
+        self.check_receipt(valid_receipt(modelSha256='0' * 64), False)
+
+    def test_wrong_checkpoint_identity(self):
+        self.check_receipt(valid_receipt(checkpointSha256='0' * 64), False)
+
+    def test_wrong_runtime_version(self):
+        self.check_receipt(valid_receipt(runtime='0.0.0'), False)
+
+    def test_false_scientific_qualification_is_rejected(self):
+        steps = json.loads(valid_receipt())["forecasts"]
+        steps[0]["scientificQualification"] = "QUALIFIED"
+        self.check_receipt(valid_receipt(forecasts=steps), False)
+
+    def test_integer_overflow_parity_error_is_rejected_without_traceback(self):
+        for value in (10**1000, -(10**1000)):
+            steps = json.loads(valid_receipt())["forecasts"]
+            steps[0]["maxAbsError"]["forecast"] = value
+            result = self.run_receipt(valid_receipt(forecasts=steps))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("FAIL: invalid host replay evidence: forecasts: invalid forecast error", result.stderr)
+            self.assertNotIn("Traceback", result.stderr)
 
     def test_missing_conflict_abstention(self):
         self.check_receipt(valid_receipt(cases={'unauthorizedSource':'DENIED','remoteFallback':'REJECTED','canonicalHistoryDuringPrediction':'UNCHANGED'}), False)
