@@ -1,0 +1,65 @@
+name: Woyengi local predictive SDK contract
+
+on:
+  push:
+    branches:
+      - company/host-replay-strict-json-20261107
+      - company/woyengi-local-predictive-sdk-2026-10-30
+      - company/sdk-deepfreeze-source-2026-10-30
+      - company/sdk-constructed-quickstart-2026-10-31
+      - company/sdk-output-descriptor-hardening-2026-11-01
+      - company/me111-source-bridge-2026-11-01
+      - company/me111-host-runtime-demo-20261104
+  pull_request:
+    branches:
+      - main
+      - feature/offline-only-predictive-export-2026-10-30
+      - company/woyengi-local-predictive-sdk-2026-10-30
+      - company/sdk-deepfreeze-source-2026-10-30
+      - company/sdk-constructed-quickstart-2026-10-31
+      - company/sdk-output-descriptor-hardening-2026-11-01
+      - company/me111-source-bridge-2026-11-01
+    paths:
+      - 'packages/predictive-sdk/**'
+      - '.github/workflows/predictive-sdk-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  local-sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.12.0'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Checkout frozen TAC-OSM Android bridge reference (not training data)
+        uses: actions/checkout@v4
+        with:
+          repository: FPC-effortless/TAC-OSM
+          ref: eda076507f5762fa4413848cd3f0fd87a55c3681
+          path: pinned-me111
+          persist-credentials: false
+      - name: Run constructed local prediction and source-export tests
+        run: |
+          node --test packages/predictive-export/test/export.test.ts
+          node --test packages/predictive-sdk/test/local.test.ts
+          node packages/predictive-sdk/examples/constructed_quickstart.ts
+          node --test packages/predictive-sdk/test/quickstart.test.ts
+          node --test packages/predictive-sdk/test/me111-bridge.test.ts
+          ME111_PINNED_ANDROID_SOURCE=$GITHUB_WORKSPACE/pinned-me111 node --test packages/predictive-sdk/test/me111-upstream-contract.test.ts
+      - name: Validate host replay receipts (fixture-only; no APK or device qualification)
+        run: python -m unittest discover -s packages/predictive-sdk/examples -p 'test_host_replay_receipt.py' -v
+      - name: Full local type and boundary checks
+        run: |
+          corepack enable
+          corepack pnpm install --frozen-lockfile
+          corepack pnpm typecheck
+          corepack pnpm boundaries
+      - name: Full Node and Python regression suite
+        run: corepack pnpm test:all
