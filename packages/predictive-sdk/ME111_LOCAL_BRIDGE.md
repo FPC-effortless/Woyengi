@@ -18,7 +18,7 @@ source branch. It should not be described as "missing":
 | ONNX opset 18 model SHA256 | `dd65519a9e4f3388966538af53119b56e9292b46a9209d63ad4927b87f0a176b` |
 | Original source/exporter commit | `3fc2fbe8e4974491349caecd8d6171e738810b54` |
 | Pinned Android interoperability source | `eda076507f5762fa4413848cd3f0fd87a55c3681` |
-| Host ONNX/PyTorch 512 constructed streaming step comparison | **PASS in TAC PR #544 CI**; not executed by this Woyengi change |
+| Host ONNX/PyTorch 512 constructed streaming step comparison | **PASS in TAC PR #544 CI**; the host example below checks two steps |
 | Android emulator native ONNX/state test | **PASS in TAC PR #544 CI**; emulator is not a physical phone |
 | Original ME111 real-source scientific joint forecast gate | **FAIL/MIXED**; PM2.5/NO2 coverage gates failed |
 | Original customer Galaxy A07 (SM-A075F, Android 16) native execution | **NOT RUN/BLOCKED** |
@@ -112,3 +112,42 @@ Commercial path remains open research models, **fully offline** local
 SDKs and paid integration/optimization, deployment support and evidence
 tools—not hosted inference. No customer or commercial suitability claim
 follows from these constructed checks.
+
+## Trained-model developer replay on a host
+
+This review-only example runs the real authorization checks, frozen ONNX graph and
+local CPU inference on a developer machine. It compares two constructed events
+with the frozen PyTorch reference, including the recurrent tensors and count. The
+second runtime process reads the state serialized by the first. The example also
+checks source denial, conflict abstention, disabled remote fallback, and unchanged
+canonical history during prediction.
+
+Use Node.js 24.12+ and Python 3.12. Save the original
+`TAC-OSM-ME111-Android16-ARM64-offline-debug.apk` locally. The example only reads the
+APK's model and constructed reference vector assets and verifies their SHA-256
+digests before running. It never installs the APK. The known APK SHA-256 is
+`917553ac4c0fc04ee5f4215164cb1844550effcb2d9076c2816d3e53c096da0f`.
+See the [TAC-OSM APK build and installer evidence](https://github.com/FPC-effortless/TAC-OSM/actions/runs/44259602001).
+
+The prior 14-day artifact expired. A new ARM64-only APK was regenerated in the 2026-11-18 [TAC-OSM build run #133](https://github.com/FPC-effortless/TAC-OSM/actions/runs/44259602001), artifact ID `14407941826` (`tac-me111-android-arm64-phone-small-debug`). The extracted APK is 20,195,455 bytes with SHA-256 `917553ac4c0fc04ee5f4215164cb1844550effcb2d9076c2816d3e53c096da0f`; its ONNX asset and constructed reference-vector hashes match the frozen constants above. The workflow's emulator tests and Android 16 emulator install passed; this is still not a physical Galaxy A07 test.
+
+From the Woyengi checkout, set `APK` to the local absolute APK path and run the
+following commands. The clone, APK download and wheel installation are setup
+steps. With those bytes present, prediction can run offline.
+
+```sh
+python3 -m venv .venv-me111
+.venv-me111/bin/python -m pip install 'numpy==2.5.4' 'onnxruntime==1.23.2'
+node packages/predictive-sdk/examples/me111_host_quickstart.ts "$APK" .venv-me111/bin/python > receipt.json
+node packages/predictive-sdk/examples/me111_host_quickstart.ts "$APK" .venv-me111/bin/python > replay.json
+cmp receipt.json replay.json
+```
+
+Inspect the two `FORECAST` outcomes, `maxAbsError` per step, and
+`PASSED_ACROSS_TWO_LOCAL_RUNTIME_PROCESSES` in the receipt. Each of the three
+forecast tensors and each floating-point state tensor must match the pinned
+reference within `atol=2e-5, rtol=2e-5`. Count and hour must match exactly.
+The example only exercises constructed data, and the receipt records
+`physicalDeviceQualification: NOT_RUN`. Independent developer acceptance,
+authorized real-source preprocessing, physical Android and customer use remain
+separate gates under [issue #60](https://github.com/FPC-effortless/Woyengi/issues/60).
