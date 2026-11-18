@@ -1,16 +1,132 @@
 #!/usr/bin/env node
 // Dependency-free, fail-closed validation of physical-device offline evidence.
 // Usage: node tools/verify-offline-device-evidence.mjs path/to/receipt.json
-import { readFileSync } from 'node:fs';
+import { closeSync, fstatSync, openSync, readSync } from 'node:fs';
+import { TextDecoder } from 'node:util';
 
+const MAX_RECEIPT_BYTES = 1024 * 1024;
+const MAX_JSON_DEPTH = 64;
+const MAX_JSON_NODES = 200_000;
 const path = process.argv[2];
 if (!path || process.argv.length !== 3) {
   console.error('Usage: node tools/verify-offline-device-evidence.mjs RECEIPT.json');
   process.exit(2);
 }
+
+function readBoundedUtf8(filePath) {
+  const fd = openSync(filePath, 'r');
+  try {
+    const metadata = fstatSync(fd);
+    if (!metadata.isFile()) throw new Error('receipt must be a regular file');
+    if (metadata.size > MAX_RECEIPT_BYTES) throw new Error('receipt exceeds 1 MiB limit');
+    const buffer = Buffer.alloc(MAX_RECEIPT_BYTES + 1);
+    let bytesRead = 0;
+    while (bytesRead < buffer.length) {
+      const count = readSync(fd, buffer, bytesRead, buffer.length - bytesRead, null);
+      if (count === 0) break;
+      bytesRead += count;
+    }
+    if (bytesRead > MAX_RECEIPT_BYTES) throw new Error('receipt exceeds 1 MiB limit');
+    return new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, bytesRead));
+  } finally {
+    closeSync(fd);
+  }
+}
+
+// JSON.parse silently accepts duplicate object keys and keeps the last value.
+// Scan the complete JSON grammar first so ambiguous receipts fail closed.
+function assertUniqueJsonKeys(source) {
+  let offset = 0;
+  let nodes = 0;
+  const numberPattern = /-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
+  const fail = message => { throw new Error('invalid JSON: ' + message); };
+  const whitespace = () => {
+    while (offset < source.length && /[\u0020\u0009\u000a\u000d]/.test(source[offset])) offset += 1;
+  };
+  const string = () => {
+    if (source[offset] !== '"') fail('string expected');
+    const start = offset;
+    offset += 1;
+    while (offset < source.length) {
+      const code = source.charCodeAt(offset);
+      const character = source[offset];
+      offset += 1;
+      if (character === '"') {
+        try { return JSON.parse(source.slice(start, offset)); }
+        catch { fail('invalid string escape'); }
+      }
+      if (character === '\\') {
+        if (offset >= source.length) fail('unterminated escape');
+        offset += 1;
+      } else if (code < 0x20) {
+        fail('unescaped control character');
+      }
+    }
+    fail('unterminated string');
+  };
+  const value = depth => {
+    whitespace();
+    if (depth > MAX_JSON_DEPTH) fail('nesting exceeds ' + MAX_JSON_DEPTH);
+    nodes += 1;
+    if (nodes > MAX_JSON_NODES) fail('node count exceeds ' + MAX_JSON_NODES);
+    const character = source[offset];
+    if (character === '"') { string(); return; }
+    if (character === '{') {
+      offset += 1;
+      whitespace();
+      if (source[offset] === '}') { offset += 1; return; }
+      const keys = new Set();
+      while (true) {
+        whitespace();
+        const key = string();
+        if (keys.has(key)) fail('duplicate object key ' + JSON.stringify(key));
+        keys.add(key);
+        whitespace();
+        if (source[offset] !== ':') fail('colon expected');
+        offset += 1;
+        value(depth + 1);
+        whitespace();
+        if (source[offset] === '}') { offset += 1; return; }
+        if (source[offset] !== ',') fail('comma or object end expected');
+        offset += 1;
+      }
+    }
+    if (character === '[') {
+      offset += 1;
+      whitespace();
+      if (source[offset] === ']') { offset += 1; return; }
+      while (true) {
+        value(depth + 1);
+        whitespace();
+        if (source[offset] === ']') { offset += 1; return; }
+        if (source[offset] !== ',') fail('comma or array end expected');
+        offset += 1;
+      }
+    }
+    for (const literal of ['true', 'false', 'null']) {
+      if (source.startsWith(literal, offset)) { offset += literal.length; return; }
+    }
+    numberPattern.lastIndex = offset;
+    const match = numberPattern.exec(source);
+    if (match) { offset = numberPattern.lastIndex; return; }
+    fail('JSON value expected');
+  };
+
+  value(0);
+  whitespace();
+  if (offset !== source.length) fail('trailing content');
+}
+
 let receipt;
-try { receipt = JSON.parse(readFileSync(path, 'utf8')); }
-catch (error) { console.error('INVALID: unreadable JSON receipt:', error.message); process.exit(1); }
+try {
+  const source = readBoundedUtf8(path);
+  assertUniqueJsonKeys(source);
+  receipt = JSON.parse(source);
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error('INVALID: unreadable, oversized or ambiguous JSON receipt:', message);
+  process.exit(1);
+}
 
 const errors = [];
 const own = (o, k) => Object.hasOwn(o, k);
