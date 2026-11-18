@@ -16,6 +16,8 @@ The validator reads only a regular file and caps the receipt at **1 MiB** before
 
 The parser limits are software safeguards, not a device-qualification result. A structurally valid synthetic fixture remains synthetic.
 
+UTC timestamps are also checked for calendar validity. JavaScript's `Date.parse` can normalize impossible dates such as February 30; the validator now round-trips the parsed UTC second and rejects any normalized date/time that differs from the supplied value.
+
 Example receipt template (intentionally **fails** until physical evidence exists):
 
 ~~~json
