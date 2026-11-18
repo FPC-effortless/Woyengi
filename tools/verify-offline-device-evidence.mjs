@@ -147,7 +147,15 @@ else {
   if (nonempty(receipt.tested_at_utc)) {
     const testedAt = Date.parse(receipt.tested_at_utc);
     if (Number.isNaN(testedAt) || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$/.test(receipt.tested_at_utc)) errors.push('tested_at_utc: expected ISO UTC timestamp');
-    else if (testedAt > Date.now() + 5 * 60 * 1000) errors.push('tested_at_utc: cannot be in the future');
+    else {
+      // Date.parse normalizes impossible calendar dates (for example, February 30)
+      // instead of rejecting them. Compare the parsed UTC second back to the input.
+      const normalizedSecond = new Date(testedAt).toISOString().slice(0, 19);
+      if (normalizedSecond !== receipt.tested_at_utc.slice(0, 19)) {
+        errors.push('tested_at_utc: invalid calendar date or time');
+      }
+      if (testedAt > Date.now() + 5 * 60 * 1000) errors.push('tested_at_utc: cannot be in the future');
+    }
   }
   for (const field of ['local_input_boundary','local_state_boundary','local_output_boundary','preprocessing_location','embedding_location','inference_location','state_update_location']) {
     if (receipt[field] !== 'device') errors.push(field + ': must equal device');
