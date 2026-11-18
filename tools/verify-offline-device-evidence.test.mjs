@@ -44,6 +44,12 @@ test('future physical test timestamp fails closed', () =>
   assert.notEqual(check({ ...valid, tested_at_utc: '2999-01-01T00:00:00Z' }).status, 0));
 test('timestamp without seconds fails closed', () =>
   assert.notEqual(check({ ...valid, tested_at_utc: '2026-11-03T00:00Z' }).status, 0));
+test('impossible calendar date fails closed instead of Date.parse normalization', () =>
+  assert.notEqual(check({ ...valid, tested_at_utc: '2026-02-30T00:00:00Z' }).status, 0));
+test('non-leap-year February 29 fails closed', () =>
+  assert.notEqual(check({ ...valid, tested_at_utc: '2025-02-29T00:00:00Z' }).status, 0));
+test('valid leap-day timestamp remains accepted', () =>
+  assert.equal(check({ ...valid, tested_at_utc: '2024-02-29T12:34:56Z' }).status, 0));
 test('duplicate top-level JSON keys fail closed instead of taking the last value', () => {
   const raw = JSON.stringify(valid).replace(
     '"network_requests_observed":0',
