@@ -126,8 +126,10 @@ Use Node.js 24.12+ and Python 3.12. Save the original
 `TAC-OSM-ME111-Android16-ARM64-offline-debug.apk` locally. The example only reads the
 APK's model and constructed reference vector assets and verifies their SHA-256
 digests before running. It never installs the APK. The known APK SHA-256 is
-`f17a9f9a5752c32ffe8da407b27754793925a87bddb7b51a8bae56d64fb1f318`.
-See the [TAC-OSM APK build and installer evidence](https://github.com/FPC-effortless/TAC-OSM/actions/runs/40802404972).
+`917553ac4c0fc04ee5f4215164cb1844550effcb2d9076c2816d3e53c096da0f`.
+See the [TAC-OSM APK build and installer evidence](https://github.com/FPC-effortless/TAC-OSM/actions/runs/44259602001).
+
+The prior 14-day artifact expired. A new ARM64-only APK was regenerated in the 2026-11-18 [TAC-OSM build run #133](https://github.com/FPC-effortless/TAC-OSM/actions/runs/44259602001), artifact ID `14407941826` (`tac-me111-android-arm64-phone-small-debug`). The extracted APK is 20,195,455 bytes with SHA-256 `917553ac4c0fc04ee5f4215164cb1844550effcb2d9076c2816d3e53c096da0f`; its ONNX asset and constructed reference-vector hashes match the frozen constants above. The workflow's emulator tests and Android 16 emulator install passed; this is still not a physical Galaxy A07 test.
 
 From the Woyengi checkout, set `APK` to the local absolute APK path and run the
 following commands. The clone, APK download and wheel installation are setup
