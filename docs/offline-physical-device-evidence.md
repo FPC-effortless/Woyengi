@@ -4,15 +4,21 @@ This is a **receipt schema validator**, not a device test, certification, model-
 
 From a fresh checkout, with Node.js 24+:
 
-```sh
+~~~sh
 node tools/verify-offline-device-evidence.mjs evidence/device-receipt.json
-```
+~~~
 
 The command exits nonzero for missing, malformed or unqualified receipts. A structurally valid receipt still requires an independent reviewer to inspect raw traces, measurement methodology, operator coverage, model artifact hash, and device identity.
 
+## Input hardening
+
+The validator reads only a regular file and caps the receipt at **1 MiB** before parsing. UTF-8 decoding is strict. A bounded JSON grammar scan rejects duplicate keys at every object depth (including keys that become identical after JSON escape decoding), nesting deeper than 64 levels, and more than 200,000 JSON values. This avoids last-key-wins ambiguity and unbounded input/depth handling; it does not establish receipt authenticity or make a caller-supplied path a hostile-filesystem sandbox.
+
+The parser limits are software safeguards, not a device-qualification result. A structurally valid synthetic fixture remains synthetic.
+
 Example receipt template (intentionally **fails** until physical evidence exists):
 
-```json
+~~~json
 {
   "model_id": "NOT RUN",
   "model_sha256": "NOT RUN",
@@ -46,7 +52,7 @@ Example receipt template (intentionally **fails** until physical evidence exists
   },
   "raw_evidence_path": "NOT RUN"
 }
-```
+~~~
 
 For actual qualification, capture a model and export hash, complete supported/unsupported operator inventory, numerical comparison against a pinned reference, real physical p50/p95 under stated thermal and power conditions, peak RAM and energy measurement methodology, restart/state replay, airplane-mode network traces, and proof that **all** preprocessing, embeddings, inference, state updates and optional speech remain on-device. No network fallback is permitted. Store raw traces in an independently inspectable, rights-cleared evidence bundle. A populated receipt is only a claim until reviewed.
 
