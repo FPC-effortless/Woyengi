@@ -5,14 +5,15 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const script = new URL('./verify-offline-device-evidence.mjs', import.meta.url);
-function check(value) {
+function checkRaw(raw) {
   const dir = mkdtempSync(join(tmpdir(), 'offline-receipt-'));
   try {
     const path = join(dir, 'receipt.json');
-    writeFileSync(path, JSON.stringify(value));
+    writeFileSync(path, raw);
     return spawnSync(process.execPath, [script.pathname, path], { encoding: 'utf8' });
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
+function check(value) { return checkRaw(JSON.stringify(value)); }
 const valid = {
   model_id: 'synthetic-example', model_sha256: 'a'.repeat(64),
   device_model: 'synthetic-example', device_os: 'Android', device_os_version: '16',
@@ -32,16 +33,57 @@ test('network activity fails closed', () => assert.notEqual(check({ ...valid, ne
 test('remote preprocessing fails closed', () => assert.notEqual(check({ ...valid, preprocessing_location: 'cloud' }).status, 0));
 test('unmeasured energy fails closed', () => assert.notEqual(check({ ...valid, measurements: { ...valid.measurements, energy_mj_per_inference: null } }).status, 0));
 test('p95 below p50 fails closed', () => assert.notEqual(check({ ...valid, measurements: { ...valid.measurements, latency_p95_ms: 0.5 } }).status, 0));
-
 test('placeholder operator compatibility fails closed', () => assert.notEqual(check({ ...valid, operator_compatibility: 'NOT RUN' }).status, 0));
 test('remote output boundary fails closed', () => assert.notEqual(check({ ...valid, local_output_boundary: 'cloud' }).status, 0));
 test('placeholder evidence path fails closed', () => assert.notEqual(check({ ...valid, raw_evidence_path: 'TBD' }).status, 0));
-
 for (const field of ['latency_p50_ms','latency_p95_ms','peak_ram_mb','energy_mj_per_inference']) {
-  test(`zero ${field} cannot qualify physical evidence`, () =>
+  test('zero ' + field + ' cannot qualify physical evidence', () =>
     assert.notEqual(check({ ...valid, measurements: { ...valid.measurements, [field]: 0 } }).status, 0));
 }
 test('future physical test timestamp fails closed', () =>
   assert.notEqual(check({ ...valid, tested_at_utc: '2999-01-01T00:00:00Z' }).status, 0));
 test('timestamp without seconds fails closed', () =>
   assert.notEqual(check({ ...valid, tested_at_utc: '2026-11-03T00:00Z' }).status, 0));
+test('duplicate top-level JSON keys fail closed instead of taking the last value', () => {
+  const raw = JSON.stringify(valid).replace(
+    '"network_requests_observed":0',
+    '"network_requests_observed":1,"network_requests_observed":0',
+  );
+  const result = checkRaw(raw);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /duplicate object key/);
+});
+test('duplicate nested measurement keys fail closed', () => {
+  const raw = JSON.stringify(valid).replace(
+    '"latency_p50_ms":1',
+    '"latency_p50_ms":999,"latency_p50_ms":1',
+  );
+  const result = checkRaw(raw);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /duplicate object key/);
+});
+test('oversized receipts are rejected before JSON parsing', () => {
+  const result = checkRaw(' '.repeat(1024 * 1024 + 1));
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /1 MiB limit/);
+});
+test('excessively nested JSON is rejected with a bounded diagnostic', () => {
+  const raw = '{"x":'.repeat(65) + '0' + '}'.repeat(65);
+  const result = checkRaw(raw);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /nesting exceeds 64/);
+});
+test('escape-equivalent duplicate keys fail closed', () => {
+  const raw = JSON.stringify(valid).replace(
+    '"network_requests_observed":0',
+    '"network_requests_observed":1,"network_\\u0072equests_observed":0',
+  );
+  const result = checkRaw(raw);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /duplicate object key/);
+});
+test('invalid UTF-8 receipt bytes fail closed', () => {
+  const result = checkRaw(Buffer.from([0xff, 0x7b, 0x7d]));
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /unreadable, oversized or ambiguous JSON receipt/);
+});
