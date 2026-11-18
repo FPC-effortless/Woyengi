@@ -10,7 +10,7 @@ PY="$2"
 [[ -f "$APK" && -x "$PY" ]] || { echo "BLOCKED: pinned APK or executable Python unavailable" >&2; exit 2; }
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT"
-expected=f17a9f9a5752c32ffe8da407b27754793925a87bddb7b51a8bae56d64fb1f318
+expected=917553ac4c0fc04ee5f4215164cb1844550effcb2d9076c2816d3e53c096da0f
 actual="$(sha256sum "$APK" | awk '{print $1}')"
 [[ "$actual" == "$expected" ]] || { echo "FAIL: APK SHA256 mismatch" >&2; exit 1; }
 command -v node >/dev/null || { echo "BLOCKED: Node.js missing" >&2; exit 2; }
