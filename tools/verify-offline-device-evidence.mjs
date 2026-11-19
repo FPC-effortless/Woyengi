@@ -205,9 +205,12 @@ function evidenceFilePath(receiptPath, value) {
 }
 
 function validateEvidenceFiles(receiptPath, entries) {
-  if (!Array.isArray(entries) || entries.length !== REQUIRED_EVIDENCE_KINDS.length) {
+  if (!Array.isArray(entries)) {
     errors.push('evidence_files: exactly nine hashed evidence entries required');
     return;
+  }
+  if (entries.length !== REQUIRED_EVIDENCE_KINDS.length) {
+    errors.push('evidence_files: exactly nine hashed evidence entries required');
   }
   const kinds = new Set();
   const paths = new Set();
@@ -295,7 +298,8 @@ else {
     } else {
       const fraction = match[2] ? '.' + match[2].padEnd(3, '0') : '';
       const normalized = new Date(testedAt).toISOString();
-      if (normalized !== match[1] + fraction + 'Z') {
+      const canonical = !match[2] ? normalized.replace('.000Z', 'Z') : normalized;
+      if (canonical !== match[1] + fraction + 'Z') {
         errors.push('tested_at_utc: invalid calendar date or time');
       }
       if (testedAt > Date.now() + 5 * 60 * 1000) {
