@@ -22,7 +22,7 @@ The validator requires the schema identifier woyengi.offline-device-evidence.v2.
 - physical restart/state replay, airplane-mode test, zero observed requests and no cloud fallback;
 - nine raw evidence categories: source provenance, preprocessing, operator inventory, numerical parity, latency, memory, energy, airplane-mode/network trace, and restart/replay.
 
-Every evidence entry contains a relative POSIX path and SHA256. The validator reads each referenced file, rejects symlinks, absolute paths and parent traversal, limits each file to 16 MiB and the complete evidence set to 64 MiB, and checks the bytes against the declared hash. Evidence paths are resolved relative to the receipt file. These checks bind local bytes; they do **not** prove publisher authenticity, legal rights, reviewer independence, or that the measurements were honestly produced.
+Every evidence entry contains a relative POSIX path and SHA256. The validator reads each referenced file, rejects symlinks, absolute paths and parent traversal, limits each file to 16 MiB and the complete evidence set to 64 MiB, and checks the bytes against the declared hash. Evidence paths are resolved relative to the receipt file. These checks bind local bytes; they do **not** prove publisher authenticity, legal rights, reviewer independence, or that the measurements were honestly produced. Path checks are bounded integrity checks, not a race-resistant hostile-filesystem sandbox; run the verifier on a trusted, non-mutating evidence directory.
 
 ## Input hardening
 

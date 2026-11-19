@@ -215,7 +215,8 @@ function validateEvidenceFiles(receiptPath, entries) {
   const kinds = new Set();
   const paths = new Set();
   let totalBytes = 0;
-  for (const entry of entries) {
+  // The receipt is capped at 1 MiB, but bound work independently of its node budget.
+  for (const entry of entries.slice(0, REQUIRED_EVIDENCE_KINDS.length)) {
     if (!exactKeys(entry, ['kind', 'path', 'sha256'])) {
       errors.push('evidence_files: each entry requires exactly kind, path and sha256');
       continue;
