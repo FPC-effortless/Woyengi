@@ -251,7 +251,7 @@ test("native port rejects inherited, hidden, symbolic and accessor fields before
   ]) {
     assert.throws(
       () => predictMe111AuthorizedLocal(withTrap, x.request, invalid),
-      /plain data object|exact field set|accessor or hidden field/,
+      /plain data object|inherited prototype|exact field set|accessor or hidden field/,
     );
   }
   assert.equal(getterCalls, 0);
