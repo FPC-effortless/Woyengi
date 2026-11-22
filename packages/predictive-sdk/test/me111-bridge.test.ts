@@ -214,3 +214,47 @@ test("source projection may not be mistaken for rights, trained quality or quali
   assert.equal(out.scientificQualification, "FAILED_MIXED_ME111");
   assert.equal(out.deviceQualification, "NOT_RUN");
 });
+
+test("native port rejects inherited, hidden, symbolic and accessor fields before source access", () => {
+  const x = setup();
+  const withTrap = { ...x.host, projectionResource(): never {
+    throw Error("source read occurred before native-port validation");
+  } };
+  let getterCalls = 0;
+
+  const executionGetter = { ...x.port };
+  Object.defineProperty(executionGetter, "execution", {
+    enumerable: true,
+    get() {
+      getterCalls++;
+      return "DEVICE_LOCAL";
+    },
+  });
+
+  const predictGetter = { ...x.port };
+  Object.defineProperty(predictGetter, "predictStep", {
+    enumerable: true,
+    get() {
+      getterCalls++;
+      return x.port.predictStep;
+    },
+  });
+
+  const inherited = Object.create(x.port) as Me111NativeLocalPort;
+  const hidden = { ...x.port };
+  Object.defineProperty(hidden, "hiddenAuthority", { value: true });
+  const symbolic = { ...x.port };
+  Object.defineProperty(symbolic, Symbol("authority"), { value: true });
+
+  for (const invalid of [
+    executionGetter, predictGetter, inherited, hidden, symbolic,
+  ]) {
+    assert.throws(
+      () => predictMe111AuthorizedLocal(withTrap, x.request, invalid),
+      /plain data object|exact field set|accessor or hidden field/,
+    );
+  }
+  assert.equal(getterCalls, 0);
+  assert.equal(x.nativeCalls, 0);
+});
+
