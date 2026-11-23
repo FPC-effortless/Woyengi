@@ -258,3 +258,23 @@ test("native port rejects inherited, hidden, symbolic and accessor fields before
   assert.equal(x.nativeCalls, 0);
 });
 
+test("native prediction callback preserves the exact port receiver", () => {
+  const x = setup();
+  let receiver: unknown;
+  const port: Me111NativeLocalPort = {
+    ...x.port,
+    predictStep(this: Me111NativeLocalPort, event: Me111SourceEvent) {
+      receiver = this;
+      assert.equal(this.modelSha256, ME111_FROZEN_CONTRACT.modelSha256);
+      assert.equal(event.hour, 0);
+      return {
+        logLocation: [1, 2, 3, 4, 5, 6],
+        leftScale: [1, 1, 1, 1, 1, 1],
+        rightScale: [2, 2, 2, 2, 2, 2],
+      };
+    },
+  };
+  const result = predictMe111AuthorizedLocal(x.host, x.request, port);
+  assert.equal(result.status, "FORECAST");
+  assert.equal(receiver, port);
+});
