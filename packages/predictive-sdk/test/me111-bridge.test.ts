@@ -214,3 +214,67 @@ test("source projection may not be mistaken for rights, trained quality or quali
   assert.equal(out.scientificQualification, "FAILED_MIXED_ME111");
   assert.equal(out.deviceQualification, "NOT_RUN");
 });
+
+test("native port rejects inherited, hidden, symbolic and accessor fields before source access", () => {
+  const x = setup();
+  const withTrap = { ...x.host, projectionResource(): never {
+    throw Error("source read occurred before native-port validation");
+  } };
+  let getterCalls = 0;
+
+  const executionGetter = { ...x.port };
+  Object.defineProperty(executionGetter, "execution", {
+    enumerable: true,
+    get() {
+      getterCalls++;
+      return "DEVICE_LOCAL";
+    },
+  });
+
+  const predictGetter = { ...x.port };
+  Object.defineProperty(predictGetter, "predictStep", {
+    enumerable: true,
+    get() {
+      getterCalls++;
+      return x.port.predictStep;
+    },
+  });
+
+  const inherited = Object.create(x.port) as Me111NativeLocalPort;
+  const hidden = { ...x.port };
+  Object.defineProperty(hidden, "hiddenAuthority", { value: true });
+  const symbolic = { ...x.port };
+  Object.defineProperty(symbolic, Symbol("authority"), { value: true });
+
+  for (const invalid of [
+    executionGetter, predictGetter, inherited, hidden, symbolic,
+  ]) {
+    assert.throws(
+      () => predictMe111AuthorizedLocal(withTrap, x.request, invalid),
+      /plain data object|inherited prototype|exact field set|accessor or hidden field/,
+    );
+  }
+  assert.equal(getterCalls, 0);
+  assert.equal(x.nativeCalls, 0);
+});
+
+test("native prediction callback preserves the exact port receiver", () => {
+  const x = setup();
+  let receiver: unknown;
+  const port: Me111NativeLocalPort = {
+    ...x.port,
+    predictStep(this: Me111NativeLocalPort, event: Me111SourceEvent) {
+      receiver = this;
+      assert.equal(this.modelSha256, ME111_FROZEN_CONTRACT.modelSha256);
+      assert.equal(event.hour, 0);
+      return {
+        logLocation: [1, 2, 3, 4, 5, 6],
+        leftScale: [1, 1, 1, 1, 1, 1],
+        rightScale: [2, 2, 2, 2, 2, 2],
+      };
+    },
+  };
+  const result = predictMe111AuthorizedLocal(x.host, x.request, port);
+  assert.equal(result.status, "FORECAST");
+  assert.equal(receiver, port);
+});

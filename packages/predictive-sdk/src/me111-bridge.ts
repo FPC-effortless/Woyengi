@@ -74,13 +74,32 @@ export type Me111Advisory =
       deviceQualification: "NOT_RUN";
     }>;
 
-function checkPort(port: Me111NativeLocalPort): void {
-  if (!port || port.execution !== "DEVICE_LOCAL" || port.remoteFallback !== false ||
-      port.modelSha256 !== ME111_FROZEN_CONTRACT.modelSha256 ||
-      port.checkpointSha256 !== ME111_FROZEN_CONTRACT.checkpointSha256 ||
-      typeof port.predictStep !== "function") {
+const NATIVE_PORT_FIELDS = [
+  "execution", "remoteFallback", "modelSha256", "checkpointSha256", "predictStep",
+] as const;
+
+type Me111PredictStep = Me111NativeLocalPort["predictStep"];
+
+function checkPort(port: Me111NativeLocalPort): Me111PredictStep {
+  if (!port) {
     throw new Error("ME111 original frozen identity and device-local no-fallback port required");
   }
+  onlyOwnDataFields(port, NATIVE_PORT_FIELDS, "ME111 native port");
+
+  // Read validated data descriptors instead of invoking host-supplied getters.
+  const execution = Object.getOwnPropertyDescriptor(port, "execution")?.value;
+  const remoteFallback = Object.getOwnPropertyDescriptor(port, "remoteFallback")?.value;
+  const modelSha256 = Object.getOwnPropertyDescriptor(port, "modelSha256")?.value;
+  const checkpointSha256 = Object.getOwnPropertyDescriptor(port, "checkpointSha256")?.value;
+  const predictStep = Object.getOwnPropertyDescriptor(port, "predictStep")?.value;
+
+  if (execution !== "DEVICE_LOCAL" || remoteFallback !== false ||
+      modelSha256 !== ME111_FROZEN_CONTRACT.modelSha256 ||
+      checkpointSha256 !== ME111_FROZEN_CONTRACT.checkpointSha256 ||
+      typeof predictStep !== "function") {
+    throw new Error("ME111 original frozen identity and device-local no-fallback port required");
+  }
+  return predictStep as Me111PredictStep;
 }
 
 function onlyOwnDataFields(value: unknown, required: readonly string[], label: string)
@@ -172,7 +191,7 @@ export function predictMe111AuthorizedLocal(
   request: PredictiveReadRequest,
   port: Me111NativeLocalPort,
 ): Me111Advisory {
-  checkPort(port); // Before accessing any authorized source.
+  const predictStep = checkPort(port); // Before accessing any authorized source.
   if (host?.destination !== "local-model") {
     throw new Error("ME111 source destination must remain device-local");
   }
@@ -200,7 +219,7 @@ export function predictMe111AuthorizedLocal(
                            reason: "SOURCE_AMBIGUOUS" as const });
   }
   const event = eventFromAuthorizedSource(source.observations[0].features);
-  const output: unknown = port.predictStep(event);
+  const output: unknown = Reflect.apply(predictStep, port, [event]);
   onlyOwnDataFields(output, ["logLocation", "leftScale", "rightScale"], "ME111 native output");
   const loc = numberArray(output.logLocation, 6, "logLocation", -Infinity, Infinity);
   const left = numberArray(output.leftScale, 6, "leftScale", Number.MIN_VALUE, Infinity);

@@ -37,7 +37,11 @@ energy, network isolation or numerical parity on Samsung A07.
 
 1. Requires exact frozen checkpoint and ONNX fingerprints, a trusted port
    **declared** `DEVICE_LOCAL` and `remoteFallback: false`, before reading
-   source data. A declaration is **not proof** of network isolation.
+   source data. The port must be a plain/null-prototype object with exactly
+   five own enumerable data fields; inherited, hidden, symbolic and accessor
+   fields are rejected without invoking getters. A declaration is **not proof**
+   of network isolation. Proxy traps and malicious native code remain outside
+   this JavaScript object-shape check and require trusted host/process/device controls.
 2. Checks Woyengi's existing actual `RECONSTRUCT`, `READ`, `EXPORT`
    capabilities, temporal as-of and availability rules. Full opposing source
    claims cause abstention **without native inference**.
