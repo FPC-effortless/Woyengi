@@ -70,20 +70,22 @@ export class ClaimLedger {
   }
 
   append(claim: ClaimRecord): void {
-    this.#assertNewRecordId(claim.id);
-    this.#claimsById.set(claim.id, claim);
-    this.#recordIds.add(claim.id);
+    const owned = deepFreeze(structuredClone(claim));
+    this.#assertNewRecordId(owned.id);
+    this.#claimsById.set(owned.id, owned);
+    this.#recordIds.add(owned.id);
   }
 
   appendLifecycleTransition(transition: LifecycleTransitionRecord): void {
-    this.#assertNewRecordId(transition.id);
-    if (!this.#claimsById.has(transition.targetId)) {
-      throw new Error(`lifecycle target does not exist: ${transition.targetId}`);
+    const owned = deepFreeze(structuredClone(transition));
+    this.#assertNewRecordId(owned.id);
+    if (!this.#claimsById.has(owned.targetId)) {
+      throw new Error(`lifecycle target does not exist: ${owned.targetId}`);
     }
-    const history = this.#lifecycleByTarget.get(transition.targetId) ?? [];
-    history.push(transition);
-    this.#lifecycleByTarget.set(transition.targetId, history);
-    this.#recordIds.add(transition.id);
+    const history = this.#lifecycleByTarget.get(owned.targetId) ?? [];
+    history.push(owned);
+    this.#lifecycleByTarget.set(owned.targetId, history);
+    this.#recordIds.add(owned.id);
   }
 
   history(filter: ClaimHistoryFilter = {}): readonly ClaimRecord[] {
