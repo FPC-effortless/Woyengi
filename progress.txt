@@ -408,3 +408,250 @@
 - Added ADR 0006 and corrected the status/gap matrices: Waves 0-2 are broadly functional, Wave 3 is partial, and the system is not production-ready.
 - Verification: 88/88 serialized Node tests and the Python SDK test pass; typecheck, package boundaries, and deep-module gates pass. The fast production gate remains the expected `NO-GO` because full-product requirements and human acceptance are open; architecture, deep-module, and security gates pass.
 - Next: finish WYG-019B durable self-hosted multiplayer server composition, then WYG-020 coding-first reference vertical.
+
+## 2026-10-17 — WYG-019 incremental durable Work journal (verification pending)
+
+- Next unblocked persistence seam for WYG-019: a service-layer, single-process `DurableWorkJournal` built on existing `WorkRegistry`, `WorkspaceRegistry`, and `LocalCanonicalLedger`.
+- Public-behavior regression tests cover durable two-human Work creation and replay, equal-timestamp causal sequence, restart, second-writer lockout, unauthorized workspace access, denied non-human auto-enrollment, invalid optimistic version, corrupt storage, and concurrent operation serialization.
+- Source: `services/durable-work/src/index.ts`, tests: `services/durable-work/test/journal.test.ts`, contract/limitations: `services/durable-work/README.md`.
+- Work projections remain derived from append-only replay. Durable storage—not a caller-provided value—assigns causal sequence numbers. Work and workspace identity/authority stay distinct. No effects are replayed.
+- Verification: GitHub Actions run [39011543673](https://github.com/FPC-effortless/Woyengi/actions/runs/39011543673) on code/test commit `16fdcfaa87ec6ebcedad22ec9f9c9da6b7765e65` passed typecheck, package/deep-module boundaries, full Node/Python tests, adversarial benchmark, architecture/security gates, and container smoke. Initial failures were corrected: missing service public index and test cleanup ordering. The final regression suite also covers forged participant kind and same-workspace nonparticipant read denial. Do not claim the whole WYG-019 ticket complete or change its `passes` flag.
+- Deliberate ceiling: single-process local JSON Work ledger and injected pre-reconstructed workspace registry. Real Postgres transactions, sessions, delegated agent participation, multi-user transport, and execution/API composition remain blocking WYG-019 acceptance.
+
+## 2026-10-17 — WYG-019 durable WorkspaceRegistry integration (stacked development)
+
+- Targeted the incomplete WYG-019 durable account/workspace/membership dependency after the previously CI-green Work journal. This slice is based on `feat/wyg-019-durable-work-journal-20261017`, not on main.
+- Public behavior tests: `services/durable-work/test/workspace-journal.test.ts` exercises principal/account/organization journals, invitation denial until acceptance, causal replay at tied timestamps, restart with the existing Work journal, second-writer lock, concurrent duplicate-account failure, closed-journal refusal, corruption rejection, and detached-registry isolation.
+- Implementation: `services/durable-work/src/workspace-journal.ts` plus the public service index. It reuses the LocalCanonicalLedger and WorkspaceRegistry instead of storing account snapshots, and checks the global causal sequence and operation kind on replay.
+- No session principal or agent capability is issued; the API is a trusted local service interface. Point-in-time `snapshot()` must be refreshed before authorization after membership changes.
+- Verified GitHub Actions [run #39018662494](https://github.com/FPC-effortless/Woyengi/actions/runs/39018662494) on commit `6ef84b568a1128496dd5cb6a3c381ec70720f335`: TypeScript, boundaries/deep-module, 120 Node tests (0 failures), Python SDK tests, adversarial benchmark, architecture/security checks, and container smoke passed. This is a code/test verification, not acceptance of WYG-019 or a production claim. WYG-019 still requires PostgreSQL-compatible multiplayer state, durable realtime, separately hosted compute, and human acceptance; the PRD `passes` flag remains false. Do not merge directly to main before the prerequisite Work journal is accepted.
+
+## 2026-10-17 — WYG-019 authenticated loopback Work API (stacked P1 slice)
+
+- Built a loopback-only HTTP composition for the existing durable Work and Workspace journals, on the PR #34 integration branch. The actor principal is derived from an operator-provisioned bearer credential, never a client-supplied actor field. Session hashes are compared in constant time; optional expiry and operator-local revocation are supported.
+- Added Work creation, episode creation, projection, history, and Workspace membership read routes with strict JSON shape validation, 64-KiB body limit, stable public error codes, scoped credentials and replay-resistant duplicate operation identifiers (duplicate requests reject with conflict, not response replay).
+- Fixed a stale-authority seam: DurableWorkJournal now accepts a resolver for the latest reconstructed Workspace registry, allowing access checks to follow an accepted invitation after the journal is opened without exposing mutable snapshots as governing state.
+- Tests: `services/selfhost-api/test/selfhost-work-api.test.ts` exercises two real authenticated human principals; unaccepted membership vs accepted membership; caller-impersonation rejection; agent enrollment denial; outsider/agent/anonymous denials; stale-version and repeat operation rejections; Work causal history after restart; token expiration/revocation; oversized/unknown-field input; and no unapproved write.
+- This increment intentionally DOES NOT implement production token issuance, durable server sessions, distributed PostgreSQL transactions, realtime transport, independently hosted compute, TLS termination or full WYG-019. `passes` remains false. Verified GitHub Actions [run #39060036971](https://github.com/FPC-effortless/Woyengi/actions/runs/39060036971) at `e31785722d89efb41a68c2883edbb022330ddc51`: **123 Node tests passed, 0 failed**, TypeScript, package/deep-module boundaries, Python SDK tests, adversarial benchmark, automated architecture/security gates and container smoke all passed. No production release claim.
+
+## 2026-10-17 — WYG-019 resume-from-ledger SSE Work stream (stacked P1 slice)
+
+- Targeted the next WYG-019 realtime dependency on top of draft PR #35: authorized one-way Work operation updates, recoverable after disconnect/restart by causal ledger sequence. It is NOT a separate event truth store.
+- RED public-behavior tests added first in `services/selfhost-api/test/work-events-sse.test.ts`: two human principals, initial snapshot, live post-commit event, Last-Event-ID replay after journal/server restart, observer/outsider/anonymous denial, invalid/conflicting cursors, server-side bearer revocation while streaming.
+- Implementation: `DurableWorkJournal.subscribeChanges` emits advisory wake-ups only after canonical durable commits. `services/selfhost-api/src/events.ts` reconstructs authorized Work operations on each notification, emits SSE IDs from the stored causal sequence, checks session and membership/Work participation on heartbeat and push, disconnects on write backpressure and unsubscribes on socket closure. Route `GET /v1/workspaces/:workspaceId/work/:workInstanceId/events` uses strict cursor validation.
+- No new delegated agent rights, effect replay, external event broker, multi-node transport, production sessions, PostgreSQL, user UI or release readiness implied. `prd.json` WYG-019 `passes` remains false. GitHub Actions [run #39060979999](https://github.com/FPC-effortless/Woyengi/actions/runs/39060979999) passed: 125 Node tests / 0 failures, Python SDK tests, typecheck, package/deep-module boundaries, adversarial benchmark, architecture/security gates, and container smoke. This result precedes the final extra two-subscriber regression test and documentation update; final-head CI must be reverified.
+
+## 2026-10-17 — WYG-019 durable local principal sessions (stacked P1 slice)
+
+- WYG-019 next prerequisite after draft PR #36: a single-writer `DurablePrincipalSessions` with append-only `session.issued`/`session.revoked` operations in the existing LocalCanonicalLedger, using global causal sequence and storage-assigned order.
+- Public behavior falsifiers written first in `services/selfhost-api/test/durable-sessions.test.ts`: two registered human principals and an agent; unknown and non-human provisioning fails; strong operator-provisioned bearer credentials, HTTP authorization, expiry, revoked token denial across multiple journal/server restarts; duplicate/reused token refusal including revoked sessions; token plaintext absent from storage; duplicate writer, concurrent invalid provisioning, unknown-kind/field/corrupt history and failure without partial durable mutations.
+- Integration: `SelfHostWorkApi` accepts a structural `SessionAuthenticator`; existing `BoundPrincipalSessions` remains compatible. `DurablePrincipalSessions` implements the same synchronous authorization port and existing SSE rechecks it before each Work notification and heartbeat.
+- Explicit ceiling: trusted local operator provisions/revokes; no public credential issuance endpoints, interactive login, centralized verification, production PostgreSQL, distributed sessions, cross-process invalidation, real agent grants, web shell or full WYG-019. Raw bearer tokens are **not** persisted; SHA-256 digests, sessions and revocations are sensitive records requiring file protection. `passes` remains false. Verified [GitHub Actions #39061651710](https://github.com/FPC-effortless/Woyengi/actions/runs/39061651710) at code/test commit `c482989b4e716839d4ce65ac0d1c98f1d601a50c`: **127 Node tests passed / 0 failed**, Python SDK tests, TypeScript checks, package/deep-module boundaries, adversarial benchmark, automated architecture/security gates and container smoke passed. This progress-only follow-up commit requires final-head verification.
+
+## 2026-10-17 — WYG-019 PostgreSQL canonical ledger transaction adapter (stacked P1 slice)
+
+- Added `services/postgres-storage`, a driver-injected PostgreSQL SQL adapter with explicit schema migrations, parameterized immutable JSONB canonical records, scoped causal counter rows locked with `SELECT ... FOR UPDATE`, and atomic multi-record/multi-scope transactions.
+- Added failing behavioral falsifiers first in `services/postgres-storage/test/postgres-ledger.test.ts` (deterministic SQL-port double): equal-timestamp parent/child causal ordering, replay across adapter instances, independent namespaces, per-workspace sequence allocation, duplicate ID rollback without consuming counters, competing writer serialization, and rejection of invalid namespaces, timestamps and caller-assigned sequences.
+- Unlike the existing local JSON Work, Workspace and session journals, this provider uses asynchronous database reads/writes and explicitly separates schema migration authority from application read/write roles.
+- Added an isolated real PostgreSQL 16 CI job: `services/postgres-storage/test/postgres-live.test.ts` uses a separately installed pinned pg test driver and two independent pools to verify migration, atomic rollback, cross-client concurrent appends, causal restart/reload and distinct namespace state. [Run #39063160754](https://github.com/FPC-effortless/Woyengi/actions/runs/39063160754) passed **131 Node tests / 0 failures**, Python tests, typecheck, package/deep-module boundaries, adversarial benchmark, automated architecture/security, container smoke and the live PostgreSQL integration test (**1 pass / 0 fail**). This is evidence for the DB adapter, not a multi-host Woyengi deployment.
+- Scope ceiling: the existing Work/Workspace/session runtime has **not** been wired to this async SQL provider. No multi-host claim, deployed production migrations, cross-ledger atomicity, cluster realtime, separate compute, agent grants, production credentials or full WYG-019 acceptance. PRD `passes` stays false.
+
+## 2026-10-17 — WYG-019 PostgreSQL-backed Workspace and Work journals (stacked P1 slice)
+
+- Added `PostgresCanonicalLedger.appendValidated` to validate an append-only domain operation while holding the SQL causal-counter row lock and reading the latest committed history from that same transaction. This closes the stale-version write race between independent PostgreSQL clients for one Work scope.
+- Added `PostgresWorkspaceJournal`: PostgreSQL-backed global principal, account, organization, invitation and membership acceptance operations, reconstructed through the existing validated WorkspaceRegistry.
+- Added `PostgresWorkJournal`: creates Work, starts episodes, checks active human membership and explicit Work participation, rejects auto-enrolled agents, and produces authorized history from the durable SQL operation journal. No cached Work projection is governing truth.
+- RED public-behavior test first: `services/postgres-storage/test/postgres-domain-live.test.ts` uses two independent PostgreSQL pools to create shared Work across humans and assert only one of two conflicting expected-version episode writes can commit. Rejected outsider and agent writes, replay after separate process-side openings, actor-scoped Work history and causal sequences are covered. Added this file to the real PostgreSQL 16 GitHub Actions job.
+- Scope ceiling: local `SelfHostWorkApi` and SSE are still wired to the previous local journals; PostgreSQL Work and Workspace are **new domain adapters**, not a fully switched multi-host server. Session authority, cross-ledger revocation consistency, HTTP async endpoints, cluster event transport and separate compute remain open. No production readiness or PRD `passes=true` claim. Verification: [GitHub Actions #39067593118](https://github.com/FPC-effortless/Woyengi/actions/runs/39067593118) **passed all three jobs** at commit `b20e09c48054300f63638a3f31db34fdc12a7a08`: 131 Node tests passed / 0 failures, two *live PostgreSQL 16* integration tests passed / 0 failures (including independent-pool Workspace and Work replay/version race), Python SDK tests, TypeScript, package/deep-module boundaries, adversarial benchmark, architecture/security gates and container smoke. An earlier CI run revealed a migration DDL race; fixed using an advisory schema lock and independently verified. Documentation-only final-head CI must still run after this evidence update.
+
+## 2026-10-18 — WYG-019 PostgreSQL-backed authenticated Work HTTP (stacked P1 slice)
+
+- Public-behavior falsifier first: new `services/selfhost-api/test/postgres-work-http-live.test.ts` starts two loopback API server instances using independent PostgreSQL pools and real Work/Workspace journals; tests two human participants, Postgres cross-instance replay, outsider/observer/agent/anonymous denial, actor-body spoofing rejection, duplicate idempotency key conflict, two-server same-version episode race, durable history, and restart recovery.
+- `SelfHostWorkApi` now accepts asynchronous Work/Workspace repository ports and awaits authoritative reads while retaining compatibility with existing synchronous local journals. No actor identity comes from the request body.
+- PostgreSQL Work requests deliberately refuse the existing local-only `/events` SSE endpoint with `501 STREAM_UNAVAILABLE` **after** Work participation checks rather than silently losing cross-process notifications. Durable `/history` remains available to authorized HTTP clients.
+- Live PostgreSQL CI invokes the new HTTP test alongside transactional and domain replay tests. Scope ceiling: PostgreSQL sessions, cross-process realtime, network deployment, cross-ledger authority revocation, independently hosted compute and user acceptance remain open. WYG-019 `passes` remains false. Verified [GitHub Actions run #39086972307](https://github.com/FPC-effortless/Woyengi/actions/runs/39086972307) at commit `78f9a1add1c861996bdf669127ab88ad1f574ce6`: **131 Node tests passed / 0 failed; all 3 live PostgreSQL 16 tests passed / 0 failed**, including the new two-independent-server authenticated HTTP integration. Python SDK tests, TypeScript, package/deep-module boundaries, adversarial benchmark, architecture/security gates and container smoke passed. This documentation-only evidence commit requires final-head CI.
+
+## 2026-10-18 — WYG-019 PostgreSQL-backed principal sessions (draft incremental slice)
+
+- RED public-behavior falsifier first: `services/selfhost-api/test/postgres-sessions-live.test.ts`, added to live PostgreSQL 16 CI, exercises two independently connected Work HTTP instances authenticating from a shared SQL session namespace, issued bearer auth, remote revocation, restart recovery, revoked token reuse refusal, expiration, agent/unknown refusal, concurrent duplicate token issuance, digest-only persistence, and fail-closed corrupted history.
+- New `PostgresPrincipalSessions` uses a global causal `PostgresCanonicalLedger.appendValidated` transaction for registered-human, <=30-day expiring session grants and irreversible revocations. Operators must distribute high-entropy secrets; SQL contains digests, never raw bearer tokens. Each HTTP request reads and replays canonical SQL session history; no session authority cache.
+- `SelfHostWorkApi` supports either synchronous local session providers or asynchronous PostgreSQL authentication. PostgreSQL-backed Work SSE remains explicitly unavailable; local SSE with async sessions also fails closed rather than producing an unauthenticated streaming path.
+- Scope ceiling: no public credential issuance, OIDC, MFA, cluster realtime, agent rights, cross-ledger membership revocation atomicity, proxy/TLS deployment, independent compute or full WYG-019 acceptance. `passes` remains false. Verified [GitHub Actions run #39091478002](https://github.com/FPC-effortless/Woyengi/actions/runs/39091478002) at commit `1c3e8d14fea219b92f6f33173fef6bc39a768068`: **131 Node tests passed / 0 failed; 5 live PostgreSQL 16 integration tests passed / 0 failed** (including two new credential issuance/revocation/expiry and policy tests), Python SDK, typecheck, boundaries, adversarial benchmark, architecture/security gates and container smoke passed. Initial red CI exposed a corrupt SQL history being reported as 400 instead of a server integrity error and static secret-shaped synthetic test strings triggering the scanner; both were fixed and independently verified. This documentation-only evidence commit requires final-head CI.
+
+## 2026-10-18 — WYG-019 cross-instance durable Work SSE (P1 slice)
+
+- Public-behavior falsifier first: `services/selfhost-api/test/postgres-work-stream-live.test.ts` uses two PostgreSQL pools/API instances, authenticated human Work participants and PostgreSQL principal sessions. Verifies remote commit delivery, ordered canonical sequence, reconnect via Last-Event-ID, denial of nonparticipants/unknown/corrupt cursors and disconnection after remote token revocation.
+- `openRemoteWorkEventStream` provides periodic authoritative SQL replay rather than using lossy in-process notifications. Each poll rechecks session, workspace and Work membership; no cached revocation authority. Backpressure and SQL faults close rather than release data.
+- Local SSE still uses event-driven journal hints for synchronous local session authenticators. SQL SSE uses bounded polling (default 250ms, configurable 50 to 60000ms) and the same published Work endpoint. Historical recovery uses durable sequence IDs; remote notification isn't instantaneous.
+- Remaining WYG-019: fully independent hosted compute, agent capability delegation, authority/effect reconciliation integration, production TLS/proxy and operation-scale monitoring, adversarial distributed revocation races, release/human QA. PRD `passes=false`. [GitHub Actions run #39095961174](https://github.com/FPC-effortless/Woyengi/actions/runs/39095961174) passed at code/test commit `4e46278221d1e01fb116d9774cb8e3c41a5c01d3`: 131 Node tests / 0 failed, **6 live PostgreSQL 16 tests / 0 failed**, Python SDK, TypeScript, package/deep-module checks, benchmark, architecture/security gates and container smoke. The new live SSE test confirms remote commits, Last-Event-ID recovery and remote session-revocation disconnect. Final-head documentation-only CI requires separate verification.
+
+## 2026-10-18 — WYG-019 independently hosted compute RPC boundary (draft P1 slice)
+
+- Public-falsifier-first: `services/compute-node/test/http.test.ts` exercises an independently spawned Node process running `HostedComputeNodeRuntime` through authenticated HTTP to a separate state-service port. Asserts remote lease and authority checks, observation publication with usage/effect/reconciliation evidence, node-scope refusal, wrong credential denial, and TLS requirement outside loopback.
+- Added `HttpComputeNodeStatePort` client implementing the existing public `ComputeNodeStatePort` and `HostedComputeStateHttpApi` state-side RPC router. A trusted state service provides leases and authority rather than the transport itself. Token bound to node identity; single bearer per node; endpoint/body controls and bounded fetch timeout. State API deliberately listens only on loopback for TLS termination.
+- All published compute records remain `observationOnly=true`, `acceptedTruth=false`, with `semanticMutation=false`. Verifier/effect reconciler must independently accept any proposed semantic change.
+- Ceiling: state-side receipt storage still depends on the provided ComputeNodeStatePort; **this PR does not claim PostgreSQL-persisted compute receipts, real hosted queue, autoscaling, full security deployment, acceptance of effects or WYG-019 completion.** Verified [GitHub Actions #39096512686](https://github.com/FPC-effortless/Woyengi/actions/runs/39096512686) at code/test commit `b15e9d1723c1b0e0af361636aaba9fa6299a8546`: **133 Node tests passed / 0 failed**, 6 live PostgreSQL integration tests passed, Python SDK, TypeScript native/erasable syntax, boundaries, adversarial benchmark, architecture/security gates, and container smoke passed. Initial TypeScript parameter-property error was fixed before rerunning CI. This docs-only evidence update needs final-head verification. PRD `passes=false`.
+
+## 2026-10-18 — WYG-019 canonical PostgreSQL hosted compute receipts (P1 slice)
+
+- RED public behavior: `services/compute-node/test/postgres-receipts-live.test.ts` launches a separate compute operating-system process over authenticated HTTP; its trusted state-side port persists a governed usage/effect/reconciliation observation to PostgreSQL, and a second pool verifies history, idempotent repeated publishing and immutable rejection of conflicting payloads and forged acceptedTruth.
+- New `PostgresHostedObservationJournal` writes typed `compute.observation.received` records to the canonical SQL ledger. It records Workspace scope, causal sequence, usage/cost, expected-effect identity and an unaccepted pending reconciliation plan. It never treats provider output or a published receipt as semantic authority. Replays fail closed on unexpected kinds/fields, scope/ID mismatches, or invalid causal history.
+- Scope ceiling: public user-level compute grants and true AgentPrincipal delegation, persistent authoritative lease scheduling and state-side execution authorization/reconciliation remain separate work. This receipt store cannot prove that an external effect happened. Security deployment, production testing and WYG-019 human acceptance remain incomplete; PRD `passes=false`. Verified [GitHub Actions #39096929369](https://github.com/FPC-effortless/Woyengi/actions/runs/39096929369) at code/test commit `07dca041501b40855f1564f91dff1d86a6bd4a8e`: **133 Node tests passed / 0 failed; 7 real PostgreSQL 16 integration tests / 0 failed**, Python SDK, TypeScript, boundary/deep-module checks, adversarial benchmark, automated architecture/security and container smoke passed. The new test executed compute in a separate OS process, durably recorded the observation via state HTTP, replayed from another DB pool, and verified safe concurrent retries and corruption refusal. An initial TypeScript-negative-test fixture error was corrected; the final progress-only evidence commit requires final-head CI.
+
+## 2026-10-18 — WYG-019 PostgreSQL-authoritative hosted compute control (P1 slice)
+
+- Public RED falsifier first: `services/compute-node/test/postgres-hosted-state-live.test.ts`. Two separate PostgreSQL state client pools race to claim one canonical lease; only one receives it. Another lease is executed by a separate OS worker over authenticated state HTTP. The test verifies policy denied queue admission, forged node/session, non-issued execute denial, policy revocation during authorization, expired sessions, receipt publication and replay with independently connected pools.
+- Added `PostgresHostedComputeStatePort` behind the existing `ComputeNodeStatePort`, with append-only `compute.node.registered`, `compute.node.heartbeat`, `compute.lease.queued`, and `compute.lease.issued` operations, global causal PostgreSQL replay, and transaction-locked exclusive lease claims. Admission and execution both require a caller-injected trusted policy; the compute node cannot enqueue its own work.
+- Receipt acceptance checks correlate the issued lease with the observation's node, execution, principal, provider, Work scope, budget, expected effect and pending reconciliation before persisting to the observation-only PostgreSQL journal. Neither receipt nor raw provider output is treated as governing state.
+- First live CI runs found a denial-path assertion mismatch and timestamp string differences (RFC3339 `Z` vs `.000Z`) between the hosted runtime and the state journal. Both were fixed without changing authorization semantics.
+- Verified [GitHub Actions #39105952187](https://github.com/FPC-effortless/Woyengi/actions/runs/39105952187) at implementation commit `9b9a4c50d96ec36f3c05987a7894dcb8420dd8e0`: **133 Node tests / 0 failures, 8 live PostgreSQL 16 integration tests / 0 failures**, Python SDK, typecheck, package/deep-module boundaries, adversarial benchmark, architecture/security checks and container smoke passed (all three jobs green).
+- Remaining: no built-in AgentPrincipal capability issuance, revocation-aware distributed policy atomicity, lost-worker lease reclaim/fencing, independent effect reconciliation, deployed TLS/HA, WYG-013/016/017/018 acceptance or human QA. WYG-019 `passes=false`. Additional hardening binds each receipt ID to its issued execution ID (rejecting alias receipts) and requires independently trusted fleet enrollment approval for each node's exact declared workspaces, capabilities, version and budget, including reconnects. The live test now refuses a node that tries to add an unauthorized workspace or capability. [GitHub Actions #39106402946](https://github.com/FPC-effortless/Woyengi/actions/runs/39106402946) at hardened code and docs commit `c98183c99b5f7cac12093320406e99db4ddb602b` passed all three jobs, including 133 Node tests and 8 live PostgreSQL integration tests. This final progress-evidence update requires its own CI confirmation.
+
+## 2026-10-18 — WYG-019 independent hosted effect verification (P1 slice)
+
+- Public falsifier first: `services/compute-node/test/postgres-effect-verification-live.test.ts` exercises independent PostgreSQL pools, provider-observation receipts, an operator-injected canonical evidence read, one-and-only-one verification per receipt, cross-pool retry conflict, missing effect DIVERGED, unobservable effect UNCERTAIN, independent read CONFIRMED, workspace isolation, self-attestation denial, and unsupported privileged record replay refusal.
+- `PostgresHostedEffectVerificationJournal` records immutable `compute.effect.reconciled` operations in a dedicated workspace-scoped PostgreSQL namespace. References Work, execution, original observation receipt, expected effect/reconciliation, independent verifier/source/evidence and observed time.
+- No worker/provider-supplied status can itself mark an effect verified; only a trusted state-side independent read callback can produce the result. Verification remains observational, without semantic acceptance or mutation, and never triggers external re-execution.
+- Scope ceiling: provider-specific real canonical readers, signature/evidence provenance validation, full governed execution acceptance/semantic commit integration, abandoned-lease recovery, principal capability delegation, production TLS/HA and human acceptance are not implemented by this slice. WYG-019 passes=false. Verified [GitHub Actions #39138658800](https://github.com/FPC-effortless/Woyengi/actions/runs/39138658800) at implementation commit `036d2480d76ada313af8c013ba4a45c4dfdaf780`: **133 Node tests / 0 failures; 10 live PostgreSQL 16 integration tests / 0 failures**, Python SDK, TypeScript, package/deep-module boundaries, adversarial benchmark, architecture/security checks and container smoke passed (all 3 jobs). The independent reader is simulated in CI: live PostgreSQL durability/concurrency is verified, but a real provider-specific external canonical reader and WYG-019 human acceptance are not. This progress-only evidence commit requires final-head CI.
+
+## 2026-10-18 — WYG-019 expired-lease quarantine and no-retry safety
+
+- Added a public behavioral falsifier to the real PostgreSQL state-server
+  integration test: a third lease is issued to a worker that never publishes
+  an observation. Before expiration, quarantine is denied. After expiration,
+  two independently connected state clients compete to quarantine the same
+  lease; precisely one canonical `compute.lease.quarantined` operation can
+  commit. Neither client may reclaim/reissue the lease. Explicit fresh
+  execution authorization is refused after expiry/quarantine, while a late
+  observation remains permitted as evidence for independent review.
+- `PostgresHostedComputeStatePort.quarantineExpiredLease` uses the global
+  SQL-serialized causal history inside `appendValidated`, validates the
+  issued/expired lease and immutable `OUTCOME_UNVERIFIED` reason, and fails
+  closed on malformed/duplicate recovery events. It is **trusted operator
+  only**: the compute node transport has no queue/recovery/grant route.
+- `authorize` now rejects execution after lease expiry as well as after
+  quarantine, even if a long-lived node session and the trusted policy
+  would otherwise allow execution. No automatic retry, compensation or
+  accepted-truth update is performed. A worker may already have caused an
+  external effect before this restriction; independent reconciliation
+  remains mandatory before any subsequent consequential action.
+- Still open: durable human review queue, explicit externally enforceable
+  fencing/cancel semantics, verifier-backed clearance, delegation revocation,
+  production deployment and WYG-019 human acceptance. Ticket remains
+  `passes=false`. Verified [GitHub Actions run #39171189725](https://github.com/FPC-effortless/Woyengi/actions/runs/39171189725) at implementation commit `d6a7e49ab88d7ed7a280d8ee52e9a65628ecc381`: **133 Node tests / 0 failures, 10 live PostgreSQL integration tests / 0 failures**, Python SDK, TypeScript, package boundaries, adversarial benchmark, architecture/security checks, and container smoke (3 jobs green). The initial live run exposed an incorrect test error regex for the explicit "unissued" rejection; it was fixed without weakening the validator, and the final source tests were rerun. This documentation-only evidence commit still requires final-head CI.
+
+## 2026-10-18 — WYG-019 durable quarantined compute review (P1 slice)
+
+- Public RED live PostgreSQL test first:
+  `services/compute-node/test/postgres-quarantine-review-live.test.ts`
+  sets up two independently connected DB pools, a canonical claimed and
+  quarantined compute lease, late untrusted worker receipt, trusted
+  independent evidence read, authorized human reviewer, and concurrent
+  review resolution. It rejects worker-as-reviewer, wrong workspace scope,
+  unresolved case without evidence, missing rationale, denied reviewer,
+  double case open and duplicate resolution. It also verifies corrupted
+  privileged events fail replay and that review cannot reenable execution.
+- New `PostgresHostedQuarantineReviewJournal` adds immutable
+  `compute.lease.review.opened` and `compute.lease.review.resolved`
+  records. Opening checks the canonical quarantine. Resolution checks
+  matching independent `compute.effect.reconciled` evidence and requires
+  a fresh trusted human-review policy allow decision. No resolved case may
+  be based on `UNCERTAIN`; only independent CONFIRMED/DIVERGED findings
+  generate observational conclusions.
+- All review events are observation-only; no workload retry, compensation,
+  governing accepted truth, or semantic mutation is produced. Separate
+  PostgreSQL scopes are replay-validated and competing writers serialize.
+- Scope ceiling: production-specific human IAM and evidence provenance,
+  cross-ledger transactional consent, human-facing review UI, real external
+  canonical readers, independently accepted semantic commits, physical
+  worker fencing, full self-hosted deployment and acceptance QA remain
+  incomplete. WYG-019 `passes=false`. Verified [GitHub Actions run #39172854469](https://github.com/FPC-effortless/Woyengi/actions/runs/39172854469) at test/code commit `2c34ee80bb4e5e4ce369e05135b50510aec1db87`: **133 Node tests / 0 failures, 11 real PostgreSQL 16 integration tests / 0 failures**, Python SDK, TypeScript, package/deep-module boundaries, benchmark, architecture/security and container smoke (all three CI jobs passed). The first red run revealed that the independent human reviewer policy refuses wrong-Workspace access before the later state journal scope check; the negative test assertion was corrected without weakening authorization. This documentation-only evidence update needs final-head CI verification.
+
+## 2026-10-19 — WYG-013 durable episode knowledge (implementation unverified)
+
+- Continued from PR #48, previously green at GitHub Actions #39172964206 (133 Node tests and 11 live PostgreSQL tests; three jobs passed). These numbers describe PR #48, **not** this branch.
+- New branch `feat/wyg-013-postgres-episode-knowledge-20261019`: test-first PostgreSQL knowledge proposals, trusted-source publication, immutable revocations, per-operation principal/workspace/episode policy, as-of historical reconstruction, and a ContextGateway bound to the authenticated episode. Source and trust class cannot be elevated by an agent proposal. No external effect, semantic acceptance, or retry is triggered.
+- Tests: `services/episode-context/test/postgres-knowledge-live.test.ts` (committed before implementation) and `postgres-gateway-live.test.ts`. These are **not yet CI-verified**.
+- Draft [PR #49](https://github.com/FPC-effortless/Woyengi/pull/49) was subsequently created and stacked on PR #48. GitHub connector safety checks continue to block CI workflow updates and retargeting to main to trigger the configured PR CI; the two live PostgreSQL tests have not been executed. No test success, merge or deployment is claimed.
+- Remaining WYG-013: durable episode capability candidates, real Work membership/delegation and IAM revocation integration, actual PostgreSQL CI, production hardening and human acceptance. WYG-013 and WYG-019 remain `passes=false`.
+
+## 2026-10-19 — WYG-013 scoped PostgreSQL episode capabilities and live CI
+
+- Reviewed the newer draft PR #49, which added PostgreSQL episode knowledge
+  but explicitly recorded **unverified** live SQL tests because they were
+  not included in the CI workflow. Continued from its head rather than
+  replacing or falsely claiming its tests had passed.
+- Test-first added `services/episode-context/test/postgres-capability-live.test.ts`
+  to verify that an AgentPrincipal cannot self-publish a provider; a trusted
+  operator publishes one Workspace/WorkInstance/WorkEpisode candidate; another
+  PostgreSQL pool reconstructs the bound capability context with documented
+  applicability rationale; malformed bound scope and raw privilege attempts
+  fail closed; historical as-of queries preserve pre-revocation context;
+  post-revocation queries exclude the candidate; concurrent duplicate
+  publications, repeat revocation, and corrupted privileged event kinds
+  cannot overwrite canonical history.
+- Implemented `PostgresEpisodeCapabilityJournal` (immutable
+  `episode.capability.published` and `episode.capability.revoked` records,
+  trusted per-operation policy, causal replay, scope/interval validation,
+  raw secret/grant rejection, and time-aware authorized query).
+  `createEpisodeKnowledgeGateway` accepts a trusted `capabilities`
+  journal, rejects ambiguous competing candidate sources, and binds
+  capability as well as knowledge access to the same principal, episode,
+  purpose and times.
+- Extended PostgreSQL CI to **run all three episode-context live tests**,
+  including the previously unexecuted PR #49 tests. No user-facing grants,
+  external provider execution, production IAM, or acceptance criteria were
+  asserted by this change; WYG-013 and WYG-019 `passes=false`.
+- Verified [GitHub Actions #39214791243](https://github.com/FPC-effortless/Woyengi/actions/runs/39214791243) at implementation commit `f1ef87f50e6a1bcae59347e730a8109c1d65b38a`: **133 Node tests / 0 failed; 14 real PostgreSQL 16 tests / 0 failed**, Python SDK, TypeScript, architecture/security, package boundaries, benchmark and container smoke (all 3 jobs passed). The newly enabled PostgreSQL tests confirmed PR #49's knowledge/gateway behavior plus this PR's capability authority/revocation. Initial CI uncovered PR #49's inherited test using unbranded Workspace/Work IDs; corrected fixture to the domain's branded context type without weakening runtime validation. This documentation-only evidence commit requires final-head CI.
+
+## 2026-10-19 — WYG-013 live Work-bound episode context authority
+
+- Chose to bind the recently verified PR #50 episode knowledge/capability
+  journals to canonical PostgreSQL Workspace membership, Work participants,
+  human owner/decision roles, and WorkEpisode existence instead of continuing
+  with invented in-memory agent rights.
+- Test-first added `services/episode-context/test/postgres-work-bound-policy-live.test.ts`
+  with independent PostgreSQL pools, registered agent and two humans,
+  real organization membership, actual WorkInstance/Episode, a Work
+  capability publication, an agent knowledge proposal, denial of role
+  elevation, false episode/outsider refusal, and revocation-aware reads
+  and proposals. Test uses a trusted delegated-authorization stub;
+  it does not pretend the stub is a production IAM or persistent grant.
+- Implemented `createWorkBoundEpisodePolicies`: rechecks real Work and
+  Workspace history for every request; independently sourced current
+  AgentPrincipal delegation must name a human participant/sponsor with
+  governing Work owner/decision role. Agents can only READ or PROPOSE.
+  If no trusted delegation source exists, agent access is denied.
+  Human capability PUBLISH/REVOKE requires governing Work role, not just
+  membership. Missing/out-of-scope episode and data-source failure deny.
+- Added the new PostgreSQL integration test to GitHub CI. WYG-013 and
+  WYG-019 remain `passes=false`. Unfinished: true durable grant
+  issuance/revocation and session authentication, agent Work participation,
+  cross-ledger atomicity, authorized provider execution, real deployment,
+  human QA. Verified [GitHub Actions run #39217438948](https://github.com/FPC-effortless/Woyengi/actions/runs/39217438948) at implementation commit `2d60327668ba457a1035107e1a9ac90fe52b4823`: **133 Node tests / 0 failures, 15 PostgreSQL 16 integration tests / 0 failures** (including current Work episode and agent delegation revocation behavior), Python SDK, TypeScript, package/deep-module boundaries, adversarial benchmark, architecture/security, and container smoke all passed across three CI jobs. Final progress-only commit requires separate head verification.
+
+## 2026-10-19 — WYG-013 PostgreSQL AgentPrincipal episode grants
+
+- Added live PostgreSQL test `services/episode-context/test/postgres-agent-delegation-live.test.ts`
+  before implementation. It creates real organization/Work history and
+  registered human/agent principals on two independent pools, then
+  falsifies unauthorized agent self-grant, human reviewer escalation,
+  nonregistered principal, wrong WorkEpisode, and EXECUTE/PUBLISH
+  delegation. Verifies concurrent duplicates, READ/PROPOSE restriction,
+  immediate cross-instance revocation, expirations, and poisoned privileged
+  history refusal using bound Work context authorization.
+- New `PostgresEpisodeDelegationJournal` provides immutable
+  `agent.delegation.issued`/`agent.delegation.revoked` events in a
+  transaction-validated, workspace-scoped canonical PostgreSQL sequence.
+  Only a registered human Work owner/decision authority can issue a
+  bounded seven-day grant to a registered agent for an existing WorkEpisode.
+  Grants carry exact scope, rights and human governing authority reference;
+  unauthorized, duplicate, overlapping, expired or ambiguous rights deny.
+  Original human sponsor can revoke; both grant state and governing Work
+  role are replayed on every read, including another server's connections.
+- Wired `grants.resolve` as a concrete trusted delegation source into
+  `createWorkBoundEpisodePolicies` without widening agent rights or
+  granting provider execution. Added new test to PostgreSQL CI suite.
+- Remaining: cross-ledger atomic revocation fencing, production principal
+  authentication, provider-execution capability issuance, manual QA and
+  ticket acceptance; WYG-013/019 `passes=false`. CI pending.

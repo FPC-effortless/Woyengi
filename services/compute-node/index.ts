@@ -554,3 +554,12 @@ function deepFreeze<Value>(value: Value): Value {
   }
   return value;
 }
+
+export { HostedComputeStateHttpApi, HttpComputeNodeStatePort } from "./http.ts";
+export { PostgresHostedObservationJournal } from "./postgres-observations.ts";
+export { PostgresHostedComputeStatePort } from "./postgres-state.ts";
+export type { HostedComputeStatePolicy, HostedComputeStateOperation } from "./postgres-state.ts";
+export { PostgresHostedEffectVerificationJournal } from "./postgres-effect-verification.ts";
+export type { HostedEffectVerificationRecord, HostedIndependentEffectEvidence, HostedIndependentEffectReader, HostedEffectReadRequest } from "./postgres-effect-verification.ts";
+export { PostgresHostedQuarantineReviewJournal } from "./postgres-quarantine-review.ts";
+export type { QuarantineReviewOpened, QuarantineReviewResolved, QuarantineReviewOperation, TrustedQuarantineReviewerPolicy } from "./postgres-quarantine-review.ts";

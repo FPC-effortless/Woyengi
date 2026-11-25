@@ -100,12 +100,14 @@ export class LocalCanonicalLedger<RecordType extends LedgerRecord = LedgerRecord
   implements DurableLedgerPort<RecordType>
 {
   readonly #path: string;
+  readonly #fileMode: number | undefined;
   readonly #records = new Map<string, RecordType>();
   readonly #nextSequenceByWorkspace = new Map<string, number>();
   #writeQueue: Promise<void> = Promise.resolve();
 
-  private constructor(path: string, records: readonly RecordType[]) {
+  private constructor(path: string, records: readonly RecordType[], fileMode?: number) {
     this.#path = path;
+    this.#fileMode = fileMode;
     for (const rawRecord of records) {
       const workspace = workspaceScope(rawRecord);
       const previous = this.#nextSequenceByWorkspace.get(workspace) ?? 0;
@@ -122,9 +124,14 @@ export class LocalCanonicalLedger<RecordType extends LedgerRecord = LedgerRecord
 
   static async open<RecordType extends LedgerRecord = LedgerRecord>(
     path: string,
+    options: { readonly fileMode?: number } = {},
   ): Promise<LocalCanonicalLedger<RecordType>> {
+    if (options.fileMode !== undefined
+      && (!Number.isInteger(options.fileMode) || options.fileMode < 0 || options.fileMode > 0o777)) {
+      throw new TypeError("local ledger fileMode must be a valid Unix permission mask");
+    }
     const records = await readJsonRecords<RecordType>(path);
-    return new LocalCanonicalLedger(path, records);
+    return new LocalCanonicalLedger(path, records, options.fileMode);
   }
 
   async append(record: RecordType): Promise<void> {
@@ -150,7 +157,7 @@ export class LocalCanonicalLedger<RecordType extends LedgerRecord = LedgerRecord
       }
       if (stored.length === 0) return;
       const next = [...this.#records.values(), ...stored].sort(compareRecords);
-      await atomicWriteJson(this.#path, next);
+      await atomicWriteJson(this.#path, next, this.#fileMode);
       for (const record of stored) this.#records.set(record.id, record);
       for (const [workspace, sequence] of nextSequences) this.#nextSequenceByWorkspace.set(workspace, sequence);
     };
@@ -248,10 +255,10 @@ function normalizeIdempotencyEntry(value: IdempotencyEntry): IdempotencyEntry {
   });
 }
 
-async function atomicWriteJson(path: string, value: unknown): Promise<void> {
+async function atomicWriteJson(path: string, value: unknown, mode?: number): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   const temporary = join(dirname(path), `.${basename(path)}.${randomUUID()}.tmp`);
-  await writeFile(temporary, `${JSON.stringify(value)}\n`, { encoding: "utf8", flag: "wx" });
+  await writeFile(temporary, `${JSON.stringify(value)}\n`, { encoding: "utf8", flag: "wx", ...(mode === undefined ? {} : { mode }) });
   await rename(temporary, path);
 }
 
