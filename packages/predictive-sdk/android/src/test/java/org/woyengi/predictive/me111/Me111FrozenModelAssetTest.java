@@ -14,15 +14,17 @@ public final class Me111FrozenModelAssetTest {
     public static void main(String[] args) throws Exception {
         verifiesExactBytesAndReturnsDefensiveCopies();
         rejectsWrongDigest();
+        acceptsAssetExactlyAtConfiguredLimit();
         rejectsOversizedAsset();
         rejectsEmptyAsset();
+        rejectsNonPositiveMaximum();
         handlesZeroProgressStreams();
         leavesStreamOwnershipWithCaller();
         rejectsNonFrozenBytesAtPublicEntryPoint();
         rejectsMalformedExpectedDigest();
         rejectsNonAsciiDigestAndUnboundedLimit();
         rejectsNullInput();
-        System.out.println("ME111_MODEL_ASSET_TESTS=10 PASS");
+        System.out.println("ME111_MODEL_ASSET_TESTS=12 PASS");
     }
 
     private static void verifiesExactBytesAndReturnsDefensiveCopies() throws Exception {
@@ -44,6 +46,17 @@ public final class Me111FrozenModelAssetTest {
             new ByteArrayInputStream(fixture), repeat('0', 64), 128));
     }
 
+    private static void acceptsAssetExactlyAtConfiguredLimit() throws Exception {
+        byte[] fixture = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
+        Me111FrozenModelAsset.VerifiedModel model =
+            Me111FrozenModelAsset.readAndVerify(
+                new ByteArrayInputStream(fixture), sha256(fixture), fixture.length);
+        check(model.sizeBytes() == fixture.length,
+            "asset exactly at the configured byte limit must be accepted");
+        check(Arrays.equals(model.copyBytesForLocalSession(), fixture),
+            "exact-limit asset bytes must be preserved");
+    }
+
     private static void rejectsOversizedAsset() throws Exception {
         byte[] fixture = new byte[9];
         expect(IOException.class, () -> Me111FrozenModelAsset.readAndVerify(
@@ -53,6 +66,15 @@ public final class Me111FrozenModelAssetTest {
     private static void rejectsEmptyAsset() throws Exception {
         expect(IOException.class, () -> Me111FrozenModelAsset.readAndVerify(
             new ByteArrayInputStream(new byte[0]), sha256(new byte[0]), 8));
+    }
+
+    private static void rejectsNonPositiveMaximum() throws Exception {
+        byte[] fixture = new byte[] {1};
+        String digest = sha256(fixture);
+        expect(IllegalArgumentException.class, () -> Me111FrozenModelAsset.readAndVerify(
+            new ByteArrayInputStream(fixture), digest, 0));
+        expect(IllegalArgumentException.class, () -> Me111FrozenModelAsset.readAndVerify(
+            new ByteArrayInputStream(fixture), digest, -1));
     }
 
     private static void handlesZeroProgressStreams() throws Exception {
