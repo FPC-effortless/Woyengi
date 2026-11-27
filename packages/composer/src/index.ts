@@ -1,3 +1,18 @@
+import {
+  compileOperationalIR,
+  defineComprehensionModel,
+  defineOperationalSystemSpec,
+  type ComprehensionModel,
+  type OperationalAuthorityRequirement,
+  type OperationalIR,
+  type OperationalInvariantDefinition,
+  type OperationalRequirement,
+  type OperationalSystemSpec,
+  type OutcomeContract,
+} from "../../operational-spec/src/index.ts";
+
+export const APP_PROJECTION_COMPILER_VERSION = "0.1.0" as const;
+
 export const COMPOSITION_PREFERENCE = Object.freeze([
   "do-nothing",
   "reuse",
@@ -33,7 +48,7 @@ export interface AppIntent {
   readonly successCriteria: readonly string[];
   readonly collaborationExpectations: readonly string[];
   readonly unresolvedQuestions: readonly string[];
-  readonly provenance: readonly { readonly kind: "natural-language"; readonly value: string }[];
+  readonly provenance: readonly { readonly kind: "natural-language" | "operational-system-spec"; readonly value: string }[];
 }
 
 export type RequirementKind =
@@ -110,11 +125,28 @@ export interface CompositionPlan {
   readonly rationale: readonly string[];
 }
 
+export interface AppProjectionCompositionPlan extends CompositionPlan {
+  readonly operationalSystemSpecRef: string;
+  readonly operationalIRRef: string;
+}
+
 export interface AppBlueprint {
   readonly id: string;
   readonly version: "1.0.0";
   readonly intentRef: string;
   readonly requirementGraphRef: string;
+  readonly operationalSystemSpecRef: string;
+  readonly operationalSystemSpecVersion: string;
+  readonly operationalIRRef: string;
+  readonly outcomeContractRefs: readonly string[];
+  readonly projectionRequirementRefs: readonly string[];
+  readonly verificationRequirementRefs: readonly string[];
+  readonly outcomeContracts: readonly OutcomeContract[];
+  readonly authorityRequirementDefinitions: readonly OperationalAuthorityRequirement[];
+  readonly constraintRequirements: readonly OperationalRequirement[];
+  readonly acceptanceAuthorityRequirements: readonly string[];
+  readonly invariantDefinitions: readonly OperationalInvariantDefinition[];
+  readonly invariants: readonly string[];
   readonly goals: readonly string[];
   readonly domainDependencies: readonly string[];
   readonly domainExtensions: readonly string[];
@@ -154,13 +186,27 @@ export interface CompileIntentInput {
   readonly changeTargetAppId?: string;
 }
 
-export interface ReadyIntentCompilation {
+export interface CompileAppProjectionInput {
+  readonly comprehensionModel: ComprehensionModel;
+  readonly operationalSystemSpec: OperationalSystemSpec;
+  readonly availablePackages?: readonly ApplicationPackageCandidate[];
+  readonly existingApplications?: readonly ExistingApplication[];
+  readonly changeTargetAppId?: string;
+}
+
+export interface ReadyAppProjectionCompilation {
   readonly status: "ready";
-  readonly appIntent: AppIntent;
-  readonly requirementGraph: SoftwareRequirementGraph;
-  readonly compositionPlan: CompositionPlan;
+  readonly comprehensionModel: ComprehensionModel;
+  readonly operationalSystemSpec: OperationalSystemSpec;
+  readonly operationalIR: OperationalIR;
+  readonly compositionPlan: AppProjectionCompositionPlan;
   readonly appBlueprint: AppBlueprint;
   readonly humanReadableDiff: string;
+}
+
+export interface ReadyIntentCompilation extends ReadyAppProjectionCompilation {
+  readonly appIntent: AppIntent;
+  readonly requirementGraph: SoftwareRequirementGraph;
 }
 
 export interface NeedsInputIntentCompilation {
@@ -233,34 +279,17 @@ export function createAppIntent(input: CompileIntentInput): AppIntent {
 }
 
 export function createSoftwareRequirementGraph(appIntent: AppIntent): SoftwareRequirementGraph {
-  const requirements: { readonly kind: RequirementKind; readonly requirement: string }[] = [
+  return createRequirementGraph(appIntent.id, [
     ...appIntent.subjects.map((requirement) => ({ kind: "domain-object" as const, requirement })),
     ...appIntent.activities.map((requirement) => ({ kind: "activity" as const, requirement })),
     ...appIntent.users.map((requirement) => ({ kind: "role" as const, requirement })),
-    { kind: "surface", requirement: "workspace" },
+    { kind: "surface" as const, requirement: "workspace" },
     ...appIntent.requiredEffects.map((requirement) => ({ kind: "capability" as const, requirement })),
     ...appIntent.integrations.map((requirement) => ({ kind: "integration" as const, requirement })),
     ...appIntent.constraints.map((requirement) => ({ kind: "constraint" as const, requirement })),
     ...appIntent.collaborationExpectations.map((requirement) => ({ kind: "collaboration" as const, requirement })),
     ...appIntent.successCriteria.map((requirement) => ({ kind: "verification" as const, requirement })),
-  ];
-  const nodes = requirements
-    .map((item) => ({ ...item, id: `requirement:${item.kind}:${slug(item.requirement)}:${fingerprint(item.requirement)}` }))
-    .sort(compareRequirementNodes);
-  const activityNodes = nodes.filter((node) => node.kind === "activity");
-  const dependencyNodes = nodes.filter((node) => ["domain-object", "capability", "surface", "collaboration"].includes(node.kind));
-  const edges = activityNodes.flatMap((activity) => dependencyNodes.map((dependency) => ({
-    from: activity.id,
-    to: dependency.id,
-    relation: "requires" as const,
-  }))).sort(compareRequirementEdges);
-  return deepFreeze({
-    id: `software-requirement-graph:${fingerprint(stableJson({ intentRef: appIntent.id, nodes, edges }))}`,
-    intentRef: appIntent.id,
-    providerNeutral: true as const,
-    nodes,
-    edges,
-  });
+  ]);
 }
 
 export function createCompositionPlan(input: {
@@ -340,48 +369,99 @@ export function createAppBlueprint(input: {
   readonly requirementGraph: SoftwareRequirementGraph;
   readonly compositionPlan: CompositionPlan;
 }): AppBlueprint {
-  const nodes = input.requirementGraph.nodes;
-  const requirements = (kind: RequirementKind) => nodes.filter((node) => node.kind === kind).map((node) => node.requirement);
-  return deepFreeze({
-    id: `app-blueprint:${fingerprint(stableJson({ intentRef: input.appIntent.id, graphRef: input.requirementGraph.id, planRef: input.compositionPlan.id }))}`,
-    version: "1.0.0" as const,
-    intentRef: input.appIntent.id,
-    requirementGraphRef: input.requirementGraph.id,
-    goals: [input.appIntent.objective],
-    domainDependencies: requirements("domain-object"),
-    domainExtensions: [],
-    activityTypes: requirements("activity"),
-    workPackages: [],
-    capabilityRequirements: requirements("capability"),
-    procedures: [],
-    automations: requirements("automation"),
-    agentRoles: [],
-    surfaces: requirements("surface"),
-    navigation: requirements("surface"),
-    integrations: requirements("integration"),
-    authorityRequirements: requirements("authority"),
-    verificationContracts: requirements("verification"),
-    metrics: requirements("metric"),
-    notifications: [],
-    runtimeContextRequirements: requirements("runtime"),
-    personalizationRules: [],
-    collaborationContract: {
-      participantTypes: ["human" as const, "agent" as const],
-      sharedObjects: requirements("domain-object"),
-      activities: requirements("activity"),
-    },
-    publicSurfaceContracts: [],
-    packageDependencies: input.compositionPlan.selectedPackage === undefined ? [] : [input.compositionPlan.selectedPackage],
-    migrationRequirements: [],
-    compatibilityRequirements: input.compositionPlan.selectedPackage === undefined ? [] : ["package-version-compatible"],
-    provenance: [input.appIntent.id, input.requirementGraph.id, input.compositionPlan.id],
+  const source = createLegacyOperationalSource(input.appIntent, input.requirementGraph, []);
+  const operationalIR = compileOperationalIR(source.operationalSystemSpec, { compilerVersion: APP_PROJECTION_COMPILER_VERSION });
+  const compositionPlan = bindCompositionPlan(input.compositionPlan, source.operationalSystemSpec, operationalIR);
+  const appBlueprint = createAppBlueprintProjection({
+    appIntent: input.appIntent,
+    requirementGraph: input.requirementGraph,
+    compositionPlan,
+    comprehensionModel: source.comprehensionModel,
+    operationalSystemSpec: source.operationalSystemSpec,
+    operationalIR,
+    compatibilityMode: "legacy",
   });
+  validateAppBlueprintProjection({ appBlueprint, operationalSystemSpec: source.operationalSystemSpec, operationalIR });
+  return appBlueprint;
+}
+
+export function validateAppBlueprintProjection(input: {
+  readonly appBlueprint: AppBlueprint;
+  readonly operationalSystemSpec: OperationalSystemSpec;
+  readonly operationalIR: OperationalIR;
+}): void {
+  const spec = defineOperationalSystemSpec(input.operationalSystemSpec);
+  if (input.operationalIR.sourceSpecRef !== spec.id || input.operationalIR.sourceSpecVersion !== spec.version) {
+    throw new Error("AppBlueprint operational IR provenance does not match its source OperationalSystemSpec");
+  }
+  const rebuiltIR = compileOperationalIR(spec, { compilerVersion: input.operationalIR.compilerVersion });
+  if (stableJson(rebuiltIR) !== stableJson(input.operationalIR)) {
+    throw new Error("AppBlueprint operational IR is not the deterministic IR for its source OperationalSystemSpec");
+  }
+  if (
+    input.appBlueprint.operationalSystemSpecRef !== spec.id
+    || input.appBlueprint.operationalSystemSpecVersion !== spec.version
+    || input.appBlueprint.operationalIRRef !== input.operationalIR.id
+  ) {
+    throw new Error("AppBlueprint provenance does not match its source OperationalSystemSpec and Operational IR");
+  }
+  assertProjectionEquivalent("goal semantics", input.appBlueprint.goals, spec.goals);
+  assertProjectionEquivalent("outcome contract semantics", input.appBlueprint.outcomeContracts, spec.outcomeContracts);
+  assertProjectionEquivalent("outcome contract references", input.appBlueprint.outcomeContractRefs, input.operationalIR.outcomeContractRefs);
+  assertProjectionEquivalent("authority semantics", input.appBlueprint.authorityRequirementDefinitions, spec.authorityRequirements);
+  assertProjectionEquivalent("authority semantics", input.appBlueprint.authorityRequirements, projectedAuthorityRequirements(spec));
+  assertProjectionEquivalent("acceptance authority semantics", input.appBlueprint.acceptanceAuthorityRequirements, projectedAcceptanceAuthorityRequirements(spec));
+  assertProjectionEquivalent("constraint semantics", input.appBlueprint.constraintRequirements, constraintRequirements(spec));
+  assertProjectionEquivalent("verification semantics", input.appBlueprint.verificationContracts, projectedVerificationRequirements(spec));
+  assertProjectionEquivalent("verification references", input.appBlueprint.verificationRequirementRefs, input.operationalIR.verificationRequirementRefs);
+  assertProjectionEquivalent("invariant definition semantics", input.appBlueprint.invariantDefinitions, spec.invariants);
+  assertProjectionEquivalent("invariant semantics", input.appBlueprint.invariants, projectedInvariants(spec));
+  assertProjectionEquivalent("projection requirement references", input.appBlueprint.projectionRequirementRefs, input.operationalIR.projectionRequirementRefs);
+}
+
+export class AppProjectionCompiler {
+  compile(input: CompileAppProjectionInput): ReadyAppProjectionCompilation {
+    const comprehensionModel = defineComprehensionModel(input.comprehensionModel);
+    const operationalSystemSpec = defineOperationalSystemSpec(input.operationalSystemSpec);
+    assertOperationalSource(comprehensionModel, operationalSystemSpec);
+    const operationalIR = compileOperationalIR(operationalSystemSpec, { compilerVersion: APP_PROJECTION_COMPILER_VERSION });
+    const appIntent = createProjectionIntent(comprehensionModel, operationalSystemSpec);
+    const requirementGraph = createProjectionRequirementGraph(appIntent, comprehensionModel, operationalSystemSpec);
+    const basePlan = createCompositionPlan({
+      appIntent,
+      requirementGraph,
+      ...(input.availablePackages === undefined ? {} : { availablePackages: input.availablePackages }),
+      ...(input.existingApplications === undefined ? {} : { existingApplications: input.existingApplications }),
+      ...(input.changeTargetAppId === undefined ? {} : { changeTargetAppId: input.changeTargetAppId }),
+    });
+    const compositionPlan = bindCompositionPlan(basePlan, operationalSystemSpec, operationalIR);
+    const appBlueprint = createAppBlueprintProjection({
+      appIntent,
+      requirementGraph,
+      compositionPlan,
+      comprehensionModel,
+      operationalSystemSpec,
+      operationalIR,
+      compatibilityMode: "operational",
+    });
+    validateAppBlueprintProjection({ appBlueprint, operationalSystemSpec, operationalIR });
+    return deepFreeze({
+      status: "ready" as const,
+      comprehensionModel,
+      operationalSystemSpec,
+      operationalIR,
+      compositionPlan,
+      appBlueprint,
+      humanReadableDiff: renderDiff(appIntent, compositionPlan, appBlueprint, input.availablePackages ?? [], input.existingApplications ?? []),
+    });
+  }
 }
 
 export class IntentCompiler {
   compile(input: CompileIntentInput): IntentCompilation {
     const appIntent = createAppIntent(input);
-    const blocking = normalizeAmbiguities(input.ambiguities ?? []).filter((item) => item.blocking);
+    const ambiguities = normalizeAmbiguities(input.ambiguities ?? []);
+    const blocking = ambiguities.filter((item) => item.blocking);
     if (blocking.length > 0) {
       const first = blocking[0] as IntentAmbiguity;
       return deepFreeze({
@@ -392,18 +472,33 @@ export class IntentCompiler {
       });
     }
     const requirementGraph = createSoftwareRequirementGraph(appIntent);
-    const compositionPlan = createCompositionPlan({
+    const source = createLegacyOperationalSource(appIntent, requirementGraph, ambiguities);
+    const operationalIR = compileOperationalIR(source.operationalSystemSpec, { compilerVersion: APP_PROJECTION_COMPILER_VERSION });
+    const basePlan = createCompositionPlan({
       appIntent,
       requirementGraph,
       ...(input.availablePackages === undefined ? {} : { availablePackages: input.availablePackages }),
       ...(input.existingApplications === undefined ? {} : { existingApplications: input.existingApplications }),
       ...(input.changeTargetAppId === undefined ? {} : { changeTargetAppId: input.changeTargetAppId }),
     });
-    const appBlueprint = createAppBlueprint({ appIntent, requirementGraph, compositionPlan });
+    const compositionPlan = bindCompositionPlan(basePlan, source.operationalSystemSpec, operationalIR);
+    const appBlueprint = createAppBlueprintProjection({
+      appIntent,
+      requirementGraph,
+      compositionPlan,
+      comprehensionModel: source.comprehensionModel,
+      operationalSystemSpec: source.operationalSystemSpec,
+      operationalIR,
+      compatibilityMode: "legacy",
+    });
+    validateAppBlueprintProjection({ appBlueprint, operationalSystemSpec: source.operationalSystemSpec, operationalIR });
     return deepFreeze({
       status: "ready" as const,
       appIntent,
       requirementGraph,
+      comprehensionModel: source.comprehensionModel,
+      operationalSystemSpec: source.operationalSystemSpec,
+      operationalIR,
       compositionPlan,
       appBlueprint,
       humanReadableDiff: renderDiff(appIntent, compositionPlan, appBlueprint, input.availablePackages ?? [], input.existingApplications ?? []),
@@ -431,6 +526,357 @@ const USER_TERMS: Readonly<Record<string, RegExp>> = {
   manager: /\bmanagers?\b/i,
   operator: /\boperators?\b/i,
 };
+
+const LEGACY_ADAPTER_TIME = "1970-01-01T00:00:00.000Z";
+
+function createLegacyOperationalSource(
+  appIntent: AppIntent,
+  requirementGraph: SoftwareRequirementGraph,
+  ambiguities: readonly IntentAmbiguity[],
+): { readonly comprehensionModel: ComprehensionModel; readonly operationalSystemSpec: OperationalSystemSpec } {
+  const actorIds = appIntent.users.map((role) => `operational-actor:legacy-${slug(role)}-${fingerprint(role)}`);
+  const unknowns = ambiguities.map((ambiguity) => ({
+    id: `unknown:legacy-${slug(ambiguity.id)}-${fingerprint(ambiguity.id)}`,
+    question: ambiguity.question,
+    blocking: ambiguity.blocking,
+  }));
+  const comprehensionIdentity = stableJson({ appIntent, requirementGraph, ambiguities });
+  const comprehensionModel = defineComprehensionModel({
+    id: `comprehension:legacy-${fingerprint(comprehensionIdentity)}`,
+    version: "0.1.0",
+    workspaceId: appIntent.workspaceId,
+    objective: appIntent.objective,
+    actors: actorIds,
+    subjects: appIntent.subjects,
+    relevantStateRefs: [],
+    historyRefs: [],
+    requirements: requirementGraph.nodes.map((node) => node.requirement),
+    constraints: appIntent.constraints,
+    invariants: [],
+    rationale: ["Deterministic legacy AppIntent compatibility adapter"],
+    assumptions: [],
+    unknowns,
+    conflicts: [],
+    evidenceRefs: [],
+    provenanceRefs: [appIntent.id],
+    validTime: { from: LEGACY_ADAPTER_TIME },
+    recordedAt: LEGACY_ADAPTER_TIME,
+  });
+  const legacyVerificationRequirements = normalizedList(
+    requirementGraph.nodes.filter((node) => node.kind === "verification").map((node) => node.requirement),
+  );
+  const outcomeContractId = `outcome-contract:legacy-${fingerprint(stableJson({ intentRef: appIntent.id, successCriteria: appIntent.successCriteria }))}`;
+  const operationalSystemSpec = defineOperationalSystemSpec({
+    id: `operational-system-spec:legacy-${fingerprint(stableJson({ comprehensionModel, requirementGraph }))}`,
+    version: "0.1.0",
+    workspaceId: appIntent.workspaceId,
+    comprehensionRef: comprehensionModel.id,
+    goals: [appIntent.objective],
+    requirements: requirementGraph.nodes
+      .filter((node) => !["domain-object", "role", "surface", "automation", "metric"].includes(node.kind))
+      .map((node) => ({
+        id: `operational-requirement:legacy-${slug(node.kind)}-${fingerprint(node.id)}`,
+        kind: operationalKindForLegacyRequirement(node.kind),
+        statement: node.requirement,
+        providerNeutral: true as const,
+      })),
+    invariants: [],
+    actors: appIntent.users.map((role, index) => ({
+      id: actorIds[index] as string,
+      role,
+      principalRefs: [],
+    })),
+    capabilities: appIntent.requiredEffects.map((requirement) => ({
+      id: `operational-capability:legacy-${slug(requirement)}-${fingerprint(requirement)}`,
+      requirement,
+      providerNeutral: true as const,
+    })),
+    authorityRequirements: [],
+    procedures: [],
+    outcomeContracts: [{
+      id: outcomeContractId,
+      version: "0.1.0",
+      objective: appIntent.objective,
+      successAssertions: appIntent.successCriteria.map((description) => ({
+        id: `outcome-assertion:legacy-${slug(description)}-${fingerprint(description)}`,
+        description,
+      })),
+      invariants: [],
+      requiredEvidenceRefs: [],
+      verificationRequirements: legacyVerificationRequirements,
+      effectConstraints: [],
+      acceptanceAuthorityRequirements: [],
+    }],
+    epistemicState: {
+      assumptionRefs: [],
+      unknownRefs: comprehensionModel.unknowns.map((unknown) => unknown.id),
+      conflictRefs: [],
+    },
+    externalSystemBindings: [],
+    resources: appIntent.subjects.map((subject) => ({
+      id: `operational-resource:legacy-${slug(subject)}-${fingerprint(subject)}`,
+      kind: "SEMANTIC_OBJECT" as const,
+      reference: `subject:${slug(subject)}`,
+    })),
+    attentionRules: [],
+    lifecycleRules: [],
+    projectionRequirements: [],
+    provenanceRefs: [appIntent.id, comprehensionModel.id],
+    validTime: { from: LEGACY_ADAPTER_TIME },
+    recordedAt: LEGACY_ADAPTER_TIME,
+  });
+  return deepFreeze({ comprehensionModel, operationalSystemSpec });
+}
+
+function createProjectionIntent(comprehensionModel: ComprehensionModel, spec: OperationalSystemSpec): AppIntent {
+  const activities = spec.requirements.filter((item) => item.kind === "ACTIVITY").map((item) => item.statement);
+  const integrations = spec.requirements.filter((item) => item.kind === "INTEGRATION").map((item) => item.statement);
+  const constraints = spec.requirements.filter((item) => item.kind === "CONSTRAINT").map((item) => item.statement);
+  const collaboration = spec.requirements.filter((item) => item.kind === "COLLABORATION").map((item) => item.statement);
+  const successCriteria = spec.outcomeContracts.flatMap((contract) => contract.successAssertions.map((assertion) => assertion.description));
+  const objective = spec.goals.join("; ") || comprehensionModel.objective;
+  const identity = stableJson({ comprehensionRef: comprehensionModel.id, specRef: spec.id, specVersion: spec.version });
+  return deepFreeze({
+    id: `app-intent:projection-${fingerprint(identity)}`,
+    workspaceId: spec.workspaceId,
+    objective,
+    users: normalizedList(spec.actors.map((actor) => actor.role)),
+    subjects: normalizedList(comprehensionModel.subjects),
+    activities: normalizedList(activities),
+    inputs: [],
+    outputs: [],
+    triggers: normalizedList(spec.attentionRules.map((rule) => rule.trigger)),
+    decisions: normalizedList(spec.authorityRequirements.map((requirement) => requirement.operation)),
+    requiredEffects: normalizedList(spec.capabilities.map((capability) => capability.requirement)),
+    constraints: normalizedList(constraints),
+    integrations: normalizedList([...integrations, ...spec.externalSystemBindings.map((binding) => binding.purpose)]),
+    successCriteria: normalizedList(successCriteria),
+    collaborationExpectations: normalizedList(collaboration),
+    unresolvedQuestions: normalizedList(comprehensionModel.unknowns.map((unknown) => unknown.question)),
+    provenance: [{ kind: "operational-system-spec" as const, value: spec.id }],
+  });
+}
+
+function createProjectionRequirementGraph(
+  appIntent: AppIntent,
+  comprehensionModel: ComprehensionModel,
+  spec: OperationalSystemSpec,
+): SoftwareRequirementGraph {
+  return createRequirementGraph(appIntent.id, [
+    ...comprehensionModel.subjects.map((requirement) => ({ kind: "domain-object" as const, requirement })),
+    ...spec.requirements.map((item) => ({ kind: requirementKindForOperational(item.kind), requirement: item.statement })),
+    ...spec.actors.map((actor) => ({ kind: "role" as const, requirement: actor.role })),
+    ...spec.capabilities.map((capability) => ({ kind: "capability" as const, requirement: capability.requirement })),
+    ...spec.authorityRequirements.map((requirement) => ({ kind: "authority" as const, requirement: requirement.requirement })),
+    ...spec.externalSystemBindings.map((binding) => ({ kind: "integration" as const, requirement: binding.purpose })),
+    ...spec.outcomeContracts.flatMap((contract) => contract.verificationRequirements.map((requirement) => ({ kind: "verification" as const, requirement }))),
+    { kind: "surface" as const, requirement: "workspace" },
+  ]);
+}
+
+function createRequirementGraph(
+  intentRef: string,
+  requirements: readonly { readonly kind: RequirementKind; readonly requirement: string }[],
+): SoftwareRequirementGraph {
+  const unique = new Map<string, { readonly kind: RequirementKind; readonly requirement: string }>();
+  for (const item of requirements) {
+    const requirement = requiredText("software requirement", item.requirement);
+    unique.set(`${item.kind}\u0000${requirement}`, { kind: item.kind, requirement });
+  }
+  const nodes = [...unique.values()]
+    .map((item) => ({ ...item, id: `requirement:${item.kind}:${slug(item.requirement)}:${fingerprint(item.requirement)}` }))
+    .sort(compareRequirementNodes);
+  const activityNodes = nodes.filter((node) => node.kind === "activity");
+  const dependencyNodes = nodes.filter((node) => ["domain-object", "capability", "surface", "collaboration"].includes(node.kind));
+  const edges = activityNodes.flatMap((activity) => dependencyNodes.map((dependency) => ({
+    from: activity.id,
+    to: dependency.id,
+    relation: "requires" as const,
+  }))).sort(compareRequirementEdges);
+  return deepFreeze({
+    id: `software-requirement-graph:${fingerprint(stableJson({ intentRef, nodes, edges }))}`,
+    intentRef,
+    providerNeutral: true as const,
+    nodes,
+    edges,
+  });
+}
+
+function bindCompositionPlan(
+  plan: CompositionPlan,
+  operationalSystemSpec: OperationalSystemSpec,
+  operationalIR: OperationalIR,
+): AppProjectionCompositionPlan {
+  return deepFreeze({
+    ...plan,
+    operationalSystemSpecRef: operationalSystemSpec.id,
+    operationalIRRef: operationalIR.id,
+  });
+}
+
+function createAppBlueprintProjection(input: {
+  readonly appIntent: AppIntent;
+  readonly requirementGraph: SoftwareRequirementGraph;
+  readonly compositionPlan: AppProjectionCompositionPlan;
+  readonly comprehensionModel: ComprehensionModel;
+  readonly operationalSystemSpec: OperationalSystemSpec;
+  readonly operationalIR: OperationalIR;
+  readonly compatibilityMode: "legacy" | "operational";
+}): AppBlueprint {
+  assertOperationalSource(input.comprehensionModel, input.operationalSystemSpec);
+  if (
+    input.compositionPlan.operationalSystemSpecRef !== input.operationalSystemSpec.id
+    || input.compositionPlan.operationalIRRef !== input.operationalIR.id
+  ) {
+    throw new Error("CompositionPlan provenance does not match the App projection source");
+  }
+  const nodes = input.requirementGraph.nodes;
+  const requirements = (kind: RequirementKind) => nodes.filter((node) => node.kind === kind).map((node) => node.requirement);
+  const spec = input.operationalSystemSpec;
+  const legacyCompatibility = input.compatibilityMode === "legacy";
+  return deepFreeze({
+    id: `app-blueprint:${fingerprint(stableJson({ intentRef: input.appIntent.id, graphRef: input.requirementGraph.id, planRef: input.compositionPlan.id }))}`,
+    version: "1.0.0" as const,
+    intentRef: input.appIntent.id,
+    requirementGraphRef: input.requirementGraph.id,
+    operationalSystemSpecRef: spec.id,
+    operationalSystemSpecVersion: spec.version,
+    operationalIRRef: input.operationalIR.id,
+    outcomeContractRefs: [...input.operationalIR.outcomeContractRefs],
+    projectionRequirementRefs: [...input.operationalIR.projectionRequirementRefs],
+    verificationRequirementRefs: [...input.operationalIR.verificationRequirementRefs],
+    outcomeContracts: [...spec.outcomeContracts],
+    authorityRequirementDefinitions: [...spec.authorityRequirements],
+    constraintRequirements: constraintRequirements(spec),
+    acceptanceAuthorityRequirements: projectedAcceptanceAuthorityRequirements(spec),
+    invariantDefinitions: [...spec.invariants],
+    invariants: projectedInvariants(spec),
+    goals: [...spec.goals],
+    domainDependencies: requirements("domain-object"),
+    domainExtensions: [],
+    activityTypes: legacyCompatibility
+      ? requirements("activity")
+      : normalizedList([...requirements("activity"), ...spec.requirements.filter((item) => item.kind === "ACTIVITY").map((item) => item.statement)]),
+    workPackages: [],
+    capabilityRequirements: legacyCompatibility
+      ? requirements("capability")
+      : normalizedList([...requirements("capability"), ...spec.capabilities.map((capability) => capability.requirement)]),
+    procedures: legacyCompatibility ? [] : spec.procedures.map((procedure) => procedure.id),
+    automations: requirements("automation"),
+    agentRoles: legacyCompatibility ? [] : normalizedList(spec.actors.map((actor) => actor.role)),
+    surfaces: requirements("surface"),
+    navigation: requirements("surface"),
+    integrations: legacyCompatibility
+      ? requirements("integration")
+      : normalizedList([...requirements("integration"), ...spec.externalSystemBindings.map((binding) => binding.purpose)]),
+    authorityRequirements: projectedAuthorityRequirements(spec),
+    verificationContracts: projectedVerificationRequirements(spec),
+    metrics: requirements("metric"),
+    notifications: [],
+    runtimeContextRequirements: legacyCompatibility
+      ? requirements("runtime")
+      : normalizedList([...requirements("runtime"), ...spec.requirements.filter((item) => item.kind === "RUNTIME").map((item) => item.statement)]),
+    personalizationRules: [],
+    collaborationContract: {
+      participantTypes: ["human" as const, "agent" as const],
+      sharedObjects: requirements("domain-object"),
+      activities: legacyCompatibility
+        ? requirements("activity")
+        : normalizedList([...requirements("activity"), ...spec.requirements.filter((item) => item.kind === "ACTIVITY").map((item) => item.statement)]),
+    },
+    publicSurfaceContracts: legacyCompatibility
+      ? []
+      : spec.projectionRequirements.filter((requirement) => requirement.projectionKind === "APP").map((requirement) => requirement.requirement),
+    packageDependencies: input.compositionPlan.selectedPackage === undefined ? [] : [input.compositionPlan.selectedPackage],
+    migrationRequirements: [],
+    compatibilityRequirements: input.compositionPlan.selectedPackage === undefined ? [] : ["package-version-compatible"],
+    provenance: normalizedList([
+      input.appIntent.id,
+      input.requirementGraph.id,
+      input.compositionPlan.id,
+      input.comprehensionModel.id,
+      spec.id,
+      input.operationalIR.id,
+      ...spec.provenanceRefs,
+    ]),
+  });
+}
+
+function assertOperationalSource(comprehensionModel: ComprehensionModel, spec: OperationalSystemSpec): void {
+  if (spec.comprehensionRef !== comprehensionModel.id) {
+    throw new Error(`OperationalSystemSpec comprehensionRef does not match source comprehension: ${spec.comprehensionRef}`);
+  }
+  if (spec.workspaceId !== comprehensionModel.workspaceId) {
+    throw new Error(`OperationalSystemSpec workspace does not match source comprehension: ${spec.workspaceId}`);
+  }
+}
+
+function constraintRequirements(spec: OperationalSystemSpec): readonly OperationalRequirement[] {
+  return spec.requirements.filter((requirement) => requirement.kind === "CONSTRAINT");
+}
+
+function projectedAuthorityRequirements(spec: OperationalSystemSpec): readonly string[] {
+  return normalizedList([
+    ...spec.requirements.filter((requirement) => requirement.kind === "AUTHORITY").map((requirement) => requirement.statement),
+    ...spec.authorityRequirements.map((requirement) => requirement.requirement),
+  ]);
+}
+
+function projectedAcceptanceAuthorityRequirements(spec: OperationalSystemSpec): readonly string[] {
+  return normalizedList(spec.outcomeContracts.flatMap((contract) => contract.acceptanceAuthorityRequirements));
+}
+
+function projectedVerificationRequirements(spec: OperationalSystemSpec): readonly string[] {
+  return normalizedList([
+    ...spec.requirements.filter((requirement) => requirement.kind === "VERIFICATION").map((requirement) => requirement.statement),
+    ...spec.outcomeContracts.flatMap((contract) => contract.verificationRequirements),
+  ]);
+}
+
+function projectedInvariants(spec: OperationalSystemSpec): readonly string[] {
+  return normalizedList([
+    ...spec.invariants.map((invariant) => invariant.statement),
+    ...spec.outcomeContracts.flatMap((contract) => contract.invariants),
+  ]);
+}
+
+function assertProjectionEquivalent(name: string, actual: unknown, expected: unknown): void {
+  if (stableJson(actual) !== stableJson(expected)) {
+    throw new Error(`AppBlueprint ${name} must exactly match its source OperationalSystemSpec`);
+  }
+}
+
+function operationalKindForLegacyRequirement(kind: RequirementKind): OperationalRequirement["kind"] {
+  switch (kind) {
+    case "domain-object": return "STATE";
+    case "activity": return "ACTIVITY";
+    case "role": return "COLLABORATION";
+    case "surface": return "RUNTIME";
+    case "capability": return "CAPABILITY";
+    case "integration": return "INTEGRATION";
+    case "automation": return "ACTIVITY";
+    case "authority": return "AUTHORITY";
+    case "verification": return "VERIFICATION";
+    case "collaboration": return "COLLABORATION";
+    case "metric": return "VERIFICATION";
+    case "runtime": return "RUNTIME";
+    case "constraint": return "CONSTRAINT";
+  }
+}
+
+function requirementKindForOperational(kind: OperationalRequirement["kind"]): RequirementKind {
+  switch (kind) {
+    case "STATE": return "domain-object";
+    case "ACTIVITY": return "activity";
+    case "AUTHORITY": return "authority";
+    case "CAPABILITY": return "capability";
+    case "INTEGRATION": return "integration";
+    case "COLLABORATION": return "collaboration";
+    case "RUNTIME": return "runtime";
+    case "VERIFICATION": return "verification";
+    case "CONSTRAINT": return "constraint";
+  }
+}
 
 function renderDiff(appIntent: AppIntent, plan: CompositionPlan, blueprint: AppBlueprint, packages: readonly ApplicationPackageCandidate[], applications: readonly ExistingApplication[]): string {
   let headline: string;
