@@ -47,6 +47,8 @@ export interface Me111NativeLocalPort {
   readonly remoteFallback: boolean;
   readonly modelSha256: string;
   readonly checkpointSha256: string;
+  /** Declared source pin for the reviewed TAC Android runtime interface; not binary attestation. */
+  readonly runtimeSourceCommit: string;
   /** Must be synchronous and implement the original 12-input Android session. */
   predictStep(event: Me111SourceEvent): unknown;
 }
@@ -75,7 +77,8 @@ export type Me111Advisory =
     }>;
 
 const NATIVE_PORT_FIELDS = [
-  "execution", "remoteFallback", "modelSha256", "checkpointSha256", "predictStep",
+  "execution", "remoteFallback", "modelSha256", "checkpointSha256",
+  "runtimeSourceCommit", "predictStep",
 ] as const;
 
 type Me111PredictStep = Me111NativeLocalPort["predictStep"];
@@ -91,11 +94,13 @@ function checkPort(port: Me111NativeLocalPort): Me111PredictStep {
   const remoteFallback = Object.getOwnPropertyDescriptor(port, "remoteFallback")?.value;
   const modelSha256 = Object.getOwnPropertyDescriptor(port, "modelSha256")?.value;
   const checkpointSha256 = Object.getOwnPropertyDescriptor(port, "checkpointSha256")?.value;
+  const runtimeSourceCommit = Object.getOwnPropertyDescriptor(port, "runtimeSourceCommit")?.value;
   const predictStep = Object.getOwnPropertyDescriptor(port, "predictStep")?.value;
 
   if (execution !== "DEVICE_LOCAL" || remoteFallback !== false ||
       modelSha256 !== ME111_FROZEN_CONTRACT.modelSha256 ||
       checkpointSha256 !== ME111_FROZEN_CONTRACT.checkpointSha256 ||
+      runtimeSourceCommit !== ME111_FROZEN_CONTRACT.sourceReferenceCommit ||
       typeof predictStep !== "function") {
     throw new Error("ME111 original frozen identity and device-local no-fallback port required");
   }
