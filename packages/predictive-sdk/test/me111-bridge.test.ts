@@ -81,6 +81,7 @@ function setup(conflict = false) {
     execution: "DEVICE_LOCAL", remoteFallback: false,
     modelSha256: ME111_FROZEN_CONTRACT.modelSha256,
     checkpointSha256: ME111_FROZEN_CONTRACT.checkpointSha256,
+    runtimeSourceCommit: ME111_FROZEN_CONTRACT.sourceReferenceCommit,
     predictStep(event: Me111SourceEvent) {
       nativeCalls++;
       assert.equal(event.owner, 0);
@@ -133,6 +134,7 @@ test("wrong checkpoint, wrong ONNX and remote fallback all reject before reading
     { ...x.port, remoteFallback: true },
     { ...x.port, modelSha256: "not-the-frozen-onnx" },
     { ...x.port, checkpointSha256: "not-original-checkpoint" },
+    { ...x.port, runtimeSourceCommit: "0".repeat(40) },
   ]) {
     assert.throws(
       () => predictMe111AuthorizedLocal(withTrap, x.request, invalid),
@@ -231,6 +233,15 @@ test("native port rejects inherited, hidden, symbolic and accessor fields before
     },
   });
 
+  const runtimeSourceGetter = { ...x.port };
+  Object.defineProperty(runtimeSourceGetter, "runtimeSourceCommit", {
+    enumerable: true,
+    get() {
+      getterCalls++;
+      return ME111_FROZEN_CONTRACT.sourceReferenceCommit;
+    },
+  });
+
   const predictGetter = { ...x.port };
   Object.defineProperty(predictGetter, "predictStep", {
     enumerable: true,
@@ -247,7 +258,7 @@ test("native port rejects inherited, hidden, symbolic and accessor fields before
   Object.defineProperty(symbolic, Symbol("authority"), { value: true });
 
   for (const invalid of [
-    executionGetter, predictGetter, inherited, hidden, symbolic,
+    executionGetter, runtimeSourceGetter, predictGetter, inherited, hidden, symbolic,
   ]) {
     assert.throws(
       () => predictMe111AuthorizedLocal(withTrap, x.request, invalid),
